@@ -67,6 +67,8 @@ class ArsenalRegistry:
 
     def production_allowed(self, model: str | ModelEntry) -> bool:
         m = self._entry(model)
+        if m.family == "mock":
+            return False   # the deterministic mock exists for tests only and can never contribute to output
         if m.integration_status in (IntegrationStatus.RESEARCH_ONLY, IntegrationStatus.LICENSE_BLOCKED):
             return False
         return self.license_for(m).production_allowed

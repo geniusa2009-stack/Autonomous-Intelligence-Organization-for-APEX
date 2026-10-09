@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APEX ONE Studio</title>
+<style>
+:root{--navy:#0A1A33;--navy7:#13294B;--silver:#A9B3C1;--s1:#ECEFF3;--white:#fff;--ink:#0B1424;--warn:#B2452F}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"IBM Plex Sans Arabic",sans-serif;background:var(--s1);color:var(--ink)}
+header{background:var(--navy);color:var(--white);padding:18px 24px;display:flex;justify-content:space-between;align-items:baseline}
+header b{letter-spacing:.08em}main{max-width:1100px;margin:0 auto;padding:20px 16px}
+table{width:100%;border-collapse:collapse;background:var(--white)}td,th{padding:10px;border-bottom:1px solid var(--s1);text-align:start}
+th{font-weight:600;color:var(--navy7)}a{color:var(--navy7)}.st{font-family:ui-monospace,monospace;font-size:12px}
+section{margin-top:22px;background:var(--white);padding:16px}img{max-width:100%;border:1px solid var(--s1)}
+.blk{color:var(--warn)}form{display:grid;gap:8px;max-width:520px}input,button{padding:8px;font:inherit}
+button{background:var(--navy7);color:var(--white);border:0;cursor:pointer}
+</style>
+</head>
+<body>
+<header><b dir="ltr">APEX ONE · Studio</b><span>المراجعة البشرية والتفضيلات</span></header>
+<main>
+  <table id="jobs"><thead><tr><th>Job</th><th>الفرصة</th><th>الحالة</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>
+  <section id="detail" hidden>
+    <h2 id="title"></h2>
+    <p class="blk" id="blockers"></p>
+    <p><a id="html" target="_blank">final.html</a> · <a id="pdf" target="_blank">final.pdf</a> ·
+       <a id="qr" target="_blank">quality_report.json</a></p>
+    <img id="sheet" alt="contact sheet">
+    <h3>اعتماد الإصدار</h3>
+    <form id="approve"><input name="approver" placeholder="الاسم" required><input name="notes" placeholder="ملاحظات">
+      <button>اعتماد (RELEASE_CANDIDATE → FINAL)</button></form>
+    <h3>تفضيل تصميم (B &gt; A &gt; C)</h3>
+    <form id="pref"><input name="page_id" placeholder="page id" required>
+      <input name="ranking" placeholder="candidate ids, best first, comma separated" required>
+      <input name="reasons" placeholder="less card-like, stronger hierarchy, ..."><input name="annotator" placeholder="الاسم" required>
+      <button>سجّل التفضيل</button></form>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+let current = null;
+async function load() {
+  const jobs = await (await fetch('/jobs')).json();
+  $('#jobs tbody').innerHTML = jobs.map(j => `<tr><td class="st" dir="ltr">${j.job_id}</td><td>${j.opportunity}</td>
+    <td class="st">${j.state}</td><td class="st">${j.status}</td><td><a href="#" data-id="${j.job_id}">فتح</a></td></tr>`).join('');
+  document.querySelectorAll('[data-id]').forEach(a => a.onclick = (e) => { e.preventDefault(); open(a.dataset.id); });
+}
+async function open(id) {
+  current = id;
+  const j = await (await fetch(`/jobs/${id}`)).json();
+  $('#detail').hidden = false;
+  $('#title').textContent = `${j.opportunity} — ${j.state} / ${j.status}`;
+  $('#blockers').textContent = (j.blockers || []).join(' · ');
+  const base = `/jobs/${id}/artifacts/`;
+  $('#html').href = base + 'final.html'; $('#pdf').href = base + 'final.pdf'; $('#qr').href = base + 'quality_report.json';
+  $('#sheet').src = base + 'contact_sheet.png';
+}
+$('#approve').onsubmit = async (e) => {
+  e.preventDefault(); const f = new FormData(e.target);
+  const r = await fetch(`/jobs/${current}/approve`, {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({approver: f.get('approver'), notes: f.get('notes')})});
+  alert(r.ok ? 'approved' : await r.text()); load();
+};
+$('#pref').onsubmit = async (e) => {
+  e.preventDefault(); const f = new FormData(e.target);
+  const r = await fetch(`/jobs/${current}/preferences`, {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({page_id: f.get('page_id'), ranking: f.get('ranking').split(',').map(s => s.trim()),
+      reasons: f.get('reasons').split(',').map(s => s.trim()).filter(Boolean), annotator: f.get('annotator')})});
+  alert(r.ok ? 'recorded' : await r.text());
+};
+load();
+</script>
+</body>
+</html>

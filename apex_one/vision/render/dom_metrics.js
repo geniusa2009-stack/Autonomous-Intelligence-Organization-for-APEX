@@ -61,7 +61,10 @@
         id: el.dataset.block, role: el.dataset.role, lang: el.getAttribute('lang') || 'ar',
         opinion: el.dataset.opinion === '1', humor: el.dataset.humor === '1',
         x: r.left - pr.left, y: r.top - pr.top, w: r.width, h: r.height,
-        fontPx: parseFloat(cs.fontSize), fontFamily: cs.fontFamily, fontWeight: cs.fontWeight,
+        fontPx: parseFloat(cs.fontSize),
+        maxFontPx: Math.max(parseFloat(cs.fontSize), ...[...el.querySelectorAll('*')]
+          .filter(x => (x.textContent || '').trim().length > 0 && !x.closest('svg'))
+          .map(x => parseFloat(getComputedStyle(x).fontSize) || 0)), fontFamily: cs.fontFamily, fontWeight: cs.fontWeight,
         lineHeightPx: parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5,
         color: cs.color, bg: effectiveBg(el), dir: cs.direction, textAlign: cs.textAlign,
         lines: lines.length, lineWidths: widths, chars: text.length, text: text.slice(0, 400), diffText: diffText.slice(0, 600),

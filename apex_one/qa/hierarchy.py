@@ -15,7 +15,7 @@ def saliency(i: dict, page_h: float, page_w: float) -> float:
     area = max(1.0, i["w"] * i["h"])
     pos = 1.2 - 0.35 * (i["y"] / page_h) + 0.1 * ((i["x"] + i["w"]) / page_w)   # RTL: right/top start
     weight = 1.15 if str(i["fontWeight"]) in ("600", "700") else 1.0
-    return (i["fontPx"] ** 1.7) * (c ** 0.5) * (area ** 0.12) * pos * weight
+    return (i.get("maxFontPx", i["fontPx"]) ** 1.7) * (c ** 0.5) * (area ** 0.12) * pos * weight
 
 
 def check_hierarchy(page: dict) -> tuple[str | None, Metric]:

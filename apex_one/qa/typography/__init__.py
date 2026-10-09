@@ -15,7 +15,7 @@ def check_typography(page: dict, typo: dict, brand_fonts: list[str]) -> tuple[li
     items = page["items"]
     penalty = 0.0
     body_sizes = [i["fontPx"] for i in items if i["role"] in BODY]
-    heads = [i["fontPx"] for i in items if i["role"] == "heading"]
+    heads = [i.get("maxFontPx", i["fontPx"]) for i in items if i["role"] in ("heading", "hero")]
     for i in items:
         if i["role"] in BODY and i["fontPx"] < typo["min_body_px"]:
             sev = "critical" if i["fontPx"] < 9 else "major"

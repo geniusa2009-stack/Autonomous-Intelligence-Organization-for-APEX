@@ -30,7 +30,7 @@ def derive_images(png: Path, out_dir: Path) -> dict[str, Path]:
 
 def dhash(png: Path, size: int = 12) -> int:
     im = Image.open(png).convert("L").resize((size + 1, size))
-    px = list(im.getdata())
+    px = list(im.tobytes())
     bits = 0
     for r in range(size):
         for c in range(size):
@@ -46,7 +46,7 @@ def ink_stats(png: Path) -> tuple[float, float]:
     """(mean luminance 0..1, ink density = fraction of pixels differing strongly from the page background)."""
     im = Image.open(png).convert("L")
     small = im.resize((120, 170))
-    px = list(small.getdata())
+    px = list(small.tobytes())
     mean = sum(px) / len(px) / 255
     bg = max(set(px), key=px.count)
     ink = sum(1 for p in px if abs(p - bg) > 40) / len(px)
