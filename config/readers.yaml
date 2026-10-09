@@ -1,0 +1,12 @@
+# Reader Lab personas. Simulations are extractive proxies of these readers, not real humans.
+schema_version: 1
+personas:
+  - {persona_id: teen-15-17, label: "Egyptian student 15-17", age_range: "15-17", english_level: medium, reading_mode: full, scan_budget_seconds: 180, priorities: [deadline, funding, eligibility]}
+  - {persona_id: weak-english, label: "Student with weak English", english_level: weak, reading_mode: full, scan_budget_seconds: 180, priorities: [deadline, funding]}
+  - {persona_id: full-aid, label: "Student needing full aid", english_level: medium, reading_mode: full, needs_full_aid: true, scan_budget_seconds: 150, priorities: [funding, remaining_cost]}
+  - {persona_id: concerned-parent, label: "Student with a concerned parent", english_level: weak, reading_mode: full, parent_involved: true, scan_budget_seconds: 200, priorities: [remaining_cost, risk]}
+  - {persona_id: strong-academic, label: "Strong academic student", english_level: strong, reading_mode: skim, scan_budget_seconds: 60, priorities: [test_minimum, competitive_signal]}
+  - {persona_id: first-time, label: "First-time applicant", english_level: medium, reading_mode: full, scan_budget_seconds: 240, priorities: [next_action, application_requirement]}
+  - {persona_id: last-minute, label: "Last-minute applicant", english_level: medium, reading_mode: skim, scan_budget_seconds: 30, priorities: [deadline, next_action]}
+  - {persona_id: mobile-only, label: "Mobile-only reader", english_level: medium, reading_mode: mobile, scan_budget_seconds: 90, priorities: [deadline, funding]}
+  - {persona_id: comparer, label: "Student comparing opportunities", english_level: strong, reading_mode: skim, scan_budget_seconds: 45, priorities: [funding, remaining_cost, competitive_signal]}

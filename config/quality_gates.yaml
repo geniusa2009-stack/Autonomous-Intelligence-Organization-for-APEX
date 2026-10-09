@@ -1,0 +1,21 @@
+# APEX ONE — quality gates. Critical gates must be MEASURED and PASS for RELEASE_CANDIDATE.
+# Target gates: NOT_MEASURED never counts as a pass; it is reported and requires human review.
+schema_version: 1
+critical:
+  critical_fact_accuracy:       {threshold: 100, metric: fact.critical_accuracy}
+  deadline_integrity:           {threshold: 100, metric: fact.deadline_integrity}
+  eligibility_integrity:        {threshold: 100, metric: fact.eligibility_integrity}
+  funding_meaning_integrity:    {threshold: 100, metric: fact.funding_integrity}
+  unresolved_critical_contradictions: {max: 0, metric: fact.unresolved_critical_contradictions}
+  critical_layout_failures:     {max: 0, metric: qa.critical_layout_failures}
+  license_contamination:        {max: 0, metric: license.prohibited_engines_in_output}
+targets:
+  reader_comprehension:   {threshold: 95, metric: reader.comprehension}
+  typography:             {threshold: 95, metric: design.typography}
+  visual_hierarchy:       {threshold: 95, metric: design.hierarchy}
+  apex_brand_fit:         {threshold: 95, metric: design.brand_fit}
+  editorial_quality:      {threshold: 95, metric: editorial.quality}
+  rtl_visual_quality:     {threshold: 98, metric: rtl.quality}
+  print_fidelity:         {threshold: 98, metric: print.fidelity}
+  cross_page_rhythm:      {threshold: 93, metric: document.rhythm}
+  novelty:                {threshold: 90, metric: design.novelty}

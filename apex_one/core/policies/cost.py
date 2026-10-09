@@ -24,9 +24,6 @@ class CostPolicy:
     # When free capacity is exhausted the only permitted outcomes, in order of preference:
     exhaustion_strategy: tuple[str, ...] = ("LOCAL_FALLBACK", "QUEUE", "WAIT", "DEGRADE")
 
-    def __setattr__(self, *_: object) -> None:  # pragma: no cover - frozen guard
-        raise AttributeError("CostPolicy is immutable")
-
 
 COST_POLICY = CostPolicy()
 

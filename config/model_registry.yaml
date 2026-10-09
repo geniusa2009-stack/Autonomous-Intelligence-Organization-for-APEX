@@ -1,0 +1,1979 @@
+# APEX ONE — model registry. EVERY model named in the APEX ONE ULTRA specification appears here.
+# Presence here is NOT a claim of integration. Read `integration_status` (code maturity) and run
+# `apex-one models` for runtime availability.
+#  * capabilities with capability_source=prior-estimate are routing hints, replaced by APEX benchmark results.
+#  * provider_model_id values are best-known ids, `model_id_verified: false` until a live listing confirms them.
+#  * Remote pricing is marked verified=false: the firewall still BLOCKS unless a live price check or a human
+#    free-tier attestation exists. Local/self-hosted routes are $0 by construction.
+schema_version: 1
+models:
+- id: nemotron-3-ultra-550b-a55b
+  family: nvidia-nemotron-3
+  version: ultra-550b-a55b
+  category: general
+  description: NVIDIA Nemotron 3 Ultra (MoE, ~55B active).
+  capabilities:
+    reasoning: frontier
+    coding: high
+    arabic: high
+    egyptian_arabic: medium
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: slow
+  routes:
+  - provider: nvidia_nim
+    provider_model_id: nvidia/nemotron-3-ultra-550b-a55b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-nvidia-nemotron-3
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 1100
+  min_ram_gb: null
+  local_hint: ''
+  notes: Not runnable locally on consumer hardware. Remote id unverified.
+- id: nemotron-3-super-120b-a12b
+  family: nvidia-nemotron-3
+  version: super-120b-a12b
+  category: general
+  description: NVIDIA Nemotron 3 Super (MoE, ~12B active).
+  capabilities:
+    reasoning: high
+    coding: high
+    arabic: medium
+    egyptian_arabic: medium
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: medium
+  routes:
+  - provider: nvidia_nim
+    provider_model_id: nvidia/nemotron-3-super-120b-a12b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: openrouter
+    provider_model_id: nvidia/nemotron-3-super-120b-a12b:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-nvidia-nemotron-3
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 240
+  min_ram_gb: 96
+  local_hint: ''
+  notes: ''
+- id: nemotron-nano-omni
+  family: nvidia-nemotron
+  version: nano/omni multimodal variants
+  category: general
+  description: NVIDIA Nemotron Nano / Omni multimodal variants (VL).
+  capabilities:
+    reasoning: medium
+    coding: medium
+    arabic: low
+    egyptian_arabic: low
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: fast
+  routes:
+  - provider: nvidia_nim
+    provider_model_id: nvidia/nemotron-nano-vl
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: openrouter
+    provider_model_id: nvidia/nemotron-nano-vl:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-nvidia-nemotron-nano
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 24
+  min_ram_gb: 32
+  local_hint: ''
+  notes: Exact variant ids change frequently; verify via live listing.
+- id: gpt-oss-120b
+  family: gpt-oss
+  version: 120b
+  category: general
+  description: OpenAI open-weight MoE reasoning model.
+  capabilities:
+    reasoning: high
+    coding: high
+    arabic: medium
+    egyptian_arabic: low
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: fast
+  routes:
+  - provider: groq
+    provider_model_id: openai/gpt-oss-120b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: nvidia_nim
+    provider_model_id: openai/gpt-oss-120b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: openrouter
+    provider_model_id: openai/gpt-oss-120b:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: cloudflare
+    provider_model_id: '@cf/openai/gpt-oss-120b'
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: ollama
+    provider_model_id: gpt-oss:120b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-gpt-oss
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 65
+  min_ram_gb: 80
+  local_hint: ollama pull gpt-oss:120b (needs ~80 GB unified memory)
+  notes: ''
+- id: gpt-oss-20b
+  family: gpt-oss
+  version: 20b
+  category: general
+  description: OpenAI open-weight MoE reasoning model (small).
+  capabilities:
+    reasoning: medium
+    coding: medium
+    arabic: low
+    egyptian_arabic: low
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: fast
+  routes:
+  - provider: groq
+    provider_model_id: openai/gpt-oss-20b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: openrouter
+    provider_model_id: openai/gpt-oss-20b:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: cloudflare
+    provider_model_id: '@cf/openai/gpt-oss-20b'
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: ollama
+    provider_model_id: gpt-oss:20b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: llamacpp
+    provider_model_id: gpt-oss-20b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: mlx
+    provider_model_id: mlx-community/gpt-oss-20b-MXFP4-Q8
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-gpt-oss
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 14
+  min_ram_gb: 16
+  local_hint: ollama pull gpt-oss:20b (16 GB+ RAM)
+  notes: ''
+- id: qwen-27b-class
+  family: qwen
+  version: 27B-class (current generation)
+  category: general
+  description: Qwen dense ~27B-class models (general/reasoning).
+  capabilities:
+    reasoning: high
+    coding: high
+    arabic: high
+    egyptian_arabic: medium
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: medium
+  routes:
+  - provider: ollama
+    provider_model_id: qwen:27b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: llamacpp
+    provider_model_id: qwen-27b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: mlx
+    provider_model_id: mlx-community/qwen-27b-4bit
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: openrouter
+    provider_model_id: qwen/qwen-27b:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-qwen-open
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 17
+  min_ram_gb: 32
+  local_hint: ''
+  notes: Concrete repo/tag must be chosen at acquisition time; ids here are placeholders, unverified.
+- id: qwen-reasoning-coding-current
+  family: qwen
+  version: current flagship reasoning/coding
+  category: general
+  description: Strongest current Qwen reasoning/coding models (e.g. Qwen3 large MoE / Coder).
+  capabilities:
+    reasoning: frontier
+    coding: frontier
+    arabic: high
+    egyptian_arabic: medium
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 262144
+  latency: medium
+  routes:
+  - provider: nvidia_nim
+    provider_model_id: qwen/qwen3-235b-a22b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: openrouter
+    provider_model_id: qwen/qwen3-coder:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: groq
+    provider_model_id: qwen/qwen3-32b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-qwen-open
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: ''
+- id: qwen-vl-current
+  family: qwen
+  version: current VL
+  category: general
+  description: Qwen multimodal / vision-language models.
+  capabilities:
+    reasoning: high
+    coding: medium
+    arabic: high
+    egyptian_arabic: medium
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: medium
+  routes:
+  - provider: openrouter
+    provider_model_id: qwen/qwen2.5-vl-72b-instruct:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: ollama
+    provider_model_id: qwen2.5vl:7b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: nvidia_nim
+    provider_model_id: qwen/qwen-vl
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-qwen-open
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 6
+  min_ram_gb: 16
+  local_hint: ollama pull qwen2.5vl:7b for a local vision judge
+  notes: ''
+- id: kimi-k2.5
+  family: kimi
+  version: k2.5
+  category: general
+  description: Moonshot Kimi K2.5 (large MoE, agentic, multimodal).
+  capabilities:
+    reasoning: frontier
+    coding: frontier
+    arabic: medium
+    egyptian_arabic: low
+    vision: true
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 262144
+  latency: medium
+  routes:
+  - provider: nvidia_nim
+    provider_model_id: moonshotai/kimi-k2.5
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: openrouter
+    provider_model_id: moonshotai/kimi-k2.5:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: groq
+    provider_model_id: moonshotai/kimi-k2-instruct
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-kimi
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 600
+  min_ram_gb: null
+  local_hint: ''
+  notes: ''
+- id: kimi-k3-family
+  family: kimi
+  version: k3 / future
+  category: general
+  description: Kimi K3 family and future compatible Kimi models.
+  capabilities:
+    reasoning: frontier
+    coding: frontier
+    arabic: medium
+    egyptian_arabic: low
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: null
+  latency: unknown
+  routes: []
+  license_ref: lic-kimi-future
+  integration_status: NOT_YET_SUPPORTED
+  adapter: openai_compatible
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: Slot reserved; enable when a free route is verified.
+- id: glm-5.x
+  family: glm
+  version: 5.x
+  category: general
+  description: Zhipu GLM-5.x family.
+  capabilities:
+    reasoning: frontier
+    coding: high
+    arabic: medium
+    egyptian_arabic: low
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: medium
+  routes:
+  - provider: openrouter
+    provider_model_id: z-ai/glm-5:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: nvidia_nim
+    provider_model_id: z-ai/glm-5
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-glm
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: ''
+- id: minimax-m2.x
+  family: minimax
+  version: M2.x
+  category: general
+  description: MiniMax M2.x agentic/coding MoE.
+  capabilities:
+    reasoning: high
+    coding: frontier
+    arabic: medium
+    egyptian_arabic: low
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 196608
+  latency: medium
+  routes:
+  - provider: openrouter
+    provider_model_id: minimax/minimax-m2:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: nvidia_nim
+    provider_model_id: minimaxai/minimax-m2
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-minimax
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: ''
+- id: minimax-m3-family
+  family: minimax
+  version: M3 / future
+  category: general
+  description: MiniMax M3 family.
+  capabilities:
+    reasoning: high
+    coding: high
+    arabic: medium
+    egyptian_arabic: low
+    vision: false
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: null
+  latency: unknown
+  routes: []
+  license_ref: lic-minimax-future
+  integration_status: NOT_YET_SUPPORTED
+  adapter: openai_compatible
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: ''
+- id: gemini-flash-free
+  family: gemini
+  version: flash (free-tier compatible)
+  category: general
+  description: Google Gemini Flash models on the free tier.
+  capabilities:
+    reasoning: high
+    coding: high
+    arabic: high
+    egyptian_arabic: medium
+    vision: true
+    structured_output: true
+    tool_use: true
+    design_roles: []
+  capability_source: prior-estimate
+  context: 1048576
+  latency: fast
+  routes:
+  - provider: gemini
+    provider_model_id: gemini-flash-latest
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-gemini-api
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: gemini
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: 'Proprietary API, not open weights. Free tier may use prompts to improve Google products: public data only.'
+- id: gemma-multimodal
+  family: gemma
+  version: 3 / 3n multimodal
+  category: general
+  description: Google Gemma open models (multimodal variants).
+  capabilities:
+    reasoning: medium
+    coding: medium
+    arabic: medium
+    egyptian_arabic: low
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: fast
+  routes:
+  - provider: gemini
+    provider_model_id: gemma-3-27b-it
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: ollama
+    provider_model_id: gemma3:12b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  - provider: openrouter
+    provider_model_id: google/gemma-3-27b-it:free
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  - provider: cloudflare
+    provider_model_id: '@cf/google/gemma-3-12b-it'
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: false
+      note: free tier per provider docs (unverified here); needs attestation or live price check
+  license_ref: lic-gemma
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 8
+  min_ram_gb: 16
+  local_hint: ollama pull gemma3:12b
+  notes: ''
+- id: aya-expanse-32b
+  family: aya
+  version: expanse-32b
+  category: general
+  description: Cohere For AI multilingual model (strong Arabic). Reference/research only.
+  capabilities:
+    reasoning: medium
+    coding: low
+    arabic: high
+    egyptian_arabic: medium
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: medium
+  routes:
+  - provider: ollama
+    provider_model_id: aya-expanse:32b
+    model_id_verified: false
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-aya-expanse
+  integration_status: RESEARCH_ONLY
+  adapter: openai_compatible
+  weights_size_gb: 20
+  min_ram_gb: 32
+  local_hint: ''
+  notes: 'Reported CC-BY-NC: may only be used in ONE Lab research, never for production output.'
+- id: future-open-weight-slot
+  family: future
+  version: n/a
+  category: general
+  description: Slot for future free/open-weight models discovered later.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: null
+  latency: unknown
+  routes: []
+  license_ref: lic-unknown
+  integration_status: NOT_YET_SUPPORTED
+  adapter: openai_compatible
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: ''
+- id: mock-llm
+  family: mock
+  version: '1'
+  category: general
+  description: Deterministic mock LLM for tests.
+  capabilities:
+    reasoning: high
+    coding: high
+    arabic: high
+    egyptian_arabic: high
+    vision: true
+    structured_output: true
+    tool_use: true
+    design_roles:
+    - '*'
+  capability_source: prior-estimate
+  context: 32768
+  latency: fast
+  routes:
+  - provider: mock
+    provider_model_id: mock-llm
+    model_id_verified: true
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: mock
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: Never routed for production purpose.
+- id: OmniDocLayout-LLM
+  family: omnidoclayout
+  version: as published
+  category: design
+  description: Document/page layout generation LLM.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - page_architecture
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: OmniDocLayout-LLM
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_OMNIDOCLAYOUT
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-omnidoclayout
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_OMNIDOCLAYOUT
+  notes: group A; io text+layout-spec->layout-json.
+- id: PosterO
+  family: postero
+  version: as published
+  category: design
+  description: Poster/page layout via structured layout representations (method).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - page_architecture
+    - graphic_layout
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-postero
+  integration_status: NOT_YET_SUPPORTED
+  adapter: research_method
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group A; io text+assets->layout.
+- id: Scan-and-Print
+  family: scan
+  version: as published
+  category: design
+  description: Layout generation method (patch scanning / printing).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - page_architecture
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-scan-and-print
+  integration_status: NOT_YET_SUPPORTED
+  adapter: research_method
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group A; io image+text->layout.
+- id: Uni-Layout
+  family: uni
+  version: as published
+  category: design
+  description: Unified layout generation/evaluation.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - page_architecture
+    - design_reward
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-uni-layout
+  integration_status: NOT_YET_SUPPORTED
+  adapter: research_method
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group A; io text+image->layout.
+- id: PosterCopilot-7B
+  family: postercopilot
+  version: as published
+  category: design
+  description: Professional graphic/poster layout model (7B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - graphic_layout
+    - design_repair
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: PosterCopilot-7B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_POSTERCOPILOT
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-postercopilot
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 15
+  min_ram_gb: 24
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_POSTERCOPILOT
+  notes: group B; io text+assets->layout-json.
+- id: SEGA-7B
+  family: sega
+  version: as published
+  category: design
+  description: Graphic layout generation model (7B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - graphic_layout
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: SEGA-7B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_SEGA
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-sega
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 15
+  min_ram_gb: 24
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_SEGA
+  notes: group B; io text+assets->layout-json.
+- id: SEGA-13B
+  family: sega
+  version: as published
+  category: design
+  description: Graphic layout generation model (13B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - graphic_layout
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: SEGA-13B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_SEGA
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-sega
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 26
+  min_ram_gb: 40
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_SEGA
+  notes: group B; io text+assets->layout-json.
+- id: WebGenAgent-LM-7B
+  family: webgenagent
+  version: as published
+  category: design
+  description: Website/HTML generation agent LM (7B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - html_generation
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: WebGenAgent-LM-7B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_WEBGENAGENT
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-webgenagent
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 15
+  min_ram_gb: 24
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_WEBGENAGENT
+  notes: group C; io spec->html.
+- id: WebGenAgent-LM-8B
+  family: webgenagent
+  version: as published
+  category: design
+  description: Website/HTML generation agent LM (8B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - html_generation
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: WebGenAgent-LM-8B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_WEBGENAGENT
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-webgenagent
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 16
+  min_ram_gb: 24
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_WEBGENAGENT
+  notes: group C; io spec->html.
+- id: WebGenAgent-Step-GRPO
+  family: webgenagent
+  version: as published
+  category: design
+  description: WebGenAgent variant trained with step-level GRPO.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - html_generation
+    - design_repair
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: WebGenAgent-Step-GRPO
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_WEBGENAGENT
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-webgenagent
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_WEBGENAGENT
+  notes: group C; io spec->html.
+- id: ScreenCoder
+  family: screencoder
+  version: as published
+  category: design
+  description: Screenshot/visual-to-code system.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - visual_to_code
+    - reverse_engineering
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-screencoder
+  integration_status: NOT_YET_SUPPORTED
+  adapter: research_method
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group C; io image->html.
+- id: DCGen
+  family: dcgen
+  version: as published
+  category: design
+  description: Divide-and-conquer screenshot-to-code method.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - visual_to_code
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-dcgen
+  integration_status: NOT_YET_SUPPORTED
+  adapter: research_method
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group C; io image->html. Method can be re-implemented on any free vision model via the broker.
+- id: MarkupDM
+  family: markupdm
+  version: as published
+  category: design
+  description: Markup-based multimodal design completion/repair model.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - design_completion
+    - design_repair
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: MarkupDM
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_MARKUPDM
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-markupdm
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_MARKUPDM
+  notes: group D; io partial-markup+image->markup.
+- id: PosterReward
+  family: posterreward
+  version: as published
+  category: design
+  description: Reward model for poster/graphic design quality.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - design_reward
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: PosterReward
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_POSTERREWARD
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-posterreward
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_POSTERREWARD
+  notes: group D; io image+intent->scores.
+- id: LayerD
+  family: layerd
+  version: as published
+  category: design
+  description: Raster graphic design decomposition into layers.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - layer_decomposition
+    - reverse_engineering
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-layerd
+  integration_status: OPTIONAL_DEPENDENCY_MISSING
+  adapter: python_package
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group E; io image->layers. Optional python package; not installed.
+- id: OmniSVG-4B
+  family: omnisvg
+  version: as published
+  category: design
+  description: Multimodal SVG generation (4B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - svg_generation
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: OmniSVG-4B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_OMNISVG
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-omnisvg
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 9
+  min_ram_gb: 16
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_OMNISVG
+  notes: group F; io text/image->svg.
+- id: OmniSVG-8B
+  family: omnisvg
+  version: as published
+  category: design
+  description: Multimodal SVG generation (8B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - svg_generation
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: OmniSVG-8B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_OMNISVG
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-omnisvg
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 17
+  min_ram_gb: 24
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_OMNISVG
+  notes: group F; io text/image->svg.
+- id: StarVector-1B
+  family: starvector
+  version: as published
+  category: design
+  description: Image/text-to-SVG code model (1B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - svg_generation
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: StarVector-1B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_STARVECTOR
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-starvector
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 3
+  min_ram_gb: 8
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_STARVECTOR
+  notes: group F; io image/text->svg.
+- id: StarVector-8B
+  family: starvector
+  version: as published
+  category: design
+  description: Image/text-to-SVG code model (8B).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - svg_generation
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes:
+  - provider: design_endpoint
+    provider_model_id: StarVector-8B
+    model_id_verified: false
+    base_url_env: APEX_DESIGN_ENDPOINT_STARVECTOR
+    pricing:
+      free_tier: true
+      input_per_mtok_usd: 0.0
+      output_per_mtok_usd: 0.0
+      per_request_usd: 0.0
+      verified: true
+      note: 'self-hosted/local: $0 API cost by construction'
+  license_ref: lic-starvector
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_design_endpoint
+  weights_size_gb: 17
+  min_ram_gb: 24
+  local_hint: serve behind an OpenAI-compatible endpoint and set APEX_DESIGN_ENDPOINT_STARVECTOR
+  notes: group F; io image/text->svg.
+- id: PosterOmni
+  family: posteromni
+  version: as published
+  category: design
+  description: Poster generation/editing system.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - poster_asset
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-posteromni
+  integration_status: NOT_YET_SUPPORTED
+  adapter: diffusion_pipeline
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group G; io text+image->image.
+- id: PosterCraft
+  family: postercraft
+  version: as published
+  category: design
+  description: Aesthetic poster generation (diffusion).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - poster_asset
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-postercraft
+  integration_status: NOT_YET_SUPPORTED
+  adapter: diffusion_pipeline
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group G; io text->image.
+- id: PosterMaker
+  family: postermaker
+  version: as published
+  category: design
+  description: Product poster generation with accurate text rendering.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - poster_asset
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-postermaker
+  integration_status: NOT_YET_SUPPORTED
+  adapter: diffusion_pipeline
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group G; io text+image->image.
+- id: PosterVerse
+  family: posterverse
+  version: as published
+  category: design
+  description: Poster generation system.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - poster_asset
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-posterverse
+  integration_status: NOT_YET_SUPPORTED
+  adapter: diffusion_pipeline
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group G; io text->image.
+- id: PosterGen
+  family: postergen
+  version: as published
+  category: design
+  description: Multi-agent paper-to-poster generation framework.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - poster_asset
+    - page_architecture
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-postergen
+  integration_status: NOT_YET_SUPPORTED
+  adapter: agent_framework
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group G; io document->poster. Agent method; could be re-implemented on free compute.
+- id: BannerAgency
+  family: banneragency
+  version: as published
+  category: design
+  description: Multi-agent banner design framework.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - poster_asset
+    - graphic_layout
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-banneragency
+  integration_status: NOT_YET_SUPPORTED
+  adapter: agent_framework
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group G; io brief->banner.
+- id: SlidePoise
+  family: slidepoise
+  version: as published
+  category: design
+  description: Slide/editorial design system.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - slide_editorial
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-slidepoise
+  integration_status: NOT_YET_SUPPORTED
+  adapter: research_method
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group H; io content->slides.
+- id: SlideGen
+  family: slidegen
+  version: as published
+  category: design
+  description: Slide generation framework.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - slide_editorial
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-slidegen
+  integration_status: NOT_YET_SUPPORTED
+  adapter: agent_framework
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group H; io content->slides.
+- id: Qwen-Image-2.1
+  family: qwen
+  version: as published
+  category: design
+  description: Image generation/editing model with strong text rendering.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - image_generation
+    - poster_asset
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-qwen-image
+  integration_status: NOT_YET_SUPPORTED
+  adapter: diffusion_pipeline
+  weights_size_gb: 40
+  min_ram_gb: 48
+  local_hint: ''
+  notes: group I; io text->image.
+- id: UI-TARS-2
+  family: ui
+  version: as published
+  category: design
+  description: GUI agent model (screen understanding & interaction).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: true
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - gui_agent
+    - vision_inspection
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-ui-tars
+  integration_status: NOT_YET_SUPPORTED
+  adapter: openai_design_endpoint
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group I; io image->actions.
+- id: GraphicDesignBench
+  family: graphicdesignbench
+  version: as published
+  category: design
+  description: Graphic design benchmark (GDB).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - benchmark
+  capability_source: apex-spec-category
+  context: null
+  latency: slow
+  routes: []
+  license_ref: lic-gdb
+  integration_status: NOT_YET_SUPPORTED
+  adapter: benchmark_harness
+  weights_size_gb: null
+  min_ram_gb: null
+  local_hint: ''
+  notes: group J; io dataset->scores. Dataset must be downloaded explicitly; licence unverified.
+- id: apex-native-layout
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX grammar-based layout generator (deterministic, seeded).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - page_architecture
+    - graphic_layout
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.
+- id: apex-native-compiler
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX Document-AST -> HTML/CSS compiler (Jinja2).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - html_generation
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.
+- id: apex-native-svg
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX deterministic SVG asset generator (geometric metaphors).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - svg_generation
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.
+- id: apex-native-reward
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX measurable-heuristic design scorer (DOM/pixel metrics).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - design_reward
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.
+- id: apex-native-repair
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX rule-based failure-targeted repair operators.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - design_repair
+    - design_completion
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.
+- id: apex-native-vision-proxy
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX measurable vision proxy (pixel/DOM statistics, no subjective scores).
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - vision_inspection
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.
+- id: apex-native-decomposer
+  family: apex-native
+  version: '1'
+  category: design
+  description: APEX DOM-based structural extractor for approved HTML designs.
+  capabilities:
+    reasoning: none
+    coding: none
+    arabic: none
+    egyptian_arabic: none
+    vision: false
+    structured_output: false
+    tool_use: false
+    design_roles:
+    - reverse_engineering
+    - layer_decomposition
+  capability_source: apex-code
+  context: null
+  latency: fast
+  routes: []
+  license_ref: lic-apex-native
+  integration_status: IMPLEMENTED
+  adapter: native
+  weights_size_gb: 0
+  min_ram_gb: null
+  local_hint: ''
+  notes: Native fallback; always available.

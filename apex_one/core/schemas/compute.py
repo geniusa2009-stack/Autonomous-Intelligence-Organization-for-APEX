@@ -106,7 +106,8 @@ class ProviderEntry(ApexModel):
     free_tier: bool = False
     billing_can_be_enabled: bool = True
     privacy: PrivacyPolicy = Field(default_factory=PrivacyPolicy)
-    quota: Quota = Field(default_factory=Quota)
+    quota: Quota = Field(default_factory=Quota)              # provider-published (often unknown)
+    self_imposed_limits: Quota = Field(default_factory=Quota)  # APEX's own conservative throttle
     terms_reference: str = ""
     notes: str = ""
     integration_status: IntegrationStatus = IntegrationStatus.CONFIGURED_BUT_UNTESTED
@@ -115,6 +116,8 @@ class ProviderEntry(ApexModel):
 class ProviderRoute(ApexModel):
     provider: str
     provider_model_id: str
+    model_id_verified: bool = False     # true only after a live /models listing confirmed it
+    base_url_env: str | None = None     # per-route endpoint (self-hosted design models)
     pricing: Pricing = Field(default_factory=Pricing)
     quota: Quota | None = None
 
@@ -133,6 +136,9 @@ class ModelEntry(ApexModel):
     adapter: str = ""
     benchmark_scores: dict[str, float] = Field(default_factory=dict)
     health: str = "unknown"
+    description: str = ""
+    capability_source: str = "prior-estimate"   # prior-estimate | apex-benchmark
+    local_hint: str = ""
     weights_size_gb: float | None = None
     min_ram_gb: float | None = None
     notes: str = ""

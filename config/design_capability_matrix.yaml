@@ -1,0 +1,96 @@
+# APEX ONE — design capability matrix.
+# Maps design ROLES to the specialist systems able to perform them (ordered by preference) and to the
+# always-available native APEX engine. The DesignRouter walks the ordered list and takes the first
+# engine that is (a) runtime-available, (b) licence-eligible for the job purpose, (c) $0.
+# A research-only engine may be used in ONE Lab, never in a production route.
+schema_version: 1
+roles:
+  page_architecture:
+    description: Document/page information architecture -> region layout.
+    specialists: [OmniDocLayout-LLM, PosterO, Scan-and-Print, Uni-Layout, PosterGen]
+    native: apex-native-layout
+  graphic_layout:
+    description: Professional graphic composition of regions, hierarchy, alignment.
+    specialists: [PosterCopilot-7B, SEGA-13B, SEGA-7B, PosterO, BannerAgency]
+    native: apex-native-layout
+  html_generation:
+    description: Layout spec -> editable HTML/CSS.
+    specialists: [WebGenAgent-Step-GRPO, WebGenAgent-LM-8B, WebGenAgent-LM-7B]
+    native: apex-native-compiler
+  visual_to_code:
+    description: Screenshot -> HTML (regression and reverse engineering).
+    specialists: [ScreenCoder, DCGen]
+    native: apex-native-decomposer
+  design_completion:
+    description: Complete a partially specified design.
+    specialists: [MarkupDM]
+    native: apex-native-repair
+  design_repair:
+    description: Repair a rendered page given a classified failure.
+    specialists: [MarkupDM, PosterCopilot-7B, WebGenAgent-Step-GRPO]
+    native: apex-native-repair
+  design_reward:
+    description: Score aesthetic/typography/layout/text/artifacts/intent fidelity (separately).
+    specialists: [PosterReward, Uni-Layout]
+    native: apex-native-reward
+  layer_decomposition:
+    description: Decompose an approved raster design into layers.
+    specialists: [LayerD]
+    native: apex-native-decomposer
+  reverse_engineering:
+    description: Approved APEX screenshot -> structure -> DesignGenome learning.
+    specialists: [LayerD, ScreenCoder]
+    native: apex-native-decomposer
+  svg_generation:
+    description: Vector assets (metaphors, icons, signature robot).
+    specialists: [OmniSVG-8B, OmniSVG-4B, StarVector-8B, StarVector-1B]
+    native: apex-native-svg
+  poster_asset:
+    description: Raster hero/poster imagery (never used for text that carries facts).
+    specialists: [PosterOmni, PosterCraft, PosterMaker, PosterVerse, Qwen-Image-2.1, PosterGen, BannerAgency]
+    native: apex-native-svg
+  slide_editorial:
+    description: Slide/editorial pacing patterns.
+    specialists: [SlidePoise, SlideGen]
+    native: apex-native-layout
+  image_generation:
+    description: General image generation.
+    specialists: [Qwen-Image-2.1]
+    native: null
+  gui_agent:
+    description: Drive a GUI / inspect interactive previews.
+    specialists: [UI-TARS-2]
+    native: null
+  vision_inspection:
+    description: Inspect rendered pages (measurable proxies natively; subjective needs a vision model).
+    specialists: [UI-TARS-2]
+    general_model_capability: {vision: true}
+    native: apex-native-vision-proxy
+  benchmark:
+    description: External design benchmark.
+    specialists: [GraphicDesignBench]
+    native: null
+
+# Design DAGs by page kind. The router never sends every page through every model.
+routes:
+  dense_information:
+    applies_to: [FundingChapter, EligibilityChapter, OpportunitySnapshot, Comparison, Checklist]
+    steps: [page_architecture, graphic_layout, html_generation, render, deterministic_qa, design_reward, vision_inspection]
+  cover:
+    applies_to: [Cover]
+    steps: [graphic_layout, svg_generation, html_generation, render, deterministic_qa, design_reward, vision_inspection]
+  narrative:
+    applies_to: [Opening, ApexTake, ProfileStory, Breath, Closing]
+    steps: [graphic_layout, html_generation, render, deterministic_qa, design_reward]
+  sequence:
+    applies_to: [ApplicationJourney, Timeline]
+    steps: [page_architecture, graphic_layout, svg_generation, html_generation, render, deterministic_qa, design_reward]
+  emphasis:
+    applies_to: [HeroFact, Warning]
+    steps: [graphic_layout, html_generation, render, deterministic_qa, design_reward, vision_inspection]
+  repair:
+    applies_to: ["*failed*"]
+    steps: [failure_classification, design_repair, html_generation, render]
+  reverse_engineering:
+    applies_to: ["*approved_screenshot*"]
+    steps: [layer_decomposition, visual_to_code, reverse_engineering]

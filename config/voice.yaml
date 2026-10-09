@@ -1,0 +1,25 @@
+# APEX Voice Genome — rules. Patterns live in voice/ (approved, rejected, warnings, ...).
+schema_version: 1
+voice_version: voice-2026.10.0
+register: egyptian-arabic-conversational-premium
+jake:
+  phrase: "يا جيك"
+  max_per_document: 3
+  min_sections_between: 3
+  forbidden_in: [Warning, EligibilityChapter, FundingChapter]
+humor:
+  allowed_in: [Opening, ApexTake, Breath, Closing, ProfileStory]
+  forbidden_in: [Warning, EligibilityChapter, FundingChapter, Timeline, Checklist]
+  max_per_document: 3
+dialect_markers: ["عشان", "إزاي", "دلوقتي", "مش", "بتاع", "كده", "يعني", "هت", "بيـ", "إنت", "إنتي", "خلّي", "علشان", "لسه", "أوي", "برضه"]
+bureaucratic_msa_markers: ["يرجى", "حيث أن", "حيث إن", "وفقاً لما سبق", "تجدر الإشارة", "الجدير بالذكر", "يتعين على", "سيادتكم", "المشار إليه", "بناءً عليه"]
+ai_cliches_ar: ["في عالم اليوم", "رحلة استثنائية", "لا مثيل لها", "في الختام", "دعونا نستكشف", "عالم مليء بالفرص", "بوابتك نحو"]
+ai_cliches_en: ["unlock your potential", "in today's fast-paced world", "embark on a journey", "game-changer", "delve into", "a testament to", "look no further", "seamless"]
+limits:
+  max_sentence_words_ar: 28
+  max_paragraph_sentences: 4
+  min_dialect_marker_ratio: 0.04     # dialect markers per word in narrative sections
+  max_english_word_ratio: 0.22        # English words per word in Arabic sections
+facts_vs_opinion:
+  opinion_label_ar: "رأي APEX"
+  fact_label_ar: "المعلومة"

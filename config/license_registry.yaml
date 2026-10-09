@@ -1,0 +1,596 @@
+# APEX ONE — licence registry.
+# Principle: RESTRICTIONS may be applied from reported (unverified) knowledge; PERMISSIONS require a recorded
+# verification. `production_state: PRODUCTION_ALLOWED` is honoured only when `verified_at` is set.
+# `reported_license` never grants rights. Record a human verification with:
+#   apex-one license verify <id> --license "Apache-2.0" --state PRODUCTION_ALLOWED --source <url> --by <name>
+# States: PRODUCTION_ALLOWED | RESEARCH_ONLY | NON_COMMERCIAL | UNKNOWN | BLOCKED
+schema_version: 1
+licenses:
+- id: lic-apex-native
+  license_name: APEX proprietary
+  reported_license: APEX proprietary (authored in this repository)
+  commercial_use: 'yes'
+  research_use: 'yes'
+  redistribution: APEX decision
+  derivative_use: 'yes'
+  dataset_constraints: none
+  provider_constraints: none
+  production_state: PRODUCTION_ALLOWED
+  verified_at: '2026-10-09T00:00:00Z'
+  verified_by: apex-one (in-repo code)
+  source_reference: this repository
+  notes: ''
+- id: lic-nvidia-nemotron-3
+  license_name: UNKNOWN
+  reported_license: NVIDIA Open Model License (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: ''
+- id: lic-nvidia-nemotron-nano
+  license_name: UNKNOWN
+  reported_license: NVIDIA Open Model License (reported; variant-specific)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: ''
+- id: lic-gpt-oss
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 + gpt-oss usage policy (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: ''
+- id: lic-qwen-open
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 for most open Qwen models; some sizes use the Qwen licence (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: Per-checkpoint licence must be verified.
+- id: lic-kimi
+  license_name: UNKNOWN
+  reported_license: Modified MIT (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: ''
+- id: lic-kimi-future
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: not yet released / unknown
+  notes: ''
+- id: lic-glm
+  license_name: UNKNOWN
+  reported_license: MIT reported for recent GLM releases; verify for 5.x
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: ''
+- id: lic-minimax
+  license_name: UNKNOWN
+  reported_license: Open-weight licence reported; verify exact terms
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: ''
+- id: lic-minimax-future
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: not yet released / unknown
+  notes: ''
+- id: lic-gemini-api
+  license_name: UNKNOWN
+  reported_license: Gemini API Terms of Service (proprietary hosted API)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: https://ai.google.dev/gemini-api/terms
+  notes: Not open weights. Free tier data-use terms differ from paid.
+- id: lic-gemma
+  license_name: UNKNOWN
+  reported_license: Gemma Terms of Use (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: https://ai.google.dev/gemma/terms
+  notes: ''
+- id: lic-aya-expanse
+  license_name: UNKNOWN
+  reported_license: CC-BY-NC-4.0 + Cohere acceptable-use policy (reported)
+  commercial_use: 'no'
+  research_use: 'yes'
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: NON_COMMERCIAL
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: 'Restriction applied conservatively from reported licence: research/reference only.'
+- id: lic-unknown
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: ''
+  notes: ''
+- id: lic-omnidoclayout
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-postero
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-scan-and-print
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-uni-layout
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-postercopilot
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-sega
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-webgenagent
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-screencoder
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-dcgen
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-markupdm
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-posterreward
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-layerd
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-omnisvg
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-starvector
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-posteromni
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-postercraft
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-postermaker
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-posterverse
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-postergen
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-banneragency
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-slidepoise
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-slidegen
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-qwen-image
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 (reported)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-ui-tars
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 reported for UI-TARS-1.5; UI-TARS-2 weights/licence unknown
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: Hugging Face model card (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: lic-gdb
+  license_name: UNKNOWN
+  reported_license: ''
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: paper/repository release (not reachable from the build container; verify manually)
+  notes: 'Research-release design system: weights, code and training-data licences may differ; all three must be verified.'
+- id: asset-font-ibm-plex-sans-arabic
+  license_name: SIL OFL 1.1
+  reported_license: SIL Open Font License 1.1
+  commercial_use: 'yes'
+  research_use: 'yes'
+  redistribution: yes (not sold alone)
+  derivative_use: yes (renamed)
+  dataset_constraints: n/a
+  provider_constraints: none
+  production_state: PRODUCTION_ALLOWED
+  verified_at: '2026-10-09T00:00:00Z'
+  verified_by: apex-one bootstrap (source = Google Fonts catalog)
+  source_reference: Google Fonts (fonts.gstatic.com), apex_one/assets/fonts/FONTS_LICENSE.md
+  notes: ''
+- id: asset-font-readex-pro
+  license_name: SIL OFL 1.1
+  reported_license: SIL Open Font License 1.1
+  commercial_use: 'yes'
+  research_use: 'yes'
+  redistribution: yes (not sold alone)
+  derivative_use: yes (renamed)
+  dataset_constraints: n/a
+  provider_constraints: none
+  production_state: PRODUCTION_ALLOWED
+  verified_at: '2026-10-09T00:00:00Z'
+  verified_by: apex-one bootstrap (source = Google Fonts catalog)
+  source_reference: Google Fonts (fonts.gstatic.com), apex_one/assets/fonts/FONTS_LICENSE.md
+  notes: ''
+- id: asset-font-ibm-plex-mono
+  license_name: SIL OFL 1.1
+  reported_license: SIL Open Font License 1.1
+  commercial_use: 'yes'
+  research_use: 'yes'
+  redistribution: yes (not sold alone)
+  derivative_use: yes (renamed)
+  dataset_constraints: n/a
+  provider_constraints: none
+  production_state: PRODUCTION_ALLOWED
+  verified_at: '2026-10-09T00:00:00Z'
+  verified_by: apex-one bootstrap (source = Google Fonts catalog)
+  source_reference: Google Fonts (fonts.gstatic.com), apex_one/assets/fonts/FONTS_LICENSE.md
+  notes: ''

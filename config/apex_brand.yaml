@@ -1,0 +1,63 @@
+# APEX Design Genome — invariant DNA (never mutates) and evolvable gene space.
+schema_version: 1
+genome_version: genome-2026.10.0
+invariants:
+  palette:
+    navy_900: "#0A1A33"     # deep navy (primary dark)
+    navy_700: "#13294B"
+    navy_500: "#24426E"
+    silver_400: "#A9B3C1"   # metallic silver
+    silver_200: "#D5DBE3"
+    silver_100: "#ECEFF3"
+    white: "#FFFFFF"
+    ink: "#0B1424"          # body text on light
+    signal: "#C8A75A"       # restrained metallic accent for critical numbers (used sparingly)
+    warning: "#B2452F"      # financial / eligibility warnings only
+  allowed_extra_colors: []   # anything else is a brand violation
+  fonts:
+    arabic_text: "IBM Plex Sans Arabic"
+    display: "Readex Pro"
+    figures: "IBM Plex Mono"
+  logo:
+    path: apex_one/assets/brand/apex_wordmark_placeholder.svg
+    is_placeholder: true     # replace with the ORIGINAL APEX logo file; brand QA reports placeholder use
+    min_width_mm: 18
+  signature:
+    robot_path: apex_one/assets/brand/apex_robot_signature.svg
+    footer_rule: "every page except the cover carries the APEX footer: robot mark + page number + 'APEX'"
+  forbidden:
+    gradients: true
+    glassmorphism: true
+    max_border_radius_px: 4
+    max_box_shadows_per_page: 0
+    max_card_like_boxes_per_page: 2
+    emoji_icons: true
+  typography:
+    min_body_px: 12.5
+    min_caption_px: 10
+    max_line_chars_ar: 78
+    max_line_chars_en: 90
+    min_line_height: 1.45
+  page:
+    size: A4
+    width_mm: 210
+    height_mm: 297
+    min_margin_mm: 12
+gene_space:
+  archetype: [hero-number, split-asymmetric, editorial-column, timeline-rail, ledger, manifesto, checklist-sheet, quiet-breath, cover-monument]
+  column_structure: ["12", "8-4", "7-5", "5-7", "4-8", "4-4-4", "3-9"]
+  asymmetry: [0.0, 1.0]
+  type_scale_ratio: [1.2, 1.25, 1.333, 1.414, 1.5, 1.618]
+  base_font_px: [13.5, 16.5]
+  heading_weight: [500, 600, 700]
+  density: [0.2, 0.9]
+  whitespace: [0.2, 0.9]
+  margin_mm: [14, 24]
+  hero_treatment: [giant-number, band, split, quiet, none]
+  number_treatment: [mono-figure, outlined, underline-rule, inline]
+  section_division: [rule, space, tone-shift, numeral]
+  timeline_style: [rail, ladder, ledger]
+  data_viz: [bar-fraction, stacked-ledger, none]
+  visual_metaphor: [grid-lines, orbit, blueprint, none]
+  tone: [light, dark, silver]
+  arabic_wrap: [balance, pretty, normal]

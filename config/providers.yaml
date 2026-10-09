@@ -1,0 +1,178 @@
+# APEX ONE — provider registry (a.k.a. provider_registry).
+#
+# Rules enforced in code (apex_one/compute/firewall):
+#  * A remote route may execute only if its price is KNOWN to be $0:
+#      - local/self-hosted providers are $0 by construction;
+#      - remote providers need EITHER a fresh live price check (OpenRouter publishes per-model
+#        prices) OR a human attestation that the key belongs to a free-tier account with billing
+#        disabled (`apex-one providers attest <id>`). Unknown price => BLOCK.
+#  * `production_allowed` for a provider's terms of service starts false and is enabled only by
+#    a recorded human verification (`apex-one providers verify-terms <id>`).
+#  * `self_imposed_limits` are APEX's own conservative throttles, NOT the provider's published
+#    quotas (those change; check the provider dashboard).
+schema_version: 1
+providers:
+  - id: nvidia_nim
+    name: NVIDIA NIM / NVIDIA Build hosted endpoints
+    kind: remote_free
+    api_style: openai
+    base_url: https://integrate.api.nvidia.com/v1
+    api_key_env: NVIDIA_API_KEY
+    free_tier: true
+    billing_can_be_enabled: true
+    privacy: {public_data_allowed: true, private_student_data_allowed: false, training_use_unknown: true, production_allowed: false}
+    self_imposed_limits: {requests_per_minute: 20, requests_per_day: 500}
+    terms_reference: https://build.nvidia.com (terms of use — verify before production)
+    notes: Free developer access; production use terms must be verified by a human.
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: groq
+    name: Groq (free tier)
+    kind: remote_free
+    api_style: openai
+    base_url: https://api.groq.com/openai/v1
+    api_key_env: GROQ_API_KEY
+    free_tier: true
+    billing_can_be_enabled: true
+    privacy: {public_data_allowed: true, private_student_data_allowed: false, training_use_unknown: true, production_allowed: false}
+    self_imposed_limits: {requests_per_minute: 20, requests_per_day: 800}
+    terms_reference: https://console.groq.com (free plan; upgrading to a paid tier is FORBIDDEN by APEX policy)
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: gemini
+    name: Google Gemini API (free tier)
+    kind: remote_free
+    api_style: gemini
+    base_url: https://generativelanguage.googleapis.com/v1beta
+    api_key_env: GEMINI_API_KEY
+    free_tier: true
+    billing_can_be_enabled: true
+    privacy: {public_data_allowed: true, private_student_data_allowed: false, training_use_unknown: true, production_allowed: false}
+    self_imposed_limits: {requests_per_minute: 8, requests_per_day: 200}
+    terms_reference: https://ai.google.dev/gemini-api/terms
+    notes: A key from a billing-enabled Google Cloud project is CHARGED. Attest the project has no billing before use.
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: openrouter
+    name: OpenRouter (':free' model variants only)
+    kind: remote_free
+    api_style: openai
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    free_tier: true
+    billing_can_be_enabled: true
+    privacy: {public_data_allowed: true, private_student_data_allowed: false, training_use_unknown: true, production_allowed: false}
+    self_imposed_limits: {requests_per_minute: 15, requests_per_day: 150}
+    terms_reference: https://openrouter.ai/terms
+    notes: Only model ids ending in ':free' are routable; live /models pricing is checked before use.
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: cloudflare
+    name: Cloudflare Workers AI (free daily allocation)
+    kind: remote_free
+    api_style: cloudflare
+    base_url: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run
+    api_key_env: CLOUDFLARE_API_TOKEN
+    extra_env: [CLOUDFLARE_ACCOUNT_ID]
+    free_tier: true
+    billing_can_be_enabled: true
+    privacy: {public_data_allowed: true, private_student_data_allowed: false, training_use_unknown: true, production_allowed: false}
+    self_imposed_limits: {requests_per_minute: 10, requests_per_day: 300}
+    terms_reference: https://developers.cloudflare.com/workers-ai/platform/pricing/
+    notes: Free allocation is metered; on the Workers Paid plan overage is billed — attest the account is on the free plan.
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: huggingface
+    name: Hugging Face Inference / ZeroGPU-compatible Spaces
+    kind: remote_free
+    api_style: openai
+    base_url: https://router.huggingface.co/v1
+    api_key_env: HF_TOKEN
+    free_tier: true
+    billing_can_be_enabled: true
+    privacy: {public_data_allowed: true, private_student_data_allowed: false, training_use_unknown: true, production_allowed: false}
+    self_imposed_limits: {requests_per_minute: 6, requests_per_day: 100}
+    terms_reference: https://huggingface.co/pricing
+    notes: Monthly free credits; pay-as-you-go beyond them must be disabled (attestation required).
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: ollama
+    name: Local Ollama
+    kind: local
+    api_style: openai
+    base_url_env: OLLAMA_BASE_URL
+    base_url: http://localhost:11434
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 60}
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: llamacpp
+    name: Local llama.cpp server (llama-server, OpenAI-compatible)
+    kind: local
+    api_style: openai
+    base_url_env: LLAMACPP_BASE_URL
+    base_url: http://localhost:8080
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 60}
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: mlx
+    name: Local MLX (Apple Silicon, mlx-lm server)
+    kind: local
+    api_style: openai
+    base_url_env: MLX_BASE_URL
+    base_url: http://localhost:8081
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 60}
+    notes: Run `mlx_lm.server --model <repo> --port 8081`. Requires Apple Silicon.
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: vllm
+    name: vLLM-compatible server (self-hosted)
+    kind: self_hosted
+    api_style: openai
+    base_url_env: VLLM_BASE_URL
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 60}
+    notes: Only $0 when it runs on hardware you already own/control.
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: sglang
+    name: SGLang-compatible server (self-hosted)
+    kind: self_hosted
+    api_style: openai
+    base_url_env: SGLANG_BASE_URL
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 60}
+    integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: mock
+    name: Deterministic mock provider (tests, offline benchmark)
+    kind: mock
+    api_style: mock
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: false}
+    notes: Never contributes to a production guide; used by tests only.
+    integration_status: IMPLEMENTED
+
+  - id: design_endpoint
+    name: Self-hosted specialist design model endpoints (OpenAI-compatible, one env var per model)
+    kind: self_hosted
+    api_style: openai
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 30}
+    notes: Each design model route names its own base_url_env (e.g. APEX_DESIGN_ENDPOINT_POSTERCOPILOT). Production use still requires the MODEL licence to be verified.
+    integration_status: CONFIGURED_BUT_UNTESTED

@@ -194,3 +194,30 @@ class LabProposalRow(Base):
     status: Mapped[str] = mapped_column(String(24), index=True)    # PROPOSED | EVALUATED | APPROVED | REJECTED | PROMOTED
     payload: Mapped[dict] = mapped_column(JSON)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ProviderAttestationRow(Base):
+    """Human attestations: 'this key is on a free tier with billing disabled', 'terms allow production'."""
+
+    __tablename__ = "provider_attestations"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    provider: Mapped[str] = mapped_column(String(64), index=True)
+    kind: Mapped[str] = mapped_column(String(32))          # free_tier_no_billing | terms_production
+    attested_by: Mapped[str] = mapped_column(String(120))
+    note: Mapped[str] = mapped_column(Text, default="")
+    revoked: Mapped[int] = mapped_column(Integer, default=0)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PriceCheckRow(Base):
+    """Live price observations (e.g. OpenRouter /models). A non-zero price blocks the route."""
+
+    __tablename__ = "price_checks"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    provider: Mapped[str] = mapped_column(String(64), index=True)
+    provider_model_id: Mapped[str] = mapped_column(String(200), index=True)
+    input_per_mtok_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    output_per_mtok_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    per_request_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
