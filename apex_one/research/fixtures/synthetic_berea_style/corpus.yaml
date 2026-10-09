@@ -1,0 +1,37 @@
+# Synthetic corpus manifest. URLs use the reserved .invalid TLD.
+schema_version: 1
+subject: Example Labor College
+mission: "Create an APEX guide for Example Labor College Fall 2027 (SYNTHETIC Berea-style benchmark)"
+official_domains: [example-labor-college.invalid]
+documents:
+  - url: https://admissions.example-labor-college.invalid/international/fall-2027
+    file: official_international.html
+    content_type: text/html
+    cycle_year: 2027
+  - url: https://finaid.example-labor-college.invalid/international
+    file: official_financial_aid.html
+    content_type: text/html
+    cycle_year: 2027
+  - url: https://admissions.example-labor-college.invalid/international/fall-2026
+    file: official_admissions_2026_cycle.html
+    content_type: text/html
+    cycle_year: 2026
+  - url: https://admissions.example-labor-college.invalid/docs/international-guide-2027.pdf
+    file: official_guide_pdf.txt
+    content_type: application/pdf
+    render_pdf_from_text: true
+    cycle_year: 2027
+  - url: https://studyabroad-roundup.invalid/top-free-colleges-2027
+    file: blog_roundup.html
+    content_type: text/html
+    cycle_year: 2027
+  - url: https://forum.student-talk.invalid/t/example-labor-college-sat
+    file: forum_thread.html
+    content_type: text/html
+    cycle_year: null
+search_index:
+  "example labor college international admissions": [0, 2, 4]
+  "example labor college financial aid international": [1, 4]
+  "example labor college application deadline fall 2027": [0, 3, 4]
+  "example labor college SAT requirement": [0, 5]
+  "example labor college TOEFL IELTS minimum": [0, 3, 2]

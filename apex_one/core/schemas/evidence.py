@@ -158,6 +158,9 @@ class FactLock(ApexModel):
     display_en: str
     display_ar: str
     source_ids: list[str]
+    criticality: Criticality = Criticality.CRITICAL
+    hedge: str = ""                       # e.g. "estimated" — writer must surface it
+    verified_by: str = "apex-verifier"    # apex-verifier | human:<name>
     locked_at: datetime = Field(default_factory=utcnow)
     lock_hash: str = ""
 
