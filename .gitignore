@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+var/
+artifacts/jobs/
+artifacts/bench/
+artifacts/lab/
+*.db
+*.sqlite
+build/
+dist/
+.DS_Store
