@@ -27,7 +27,6 @@ def build_reader_model(locks: list[FactLock], mode: QualityMode) -> ReaderModel:
         personas = [p for p in personas if p.persona_id in ("teen-15-17", "weak-english", "mobile-only")]
     slots = {lk.slot for lk in locks}
     must = [s for s in MUST_UNDERSTAND_ORDER if s in slots]
-    must += [lk.slot for lk in locks if lk.predicate == "deadline" and lk.slot not in must][:2]
     return ReaderModel(primary_persona="teen-15-17", personas=personas, must_understand=must,
                        tone_notes=["parents may read along: money must be crystal clear",
                                    "weak-English readers must get every critical fact from Arabic text alone"])

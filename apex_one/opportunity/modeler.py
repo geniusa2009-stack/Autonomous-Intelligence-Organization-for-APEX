@@ -47,10 +47,11 @@ class OpportunityModeler:
                 "work_requirement.hours_per_week"))
         if L("test_requirement.sat_act") and self.locks["test_requirement.sat_act"].value.canonical == "false":
             m.hidden_value.append(self.fact("SAT/ACT are not required (test-optional).",
-                                            "الـ [[SAT]] والـ [[ACT]] مش مطلوبين.", "test_requirement.sat_act"))
+                                            "الـ [[SAT]] والـ [[ACT]] {{test_requirement.sat_act?مطلوبين|مش مطلوبين}}.",
+                                            "test_requirement.sat_act"))
         if L("eligibility.financial_need"):
             m.main_barrier.append(self.fact("Applicants must demonstrate financial need.",
-                                            "لازم تثبت إنك محتاج دعم مادي.", "eligibility.financial_need"))
+                                            "{{eligibility.financial_need}}.", "eligibility.financial_need"))
         if L("test_minimum.toefl_ibt"):
             m.main_barrier.append(self.fact("English proficiency minimum (TOEFL iBT {{test_minimum.toefl_ibt|en}}).",
                                             "لازم توصل للحد الأدنى في الإنجليزي: [[TOEFL iBT]] {{test_minimum.toefl_ibt}}.",
@@ -64,7 +65,8 @@ class OpportunityModeler:
                                                 "eligibility.academic"))
         if L("country_eligibility.international"):
             m.eligibility_risk.append(self.fact("Open to applicants from all countries, Egypt included.",
-                                                "مفتوح للطلاب من كل الدول، ومصر منهم.", "country_eligibility.international"))
+                                                "{{country_eligibility.international}}، ومصر منهم.",
+                                                "country_eligibility.international"))
         if L("funding.student_contribution_per_year"):
             lk = self.locks["funding.student_contribution_per_year"]
             ar = ("هتساهم بحوالي {{funding.student_contribution_per_year}} في السنة (رقم تقديري من المصدر)."

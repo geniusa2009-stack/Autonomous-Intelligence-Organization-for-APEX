@@ -280,6 +280,15 @@ class ResearchDirector:
         locked_slots = {lk.slot for lk in locks}
         locks += [lk for lk in human_locks if lk.slot not in locked_slots]
         self.state.locks = locks
+        human_slots = {lk.slot for lk in human_locks}
+        for x in self.state.contradictions:
+            if x.slot in human_slots:
+                x.resolved = True
+                x.resolution = x.resolution or "resolved by human confirmation"
+        for c in self.state.claims:
+            if c.slot in human_slots and c.claim_id not in {lk.claim_id for lk in human_locks} \
+                    and c.status != ClaimStatus.REJECTED:
+                c.status = ClaimStatus.REJECTED
         lock_by_claim = {lk.claim_id for lk in locks}
         for c in self.state.claims:
             if c.claim_id in lock_by_claim:

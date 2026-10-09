@@ -49,6 +49,7 @@ class DesignIntent(ApexModel):
     tone_hint: str
     first_fixation: str
     archetype_preferences: list[str]
+    archetype_strict: bool = False
     rationale: list[str] = Field(default_factory=list)
 
 

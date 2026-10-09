@@ -86,7 +86,8 @@ class ReaderSimulator:
             lk = self.locks[slot]
             hits = [i for i in seen if slot in i.slots]
             values = sorted({v for i in hits for v in (lk.display_ar, lk.display_en) if v in i.text})
-            correct = bool(hits) and bool(values)
+            generated = lk.value.type.value in ("boolean", "text")   # rendered from the lock (incl. conditional words)
+            correct = bool(hits) and (bool(values) or generated)
             answers.append(Answer(question=f"What is {slot}?", slot=slot, found=bool(hits), correct=correct,
                                   seen_values=values))
         # next action & main risk

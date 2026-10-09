@@ -45,6 +45,10 @@ DATE_LABELS = {
     "deadline.early_application": "التقديم المبكر",
     "deadline.scholarship": "ميعاد المنحة",
 }
+OPEN_EMPHASIS = {
+    "deadline.enrollment_deposit": "آخر ميعاد للـ [[deposit]]: {{deadline.enrollment_deposit}}",
+    "deadline.financial_documents": "آخر ميعاد للورق المالي: {{deadline.financial_documents}}",
+}
 OPEN_SLOT_AR = {
     "visa_logistics.visa_type": "نوع الفيزا (مصدر واحد بس، محتاج تأكيد)",
     "funding.aid_type": "نوع الدعم المادي بالتفصيل",
@@ -120,11 +124,23 @@ class APEXEgyptianWriter:
             fn(node, sp)
             node.content = [b for b in node.content if b is not None]
             node.locked_claim_refs = sorted({r.claim_id for b in node.content for r in b.runs if r.claim_id})
-            stats = [b for b in node.content if b.role in ("stat", "hero")]
-            node.first_fixation = (stats[0] if stats else next((b for b in node.content if b.role == "heading"),
-                                                               node.content[0] if node.content else Block(role="x"))).block_id
+            node.first_fixation = self._first_fixation(node)
             nodes.append(node)
         return nodes
+
+    @staticmethod
+    def _first_fixation(node: DocNode) -> str:
+        """Where the eye MUST land first — an editorial decision per section type."""
+        want = {NodeType.OPPORTUNITY_SNAPSHOT: ("stat",), NodeType.HERO_FACT: ("hero",),
+                NodeType.TIMELINE: ("step",), NodeType.BREATH: ("pullquote",)}.get(node.semantic_type, ("heading",))
+        if node.semantic_type == NodeType.TIMELINE:
+            crit = next((b for b in node.content if b.role == "step" and b.data.get("critical")), None)
+            if crit:
+                return crit.block_id
+        for b in node.content:
+            if b.role in want:
+                return b.block_id
+        return next((b.block_id for b in node.content if b.role == "heading"), node.content[0].block_id if node.content else "")
 
     def _heading(self, node: DocNode, text_ar: str, kicker: str = "") -> None:
         node.title_ar = text_ar
@@ -167,6 +183,16 @@ class APEXEgyptianWriter:
                 lk = self.locks[slot]
                 tpl = ("حوالي " if lk.hedge else "") + "{{" + slot + "}}"
                 node.content.append(self.block("stat", tpl, label=label, hedge=lk.hedge))
+        if "test_requirement.sat_act" in self.locks:
+            node.content.append(self.block("note", "الـ [[SAT]] والـ [[ACT]]: {{test_requirement.sat_act?مطلوبين|مش مطلوبين}}، "
+                                                   "لكن الإنجليزي مطلوب."))
+        if "eligibility.financial_need" in self.locks:
+            node.content.append(self.block("note", "شرط أساسي: {{eligibility.financial_need}}."))
+        if self.voice.ctas:
+            node.content.append(self.block("cta", "أول خطوة: " + self.voice.ctas[(self.seed + 2) % len(self.voice.ctas)]))
+        for slot in sp.emphasis_slots:
+            if slot in self.locks and not any(r.slot == slot for b in node.content if b for r in b.runs):
+                node.content.append(self.block("note", OPEN_EMPHASIS.get(slot, "{{" + slot + "}}")))
 
     def _w_hero_fact(self, node: DocNode, sp: SectionPlan) -> None:
         v = self._variant("hero_coverage")

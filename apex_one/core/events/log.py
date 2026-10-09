@@ -18,8 +18,8 @@ class EventLog:
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def emit(self, kind: str, **data: Any) -> dict[str, Any]:
-        record = {"at": utcnow().isoformat(), "kind": kind, **redact(data)}
+    def emit(self, event: str, /, **data: Any) -> dict[str, Any]:
+        record = {"at": utcnow().isoformat(), "event": event, **redact(data)}
         line = json.dumps(record, ensure_ascii=False, default=str)
         with _LOCK, self.path.open("a", encoding="utf-8") as fh:
             fh.write(line + "\n")

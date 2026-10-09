@@ -21,6 +21,7 @@ class SectionPlan(ApexModel):
     emotion: Emotion
     scan_target_seconds: int
     rationale: str
+    emphasis_slots: list[str] = []
 
 
 class NarrativeArchitect:
@@ -42,7 +43,8 @@ class NarrativeArchitect:
               rationale="frame the opportunity honestly before numbers"),
             P(node_type=NodeType.OPPORTUNITY_SNAPSHOT, rhythm_role="information", importance=5,
               reading_mode=ReadingMode.SCAN, decision_impact=5, density=0.55, emotion=Emotion.CONFIDENCE,
-              scan_target_seconds=15, rationale="decision-critical facts first for skimmers and parents"),
+              scan_target_seconds=15, rationale="decision-critical facts first for skimmers and parents",
+              emphasis_slots=sorted(fb)),
         ]
         if "scholarship_coverage.tuition" in self.slots:
             plan.append(P(node_type=NodeType.HERO_FACT, rhythm_role="loud", importance=4, reading_mode=ReadingMode.GLANCE,

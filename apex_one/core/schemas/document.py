@@ -54,7 +54,8 @@ class TextRun(ApexModel):
     lang: str = "ar"
     slot: str | None = None
     claim_id: str | None = None
-    display: str = "ar"      # which lock display to use: ar | en
+    display: str = "ar"      # which lock display to use: ar | en | cond
+    cond: str | None = None  # "true_text|false_text" for boolean facts rendered as words
 
 
 class Block(ApexModel):

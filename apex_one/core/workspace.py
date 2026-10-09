@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic_core import to_jsonable_python
 
 from apex_one.core.events.log import EventLog
 from apex_one.core.security import redact
@@ -31,13 +31,7 @@ class JobWorkspace:
         return p
 
     def write_json(self, rel: str, payload: Any) -> Path:
-        if isinstance(payload, BaseModel):
-            payload = payload.model_dump(mode="json")
-        elif isinstance(payload, list):
-            payload = [p.model_dump(mode="json") if isinstance(p, BaseModel) else p for p in payload]
-        elif isinstance(payload, dict):
-            payload = {k: (v.model_dump(mode="json") if isinstance(v, BaseModel) else v)
-                       for k, v in payload.items()}
+        payload = to_jsonable_python(payload, fallback=str)
         p = self.path(rel)
         p.write_text(json.dumps(redact(payload), ensure_ascii=False, indent=2, default=str), encoding="utf-8")
         return p

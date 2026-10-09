@@ -7,7 +7,7 @@ import re
 from apex_one.core.schemas.document import TextRun
 from apex_one.core.schemas.evidence import FactLock
 
-TOKEN = re.compile(r"\{\{\s*(?P<slot>[\w.]+)(?:\|(?P<disp>en|ar))?\s*\}\}|\[\[(?P<term>[^\]]+)\]\]|(?P<url>https?://\S+)")
+TOKEN = re.compile(r"\{\{\s*(?P<slot>[\w.]+)(?:\|(?P<disp>en|ar)|\?(?P<cond>[^}]*))?\s*\}\}|\[\[(?P<term>[^\]]+)\]\]|(?P<url>https?://\S+)")
 
 
 class MissingFact(KeyError):
@@ -47,6 +47,13 @@ def parse_runs(template: str, locks: dict[str, FactLock], variables: dict[str, s
             lk = locks.get(slot)
             if lk is None:
                 raise MissingFact(slot)
+            if m.group("cond") is not None:
+                yes, _, no = m.group("cond").partition("|")
+                text = yes if lk.value.canonical == "true" else no
+                runs.append(TextRun(kind="fact", slot=slot, claim_id=lk.claim_id, display="cond", cond=f"{yes}|{no}",
+                                    text=text, lang="ar" if re.search(r"[\u0600-\u06FF]", text) else "en"))
+                pos = m.end()
+                continue
             disp = m.group("disp") or ("ar" if base_lang == "ar" else "en")
             runs.append(TextRun(kind="fact", slot=slot, claim_id=lk.claim_id, display=disp,
                                 text=lk.display_ar if disp == "ar" else lk.display_en,
