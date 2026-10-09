@@ -107,5 +107,15 @@ def parse_with_docling(path: Path) -> ParsedDocument:  # pragma: no cover - opti
 
 def parse_any(content: bytes, content_type: str) -> ParsedDocument:
     if "pdf" in content_type:
+        if docling_available():  # pragma: no cover - optional dependency
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+                tmp.write(content)
+                tmp.flush()
+                try:
+                    return parse_with_docling(Path(tmp.name))
+                except Exception:
+                    pass
         return parse_pdf(content)
     return parse_html(content.decode("utf-8", errors="replace"))

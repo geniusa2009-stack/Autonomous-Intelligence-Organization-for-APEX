@@ -241,6 +241,29 @@ def inspect(job_id: str, as_json: bool = typer.Option(False, "--json")):
 
 
 @app.command()
+def reproduce(job_id: str):
+    """Re-run a job with the same mission, seed, quality, fixture/sources and compare outcomes."""
+    from apex_one.core.governor.runner import JobRunner
+
+    src = _runner(job_id)
+    j = src.job
+    text = j.mission.text
+    r = JobRunner.create(text, quality=j.policy.quality.mode.value, offline_fixture=j.offline_fixture,
+                         sources=j.source_inputs[0] if j.source_inputs else None, seed=j.policy.seed,
+                         log=lambda m: console.print(f"[dim]{m}[/]"))
+    new = r.run()
+    a = {lk.slot: lk.value.canonical for lk in src.rd.state.locks}
+    b = {lk.slot: lk.value.canonical for lk in r.rd.state.locks}
+    sig = lambda run: [c["structural_signature"] for c in run.ws.read_json("layout_chosen.json")] \
+        if run.ws.exists("layout_chosen.json") else []
+    report = {"original": job_id, "reproduction": new.job_id, "facts_identical": a == b,
+              "layout_signatures_identical": sig(src) == sig(r), "state": new.state, "status": new.status.value,
+              "note": "external model nondeterminism (if any models were used) can cause differences"}
+    r.ws.write_json("reproduction_report.json", report)
+    console.print_json(json.dumps(report))
+
+
+@app.command()
 def approve(job_id: str, by: str = typer.Option(..., help="Approver name"), notes: str = typer.Option("")):
     """Human release approval: RELEASE_CANDIDATE -> FINAL."""
     _summary(_runner(job_id).approve(by, notes))

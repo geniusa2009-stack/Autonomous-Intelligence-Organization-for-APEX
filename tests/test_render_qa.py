@@ -106,3 +106,14 @@ def test_design_bench_all_measured_cases_pass(tmp_path):
     failed = [c for c in res["cases"] if c["status"] == "FAIL"]
     assert not failed, failed
     assert res["not_measured"] == 2 and res["measured"] >= 19
+
+
+def test_weasyprint_fallback_renders_pdf(rendered, tmp_path):
+    pytest.importorskip("weasyprint")
+    from apex_one.qa.print import check_pdf
+    from apex_one.vision.render.renderer import pdf_with_weasyprint
+
+    e, g, res, out, compiled = rendered
+    pdf = pdf_with_weasyprint(out / "doc.html", tmp_path / "fallback.pdf")
+    issues, metrics = check_pdf(pdf, len(compiled), [])
+    assert pdf.exists() and metrics["print.fidelity"].status.value == "MEASURED"

@@ -68,7 +68,7 @@ bdi.term,bdi.url{{unicode-bidi:isolate}}
 .blk-list_item::before{{content:"";position:absolute;inset-inline-start:0;top:.62em;width:3.2mm;height:1.4px;background:var(--accent)}}
 .blk-list_item.check::before{{width:3mm;height:3mm;top:.45em;background:none;border:1.4px solid var(--accent);border-radius:1px}}
 .blk-cta{{font-family:var(--f-display);font-weight:700;color:var(--accent)}}
-.blk-cta::after{{content:" ←"}}
+.blk-cta::after{{content:"\\00a0←"}}
 .stat-label{{display:block;color:var(--muted);font-family:var(--f-display);font-weight:500}}
 .stat-value{{display:block;font-family:var(--f-fig);color:var(--fig);font-weight:500;line-height:1.1}}
 .num-outlined .blk-hero .stat-value{{color:transparent;-webkit-text-stroke:2px var(--fig)}}

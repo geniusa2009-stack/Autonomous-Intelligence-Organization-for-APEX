@@ -1,8 +1,21 @@
 {
   "branch": "claude/charming-archimedes-2guzc9",
-  "phase": 4,
-  "phases_done": [0, 1, 2, 3],
+  "phases_done": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   "test_command": ".venv/bin/python -m pytest",
-  "last_test_result": "65 passed",
-  "environment_blockers": ["provider APIs and huggingface blocked by egress proxy", "no provider credentials", "no live web search"]
+  "last_test_result": "111 passed in 75.93s",
+  "golden_benchmark": {
+    "command": "apex-one benchmark --suite golden --quality ultra",
+    "result": "all checks passed; state HUMAN_APPROVAL / status RELEASE_CANDIDATE",
+    "targets_failing": {"reader_comprehension": 93.3, "cross_page_rhythm": 92.0},
+    "candidates_evaluated": 512
+  },
+  "design_bench": "19/19 measured cases pass; 2 NOT_MEASURED (screenshot-to-code, GraphicDesignBench)",
+  "environment_blockers": [
+    "provider APIs, huggingface, arxiv, github API blocked by egress proxy (403)",
+    "no provider credentials",
+    "no SearXNG / live web search",
+    "no GPU; no specialist design model weights",
+    "git push 403: Claude GitHub App lacks repository access"
+  ],
+  "resume_hint": "read PROGRESS.md, NEXT_ACTIONS.md, docs/BLOCKERS.md; run `make test`"
 }

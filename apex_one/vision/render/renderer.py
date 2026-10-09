@@ -34,6 +34,14 @@ class RenderResult:
     engine: str = "chromium"
 
 
+def pdf_with_weasyprint(html_path: Path, pdf_path: Path) -> Path:
+    """Fallback PDF engine (optional extra `pdf-fallback`). Used only if Chromium printing fails."""
+    from weasyprint import HTML
+
+    HTML(filename=str(html_path)).write_pdf(str(pdf_path))
+    return pdf_path
+
+
 class Renderer:
     """Use as a context manager; one browser for many renders."""
 
@@ -91,6 +99,10 @@ class Renderer:
                 page.emulate_media(media="print")
                 page.pdf(path=str(pdf_path), format="A4", print_background=True, prefer_css_page_size=True,
                          margin={"top": "0", "bottom": "0", "left": "0", "right": "0"})
+                res.engine = "chromium"
+            except Exception:
+                pdf_with_weasyprint(html_path, pdf_path)
+                res.engine = "weasyprint-fallback"
             finally:
                 page.close()
             res.pdf_path = pdf_path

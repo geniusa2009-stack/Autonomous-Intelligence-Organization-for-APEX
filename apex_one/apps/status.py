@@ -20,8 +20,8 @@ def provider_status(registry: ArsenalRegistry, probe: bool = False) -> list[dict
             avail, detail = Availability.AVAILABLE, "tests only (never production)"
         elif not configured and pid != "design_endpoint":
             avail, detail = Availability.CONFIGURATION_REQUIRED, why
-        elif probe:
-            res = adapter.probe(timeout=3.0)
+        elif probe or p.kind == "local":   # localhost probes are instant and free
+            res = adapter.probe(timeout=1.5 if p.kind == "local" else 3.0)
             avail, detail = res.availability, res.detail
         else:
             avail, detail = Availability.CONFIGURATION_REQUIRED if pid == "design_endpoint" else Availability.UNAVAILABLE, \
