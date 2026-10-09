@@ -174,7 +174,7 @@ def test_paid_fallback_never_used_quota_exhausted(registry):
         calls["nvidia_nim"] += 1
         return httpx.Response(200, json={"choices": [{"message": {"content": "PAID!"}}]})
 
-    env = {"GROQ_API_KEY": "gsk_test_not_real_000000000", "NVIDIA_API_KEY": "nvapi-test-not-real-0000000"}
+    env = {"GROQ_API_KEY": "fake-groq-key-for-tests", "NVIDIA_API_KEY": "fake-nvidia-key-for-tests"}
     broker = ComputeBroker(registry, transport=httpx.MockTransport(handler), env=env)
     for p in ("groq", "nvidia_nim"):
         broker.health.set_probe(p, Availability.AVAILABLE, "test")
@@ -202,7 +202,7 @@ def test_payment_required_removes_provider(registry):
     registry.models = {"m": _model("m", [route], lic)}
     _attest(registry, "groq")
     transport = httpx.MockTransport(lambda r: httpx.Response(402, json={"error": "upgrade required"}))
-    broker = ComputeBroker(registry, transport=transport, env={"GROQ_API_KEY": "gsk_test_not_real_0000"})
+    broker = ComputeBroker(registry, transport=transport, env={"GROQ_API_KEY": "fake-groq-key-for-tests"})
     broker.health.set_probe("groq", Availability.AVAILABLE, "t")
     res = broker.complete(REQ_RES, [ChatMessage("user", "x")])
     assert not res.executed

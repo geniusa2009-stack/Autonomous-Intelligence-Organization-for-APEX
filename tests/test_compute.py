@@ -34,7 +34,7 @@ def test_openai_adapter_probe_and_chat(registry):
         return httpx.Response(200, json={"choices": [{"message": {"content": "اهلا"}}], "usage": {"total_tokens": 3}})
 
     a = build_adapter(registry.providers["groq"], transport=httpx.MockTransport(handler),
-                      env={"GROQ_API_KEY": "gsk_unit_test_key_000000"})
+                      env={"GROQ_API_KEY": "fake-groq-key-for-tests"})
     probe = a.probe()
     assert probe.availability == Availability.AVAILABLE and "openai/gpt-oss-20b" in probe.model_ids
     route = registry.models["gpt-oss-20b"].routes[0]
@@ -70,7 +70,7 @@ def test_gemini_adapter(registry):
         return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": "ok"}]}}]})
 
     a = build_adapter(registry.providers["gemini"], transport=httpx.MockTransport(handler),
-                      env={"GEMINI_API_KEY": "AIzaUnitTestKey000000000000"})
+                      env={"GEMINI_API_KEY": "fake-gemini-key-for-tests"})
     assert a.probe().availability == Availability.AVAILABLE
     route = registry.models["gemini-flash-free"].routes[0]
     assert a.chat(_allow("gemini"), route, [ChatMessage("system", "sys"), ChatMessage("user", "u")]).text == "ok"
@@ -95,7 +95,7 @@ def test_openrouter_price_observations_feed_firewall(registry):
         ]})
 
     a = build_adapter(registry.providers["openrouter"], transport=httpx.MockTransport(handler),
-                      env={"OPENROUTER_API_KEY": "sk-or-unit-test-000000000000"})
+                      env={"OPENROUTER_API_KEY": "fake-openrouter-key-for-tests"})
     obs = {o.provider_model_id: o for o in a.price_observations()}
     assert obs["openai/gpt-oss-20b:free"].is_zero()
     assert not obs["openai/gpt-oss-120b:free"].is_zero()
