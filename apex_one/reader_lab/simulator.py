@@ -59,6 +59,11 @@ class ReaderSimulator:
     def _visible(self, persona: ReaderPersona, items: list[ReadItem]) -> tuple[list[ReadItem], int]:
         view = "mobile" if persona.reading_mode == "mobile" else "desktop"
         seq = [i for i in items if i.viewport == view] or items
+        if persona.reading_mode in ("skim", "mobile") and persona.scan_budget_seconds <= 60:
+            # scanning model: salient elements (headings, numbers, warnings, actions) first, page by page,
+            # then body text — skimmers jump across emphasis, they do not read linearly.
+            salient = [i for i in seq if i.role in ("heading", "stat", "warning", "cta") or i.font_px >= 22]
+            seq = salient + [i for i in seq if i not in salient]
         budget_words = int(persona.scan_budget_seconds * WORDS_PER_SECOND.get(persona.english_level, 3.5))
         out, used = [], 0
         for it in seq:
@@ -115,5 +120,6 @@ class ReaderSimulator:
         score = max(0.0, sum(r.score for r in results) / len(results) - penalty)
         return results, Metric.measured(
             "reader.comprehension", score,
-            method="extractive persona simulation over rendered DOM (not a human study)",
+            method="extractive persona simulation over rendered DOM (not a human study); fast skimmers use a "
+                   "salience-first scanning model",
             evidence=[f"{r.persona_id}: {r.score:.0f} ({len(r.misunderstandings)} misunderstandings)" for r in results])

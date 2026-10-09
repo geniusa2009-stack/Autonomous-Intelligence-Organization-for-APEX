@@ -93,9 +93,7 @@ bdi.term,bdi.url{{unicode-bidi:isolate}}
 .ledger-row .stat-label{{display:inline}}
 .ledger-row .stat-value{{display:inline;text-align:end}}
 .numeral{{font-family:var(--f-fig);color:var(--rule);line-height:.9}}
-.band{{background:var(--silver-100)}}
-.tone-silver .band{{background:var(--white)}}
-.tone-dark .band{{background:var(--navy-700)}}
+.band{{border-top:6px solid var(--accent)}}
 @media screen and (max-width:640px){{
 html{{background:var(--white)}}
 .page{{width:auto;height:auto;overflow:visible;margin:0;border-bottom:10px solid var(--silver-200)}}

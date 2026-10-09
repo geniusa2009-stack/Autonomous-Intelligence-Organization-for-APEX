@@ -250,11 +250,15 @@ def compile_page(node: DocNode, genes: Genes, genome: DesignGenome, locks: dict[
             f"#{scope} .zone-statement-body .blk{{font-size:{b * r ** 0.75:.1f}px}}"
             f"#{scope} .zone-hero-text .blk-paragraph{{font-size:{b * r:.1f}px;line-height:1.5}}"
             f"#{scope} .zone-breath .blk-pullquote{{font-size:{min(46, max(32, b * r ** 3)):.1f}px}}")
-    # intentional hierarchy: the designated first-fixation stat out-ranks the page heading
+    # intentional hierarchy: when the eye must land on a number first, the heading yields
+    ff_block = next((x for x in node.content if x.block_id == node.first_fixation), None)
+    if ff_block is not None and ff_block.role in ("stat", "step", "hero"):
+        css += f"#{scope} .blk-heading{{font-size:{min(34.0, b * r ** 2):.1f}px}}"
+    # the designated first-fixation stat out-ranks the page heading
     ff_size = min(104.0, max(46.0, b * r ** 3.4))
     css += (f"#{scope} .blk.ff .stat-value{{font-size:{ff_size:.1f}px;line-height:1.05}}"
             f"#{scope} .blk.ff .stat-label{{font-size:{max(13.0, b):.1f}px}}"
-            f"#{scope} .blk-step.ff .step-date{{font-size:{min(64.0, max(36.0, b * r ** 2.6)):.1f}px}}")
+            f"#{scope} .blk-step.ff .step-date{{font-size:{min(72.0, max(46.0, b * r ** 3)):.1f}px}}")
     if genes.archetype == "timeline-rail":
         css += f"#{scope} .zone-rows{{border-inline-start:2px solid var(--accent);padding-inline-start:7mm}}"
         css += f"#{scope} .zone-rows .blk-step .step-date{{font-size:{b * r ** 1.6:.1f}px}}"
@@ -268,7 +272,7 @@ def compile_page(node: DocNode, genes: Genes, genome: DesignGenome, locks: dict[
     if genes.section_division == "rule":
         css += f"#{scope} .zone-header,#{scope} .zone-side{{border-bottom:1px solid var(--rule);padding-bottom:5mm}}"
     if genes.section_division == "tone-shift":
-        css += f"#{scope} .zone.band{{padding:6mm}}"
+        css += f"#{scope} .zone.band{{padding-top:7mm}}"
     return CompiledPage(page_id=node.node_id, node_type=node.semantic_type.value, archetype=genes.archetype,
                         html=page_html, css=css, signature=structural_signature(node, genes))
 
