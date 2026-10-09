@@ -1,0 +1,10 @@
+schema_version: 1
+tuition_not_everything:
+  title: "خلي بالك: {{scholarship_coverage.tuition}} [[tuition]] مش معناها صفر مصاريف"
+  body: "المصدر الرسمي بيقول إن الطالب الدولي هيساهم بحوالي {{funding.student_contribution_per_year}} في السنة للسكن والأكل والرسوم. الرقم ده تقديري زي ما المصدر نفسه بيقول، فاحسب حسابه من دلوقتي."
+test_optional_not_english:
+  title: "[[test-optional]] مش معناها إن الإنجليزي اختياري"
+  body: "الـ [[SAT]] والـ [[ACT]] مش مطلوبين، لكن لازم تثبت مستوى الإنجليزي. الحد الأدنى للـ [[TOEFL iBT]] هو {{test_minimum.toefl_ibt}}، وللـ [[IELTS]] هو {{test_minimum.ielts}}."
+financial_need_required:
+  title: "الشرط اللي ناس كتير بتنساه"
+  body: "عشان كل طالب واخد الـ [[Tuition Promise]]، لازم تثبت إنك محتاج دعم مادي. ده مش عيب، ده شرط أساسي."

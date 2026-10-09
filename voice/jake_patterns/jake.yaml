@@ -1,0 +1,5 @@
+schema_version: 1
+patterns:
+  - "بص يا جيك، {line}"
+  - "{line} يا جيك."
+  - "خليك فاكر يا جيك: {line}"

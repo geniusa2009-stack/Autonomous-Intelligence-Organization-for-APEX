@@ -1,0 +1,8 @@
+# Phrases rejected by humans. The NaturalnessCritic penalises them.
+schema_version: 1
+phrases:
+  - "فرصة ذهبية لا تعوض"
+  - "يرجى العلم"
+  - "نود أن نحيطكم علماً"
+  - "رحلتك نحو النجاح"
+  - "unlock your future"

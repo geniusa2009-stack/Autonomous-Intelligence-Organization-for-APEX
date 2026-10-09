@@ -1,0 +1,9 @@
+# Light humor: only in sections allowed by config/voice.yaml (never in warnings, eligibility, funding).
+schema_version: 1
+jokes:
+  - section: Opening
+    text: "ولو حد قالك إن مفيش حاجة ببلاش، ورّيه الصفحة الجاية."
+  - section: Breath
+    text: "استراحة قصيرة… مش أطول من الـ [[loading]] بتاع موقع التقديم."
+  - section: Closing
+    text: "ولو نسيت كل حاجة، متنساش الميعاد. بجد."

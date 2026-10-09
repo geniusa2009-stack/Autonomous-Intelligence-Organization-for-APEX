@@ -1,0 +1,8 @@
+# English terms Egyptian students actually use; kept in Latin script, isolated for bidi.
+schema_version: 1
+terms: [deadline, deposit, tuition, essay, transcript, TOEFL iBT, IELTS, Duolingo English Test, SAT, ACT, I-20, F-1, test-optional, Tuition Promise, Labor Program, Financial Statement, calendar]
+article_prefix: "الـ"
+rules:
+  - "Use the Arabic definite article as a separate prefix: 'الـ [[deadline]]'."
+  - "Never transliterate test names into Arabic letters."
+  - "Numbers and currency are rendered from fact locks only."
