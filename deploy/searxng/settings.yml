@@ -1,0 +1,10 @@
+# Minimal SearXNG settings for APEX ONE research (JSON output enabled). Secret comes from SEARXNG_SECRET.
+use_default_settings: true
+search:
+  safe_search: 1
+  formats:
+    - html
+    - json
+server:
+  limiter: false
+  image_proxy: false

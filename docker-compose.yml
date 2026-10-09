@@ -1,0 +1,30 @@
+# Optional services. The app itself runs from the virtualenv (Mac-friendly); SQLite works without any of these.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    profiles: ["db"]
+    environment:
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: ${APEX_PG_PASSWORD:-apex-local-dev}
+      POSTGRES_DB: apex_one
+    ports: ["5432:5432"]
+    volumes: ["apex_pg:/var/lib/postgresql/data"]
+
+  searxng:
+    image: searxng/searxng:latest
+    profiles: ["research"]
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-change-me-locally}
+      SEARXNG_BASE_URL: http://localhost:8888/
+    volumes: ["./deploy/searxng/settings.yml:/etc/searxng/settings.yml:ro"]
+    ports: ["8888:8080"]
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local-llm"]
+    ports: ["11434:11434"]
+    volumes: ["apex_ollama:/root/.ollama"]
+
+volumes:
+  apex_pg: {}
+  apex_ollama: {}
