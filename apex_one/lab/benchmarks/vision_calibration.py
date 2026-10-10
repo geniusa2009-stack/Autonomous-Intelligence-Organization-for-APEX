@@ -46,6 +46,14 @@ def run_calibration(model_ids: list[str], out_dir: Path, intent: str = "one-page
     good = Path(pages.pop("good"))
     council = VisionCouncil(ComputeBroker(), model_ids)
     res = calibrate(council, good, {k: Path(v) for k, v in pages.items()}, intent)
+    from datetime import UTC, datetime
+
+    from apex_one.core.schemas.common import stable_hash
+    from apex_one.vision.council import model_digest
+
+    pages_hash = stable_hash((out_dir / "calibration_pages.json").read_text(encoding="utf-8"))
+    for mid, r in res["models"].items():   # identity stamp: a result only counts for this model build + page set
+        r.update({"at": datetime.now(UTC).isoformat(), "model_digest": model_digest(mid), "pages_hash": pages_hash})
     prev = json.loads((out_dir / "calibration_results.json").read_text()) if (out_dir / "calibration_results.json").exists() else {"models": {}}
     prev["models"].update(res["models"])
     (out_dir / "calibration_results.json").write_text(json.dumps(prev, indent=2), encoding="utf-8")

@@ -1,6 +1,6 @@
 # Design Model Activation (Phases 16, 19, 26)
 
-_Generated 2026-10-10 16:29 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-10 16:38 UTC by `apex-one reports build` from measured artifacts._
 
 Every design system named in the APEX spec, with the evidence actually gathered here. Statuses: ACTIVATED, PROTOCOL_REIMPLEMENTED, PACKAGE_INSTALLABLE, WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED, ARCHITECTURE_REFERENCE, NOT_RELEASED_OR_UNFOUND, LICENSE_BLOCKED, RESEARCH_ONLY. Nothing is marked ACTIVATED without a stored smoke-test artifact.
 
@@ -23,7 +23,7 @@ Environment facts behind most rows: huggingface.co / GitHub releases / arXiv are
 | DCGen | paper: arXiv 2406.16386 (FSE 2025) (secondary) | code licence not found | n/a | runs on any VLM | no | no | registry entry (UNAVAILABLE) | — | **PROTOCOL_REIMPLEMENTABLE, ARCHITECTURE_REFERENCE** |
 | MarkupDM | model_card: huggingface.co/cyberagent/markupdm; paper: arXiv 2409.19051 (secondary) | Apache-2.0 (repo) — base model StarCoderBase carries BigCode OpenRAIL-M terms; training data crello | huggingface | 7B fp16: HARDWARE_BLOCKED on CPU without GGUF | no | no | registry entry (UNAVAILABLE) | — | **WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED** |
 | PosterReward | paper: arXiv 2603.29855 (CVPR 2026); variants pairwise / lite / full, all Qwen3-VL-8B base (secondary) | not found | huggingface (assumed) | 8B VLM: CPU GGUF Q4 would be ~5 GB and slow (minutes per pai | no | no | apex_one/vision/pairwise.py (protocol) | pairwise unit tests; live judges: NONE yet (no calibrated-reliable vision judge) — the protocol does not run in jobs | **WEIGHTS_UNREACHABLE, PROTOCOL_REIMPLEMENTED** |
-| ↳ APEX use | PosterReward-style PAIRWISE protocol (order-swapped twice, consistency required) runs on local Qwen3-VL / Gemma 3 judges — clearly labelled as protocol, not PosterReward weights | | | | | | | | |
+| ↳ APEX use | PosterReward-style PAIRWISE protocol (order-swapped twice, consistency required) runs on local vision judges ONLY when calibration marks them reliable — clearly labelled as protocol, not PosterReward weights | | | | | | | | |
 | LayerD | paper: ICCV 2025 (CyberAgent, Tohoku); code: github.com/CyberAgentAILab/LayerD (secondary) | not found | github/huggingface | CPU feasible (slow) | no | no | registry entry (UNAVAILABLE) | — | **WEIGHTS_UNREACHABLE** |
 | OmniSVG-4B | model_card: huggingface.co/OmniSVG/OmniSVG1.1_4B (7.6 GB) (secondary) | Apache-2.0 (code/model); MMSVG dataset CC non-commercial | huggingface | 4B fp16 7.6 GB: CPU-feasible but slow | no | no | registry entry (UNAVAILABLE) | — | **WEIGHTS_UNREACHABLE** |
 | OmniSVG-8B | model_card: OmniSVG org on huggingface (secondary) | Apache-2.0 (code/model); dataset non-commercial | huggingface | HARDWARE_BLOCKED (fp16 ~16 GB) | no | no | registry entry (UNAVAILABLE) | — | **WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED** |
@@ -48,7 +48,7 @@ Environment facts behind most rows: huggingface.co / GitHub releases / arXiv are
 ## What actually runs
 
 * **Design generation:** the native APEX engines (layout genome, compiler, tournament) — licence-clean.
-* **Design judging:** calibrated local vision models (Vision Council) + the PosterReward-style pairwise protocol, purpose=evaluation only.
+* **Design judging:** calibrated-reliable local vision judges: NONE — no judge has passed calibration, so the Vision Council and the pairwise protocol report NOT_MEASURED in jobs.
 * **Design benchmarking:** APEX Design Bench (15 page types) and the GraphicDesignBench smoke bundle through the $0 broker.
 * **Not running:** every specialist checkpoint above whose weights are unreachable or too large; their roles are filled by native engines and recorded as such in each job's `design_routes.json`.
 

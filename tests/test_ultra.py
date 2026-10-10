@@ -303,8 +303,21 @@ def test_council_uses_only_calibrated_reliable_judges(tmp_path, monkeypatch):
 
     assert reliable_judges(tmp_path / "none.json")[0] == []
     p = tmp_path / "cal.json"
-    p.write_text(json.dumps({"models": {"a": {"reliable": True}, "b": {"reliable": False}, "c": {"reliable": True}}}))
-    assert reliable_judges(p)[0] == ["a", "c"]
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime.now(UTC).isoformat()
+    full = {k: True for k in ("low_contrast", "card_overuse", "gradient", "cramped", "no_hierarchy")}
+    ok = {"reliable": True, "checks": full, "valid_checks": 5, "at": now, "model_digest": None}
+    p.write_text(json.dumps({"models": {
+        "a": ok, "b": {**ok, "reliable": False}, "c": ok,
+        "unstamped": {"reliable": True, "checks": full, "valid_checks": 5},
+        "partial": {**ok, "valid_checks": 1},
+        "old": {**ok, "at": (datetime.now(UTC) - timedelta(days=90)).isoformat()},
+        "other-build": {**ok, "model_digest": "sha256:deadbeef"}}}))
+    judges, info = reliable_judges(p)
+    assert judges == ["a", "c"]
+    assert {info[m]["rejected"].split()[0] for m in ("unstamped", "partial", "old", "other-build")} == {
+        "calibration", "incomplete", "calibrated"}
     assert page_budget("draft") == 0 and page_budget("ultra") > page_budget("standard")
     monkeypatch.setenv("APEX_VISION_COUNCIL_PAGES", "1")
     assert page_budget("draft") == 1
@@ -459,3 +472,89 @@ def test_moe_holds_default_on_saturated_evidence(registry):
     rows = [_row("native-baseline", "Cover", 100), _row("native-tournament", "Cover", 99.2)]
     ch = DesignMoE(registry, rows).route("Cover")
     assert ch.experts[0] == "native-tournament" and "default-held" in ch.gate
+
+
+
+def test_calibration_needs_every_check(tmp_path):
+    from apex_one.vision.council import PageReview, calibrate
+
+    class Flaky:
+        models = ["m"]
+
+        def review(self, page_id, png, intent):
+            if page_id in ("calibration-good", "calibration-low_contrast"):
+                return PageReview(page_id, reviews={"m": {r: {"score": 90 if page_id.endswith("good") else 10}
+                                                          for r in ROLE_JSON}})
+            return PageReview(page_id, errors={"m": "timeout"})
+
+    res = calibrate(Flaky(), tmp_path / "g.png", {k: tmp_path / f"{k}.png" for k in
+                                                 ("low_contrast", "card_overuse", "gradient")}, "i")
+    m = res["models"]["m"]
+    assert m["discrimination_rate"] == 1.0 and m["valid_checks"] == 1 and m["reliable"] is False
+    assert m["errors"]
+
+
+def test_pairwise_failures_are_not_measured(tmp_path):
+    from types import SimpleNamespace
+
+    from apex_one.vision.pairwise import PairwiseJudge
+
+    class Down:
+        def complete(self, req, messages, **kw):
+            return SimpleNamespace(executed=False, text=None,
+                                   decision=SimpleNamespace(outcome=SimpleNamespace(value="NO_FREE_ROUTE")))
+
+    a = _page_png(tmp_path / "a.png", dark=False, hero=True)
+    res = PairwiseJudge(Down(), ["m"]).compare(a, a, "i")
+    d = res.as_dict()
+    assert d["status"] == "NOT_MEASURED" and res.winner is None and res.failures and not res.disagreements
+
+
+def test_evaluation_purpose_is_only_for_evaluation_tasks(registry):
+    from apex_one.compute.firewall.zero_cost import ZeroCostFirewall
+    from apex_one.core.schemas.compute import CapabilityRequest
+
+    fw = ZeroCostFirewall(registry)
+    model = next(m for m in registry.models.values() if any(r.provider == "mock" for r in m.routes))
+    route = next(r for r in model.routes if r.provider == "mock")
+    bad = fw.evaluate(model, route, CapabilityRequest(task="writer.paragraph", purpose="evaluation"))
+    assert any("purpose=evaluation is only" in r for r in bad.reasons)
+    good = fw.evaluate(model, route, CapabilityRequest(task="bench.structured_json", purpose="evaluation"))
+    assert not any("purpose=evaluation is only" in r for r in good.reasons)
+
+
+def test_license_guard_needs_purpose_and_task_for_evaluation(registry):
+    from apex_one.release import license_guard
+
+    mid = next(iter(registry.models))
+    calls = [{"model_id": mid, "task": "vision.caption", "outcome": "ok", "purpose": "production"}]
+    rep, _ = license_guard(registry, [], calls)
+    assert mid not in rep["evaluation_only_models"]          # production call with an evaluation-looking name
+
+
+def test_fixture_path_cannot_escape_bundle():
+    from apex_one.research.swarm import fixture_dir
+
+    assert fixture_dir("synthetic_berea_style").name == "synthetic_berea_style"
+    for bad in ("../fixtures/synthetic_berea_style/..", "/etc", "../../../"):
+        with pytest.raises(ValueError):
+            fixture_dir(bad)
+
+
+def test_embedded_placeholder_fails_the_brand_gate():
+    from apex_one.release.assets import brand_svg, embedded_asset_failures, validate_assets
+
+    rep = validate_assets()
+    svg, sha = brand_svg("robot")                 # no valid contract asset -> the placeholder is embedded
+    assert svg.startswith("<svg")
+    html = f'<footer data-brand="footer" data-asset-sha="{sha}">{svg}</footer>'
+    assert embedded_asset_failures(html, rep)
+    good = {**rep, "assets": {"robot": {"status": "VALID", "sha256": sha}}}
+    assert embedded_asset_failures(html, good) == []
+
+
+def test_openrouter_missing_or_image_price_is_not_free():
+    from apex_one.compute.firewall.zero_cost import PriceObservation
+    from datetime import UTC, datetime
+
+    assert not PriceObservation("openrouter", "x:free", 0.0, 0.0, None, datetime.now(UTC)).is_zero()

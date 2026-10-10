@@ -9,10 +9,16 @@ from pathlib import Path
 
 from apex_one.compute.registry.loader import ArsenalRegistry
 from apex_one.core.schemas.common import Metric
+from apex_one.core.schemas.compute import EVALUATION_TASKS
 from apex_one.core.security import contains_secret
 
-# Model calls with these task prefixes only JUDGE or MEASURE; their text never enters final.html/final.pdf.
-EVALUATION_TASKS = ("vision.", "bench.", "eval.", "live.")
+# Model calls with EVALUATION_TASKS prefixes made under purpose=evaluation only JUDGE or MEASURE; their text never
+# enters final.html/final.pdf.
+
+
+def _is_evaluation(c: dict) -> bool:
+    """A call counts as evaluation only if it was BOTH routed with purpose=evaluation and is an evaluation task."""
+    return c.get("purpose", "production") == "evaluation" and str(c.get("task", "")).startswith(EVALUATION_TASKS)
 
 REQUIRED_ARTIFACTS = ["final.html", "final.pdf", "sources.json", "evidence.json", "claims.json", "contradictions.json",
                       "document_ast.json", "design_decisions.json", "model_routing.json", "quality_report.json",
@@ -24,9 +30,8 @@ def license_guard(registry: ArsenalRegistry, engines: list[str], model_calls: li
                   purpose: str = "production") -> tuple[dict, Metric]:
     """Every engine/model that contributed to output must be production-allowed (verified licence)."""
     rows, prohibited = [], []
-    content_calls = [c for c in model_calls if c.get("outcome") == "ok" and not str(c.get("task", "")).startswith(EVALUATION_TASKS)]
-    evaluators = sorted({c["model_id"] for c in model_calls if c.get("outcome") == "ok"
-                         and str(c.get("task", "")).startswith(EVALUATION_TASKS)})
+    content_calls = [c for c in model_calls if c.get("outcome") == "ok" and not _is_evaluation(c)]
+    evaluators = sorted({c["model_id"] for c in model_calls if c.get("outcome") == "ok" and _is_evaluation(c)})
     used = sorted(set(engines) | {c["model_id"] for c in content_calls})
     for mid in used:
         if mid not in registry.models:

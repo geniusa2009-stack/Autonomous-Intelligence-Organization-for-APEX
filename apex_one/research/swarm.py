@@ -51,6 +51,14 @@ PERMANENT_ROLES = [
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+def fixture_dir(name: str) -> Path:
+    """A fixture name marks the job SYNTHETIC (real-job gates are skipped), so it must be a bundled fixture."""
+    d = (FIXTURES_DIR / name).resolve()
+    if d.parent != FIXTURES_DIR.resolve() or not (d / "corpus.yaml").exists():
+        raise ValueError(f"unknown offline fixture {name!r}: must be a bundled fixture under {FIXTURES_DIR}")
+    return d
+
+
 class ResearchState(ApexModel):
     backend: str = "live"                       # live | fixture:<name> | local:<dir>
     roles: list[str] = Field(default_factory=list)
@@ -114,7 +122,7 @@ class ResearchDirector:
             return self._search, self._fetcher
         kind, _, arg = self.state.backend.partition(":")
         if kind == "fixture":
-            d = FIXTURES_DIR / arg
+            d = fixture_dir(arg)
             self._search, self._fetcher = FixtureSearch(d), FixtureFetcher(d)
         elif kind == "local":
             s = LocalManifestSearch(Path(arg))

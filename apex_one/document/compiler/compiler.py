@@ -14,8 +14,9 @@ from apex_one.core.schemas.design import DesignGenome, Genes
 from apex_one.core.schemas.document import Block, DocNode, TextRun
 from apex_one.core.schemas.evidence import FactLock
 from apex_one.core.schemas.common import stable_hash
-from apex_one.design.assets.svg import bar_fraction_svg, inline_asset, metaphor_svg
+from apex_one.design.assets.svg import bar_fraction_svg, metaphor_svg
 from apex_one.document.compiler.styles import base_css, font_css, page_css
+from apex_one.release.assets import brand_svg
 
 ARABIC = re.compile(r"[؀-ۿ]")
 LTRISH = re.compile(r"[A-Za-z$€£%]")
@@ -229,14 +230,16 @@ def compile_page(node: DocNode, genes: Genes, genome: DesignGenome, locks: dict[
                              opacity=0.16 if tone == "dark" else 0.2)
     logo = ""
     if node.semantic_type.value in ("Cover", "Closing"):
-        logo = (f'<div class="logo" data-brand="logo" data-decor="1" style="position:absolute;inset-inline-end:'
-                f'{max(min_m, genes.margin_mm)}mm;top:{max(min_m, genes.margin_mm)}mm">'
-                f'{inline_asset("brand/apex_wordmark_placeholder.svg")}</div>')
+        logo_svg, logo_sha = brand_svg("logo_on_dark" if tone == "dark" else "logo")
+        logo = (f'<div class="logo" data-brand="logo" data-decor="1" data-asset-sha="{logo_sha}" '
+                f'style="position:absolute;inset-inline-end:'
+                f'{max(min_m, genes.margin_mm)}mm;top:{max(min_m, genes.margin_mm)}mm">{logo_svg}</div>')
     footer = ""
     if node.semantic_type.value != "Cover":
         syn = '<bdi class="syn" dir="ltr">SYNTHETIC — fictional data</bdi>' if synthetic else ""
-        footer = (f'<footer class="page-footer" data-decor="1" data-brand="footer">'
-                  f'{inline_asset("brand/apex_robot_signature.svg")}<bdi dir="ltr">APEX</bdi>'
+        robot_svg, robot_sha = brand_svg("robot")
+        footer = (f'<footer class="page-footer" data-decor="1" data-brand="footer" data-asset-sha="{robot_sha}">'
+                  f'{robot_svg}<bdi dir="ltr">APEX</bdi>'
                   f'<bdi class="pno" dir="ltr">{page_no:02d} / {total_pages:02d}</bdi>{syn}</footer>')
     cls = f"page tone-{tone} arch-{genes.archetype} num-{genes.number_treatment} div-{genes.section_division}"
     rows = ROW_TEMPLATES.get(genes.archetype, "auto 1fr")

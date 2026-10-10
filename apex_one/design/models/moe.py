@@ -87,9 +87,10 @@ class DesignMoE:
         mid = expert.split(":", 1)[1]
         try:
             lic = self.registry.license_for(mid)
+            allowed = self.registry.production_allowed(mid)   # same full check the firewall uses
         except Exception:  # noqa: BLE001
             return False, f"model {mid} not in registry"
-        return (lic.production_allowed, f"licence {lic.id}: {lic.production_state.value}")
+        return (allowed, f"licence {lic.id}: {lic.production_state.value}")
 
     def route(self, page_type: str, purpose: str = "production") -> ExpertChoice:
         excluded: dict[str, str] = {}

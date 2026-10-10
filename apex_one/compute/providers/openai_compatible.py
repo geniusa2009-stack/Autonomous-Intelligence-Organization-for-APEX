@@ -118,10 +118,18 @@ class OpenAICompatibleAdapter(ProviderAdapter):
                 except (TypeError, ValueError):
                     return None
 
-            req = p.get("request")
+            def flat(v: object) -> float | None:
+                try:
+                    return float(v)  # type: ignore[arg-type]
+                except (TypeError, ValueError):
+                    return None
+
+            # per-request cost = request fee + per-image fee (vision calls send >= 1 image). A MISSING request
+            # price is unknown, not free: None keeps the observation non-zero so the firewall blocks.
+            req, img = flat(p.get("request")), flat(p.get("image")) if p.get("image") not in (None, "") else 0.0
+            per_request = None if req is None or img is None else req + img
             out.append(PriceObservation("openrouter", m.get("id", ""), per_mtok(p.get("prompt")),
-                                        per_mtok(p.get("completion")),
-                                        float(req) if req not in (None, "") else 0.0, now))
+                                        per_mtok(p.get("completion")), per_request, now))
         return out
 
 

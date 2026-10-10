@@ -44,26 +44,28 @@ def live_provider_md(rows: list[dict[str, Any]] | None) -> str:
            ""]
     if not rows:
         return "\n".join(out + ["NOT_MEASURED: no live report yet (`apex-one providers live-test`)."]) + "\n"
-    out += ["| provider | model | status | structured task correct | latency | evidence |", "|---|---|---|---|---|---|"]
+    out += ["| provider | model | status | structured task correct | latency | measured at | evidence |",
+            "|---|---|---|---|---|---|---|"]
     for r in rows:
-        ev = r.get("network") or r.get("detail") or r.get("credentials") or ""
+        ev = r.get("network") or r.get("detail") or r.get("credentials") or r.get("error") or ""
         if r.get("status") == "LIVE_TESTED":
             ev = f"{r.get('structured_output', '')} · {r.get('cost_basis', '')}"
         lat = f"{r['structured_ms'] / 1000:.1f} s" if r.get("structured_ms") else "—"
+        at = str(r.get("at", ""))[:16].replace("T", " ") or "—"
         out.append(f"| {r.get('provider', '')} | {r.get('model', '')} | **{r.get('status')}** | "
-                   f"{_fmt(r.get('structured_correct'))} | {lat} | {str(ev).replace('|', '/')[:140]} |")
+                   f"{_fmt(r.get('structured_correct'))} | {lat} | {at} | {str(ev).replace('|', '/')[:140]} |")
     counts: dict[str, int] = {}
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
+    by = {s: sorted({r.get("provider", "") for r in rows if r["status"] == s}) for s in counts}
+    live = sorted({r.get("model", "") for r in rows if r["status"] == "LIVE_TESTED"})
     out += ["", "**Totals:** " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())), "",
-            "## What this means", "",
-            "* Every cloud free tier (NVIDIA NIM, Groq, OpenRouter, Cloudflare Workers AI, Hugging Face) is "
-            "NETWORK_BLOCKED from this container: the egress proxy refuses CONNECT. They are not routed around.",
-            "* Gemini is reachable but has no key in this environment (CREDENTIALS_REQUIRED). No account was created.",
-            "* The only executable $0 routes are local llama.cpp servers running open-weight GGUF models acquired "
-            "with sha256 verification. Their licences are UNKNOWN in the licence registry until a human records a "
-            "verification, so they are used for EVALUATION (judging, benchmarking) and never write shipped content.",
-            ""]
+            "## What this means (derived from the rows above)", ""]
+    for status in sorted(by):
+        out.append(f"* **{status}**: {', '.join(p for p in by[status] if p) or '—'}")
+    out += ["", f"* Executable $0 routes with a correct live structured answer: {', '.join(live) or 'NONE'}.",
+            "* NETWORK_BLOCKED rows are not routed around; CREDENTIALS_REQUIRED rows were not given accounts.",
+            "* Local models whose licence is not verified in the licence registry are used for EVALUATION only.", ""]
     return "\n".join(out) + "\n"
 
 
@@ -155,7 +157,7 @@ def design_activation_md(systems: dict[str, Any], gdb_runs: dict[str, Any], reli
         if name == "GraphicDesignBench":
             adapter = "apex_one/lab/benchmarks/gdb_provider.py"
             local = "yes (package)"
-            done = {k: v for k, v in gdb_runs.items() if v.get("scores")}
+            done = {k: v for k, v in gdb_runs.items() if v.get("valid")}
             if done:
                 smoke = "; ".join(f"{k}: {v['summary']}" for k, v in done.items())[:160]
                 status = ["ACTIVATED (smoke bundle)" if x == "PACKAGE_INSTALLABLE" else x for x in status]
@@ -167,8 +169,9 @@ def design_activation_md(systems: dict[str, Any], gdb_runs: dict[str, Any], reli
             out.append(f"| ↳ APEX use | {s['apex_use']} | | | | | | | | |")
     out += ["", "## What actually runs", "",
             "* **Design generation:** the native APEX engines (layout genome, compiler, tournament) — licence-clean.",
-            "* **Design judging:** calibrated local vision models (Vision Council) + the PosterReward-style pairwise "
-            "protocol, purpose=evaluation only.",
+            ("* **Design judging:** calibrated-reliable local vision judges: " + (", ".join(reliable) if reliable else
+             "NONE — no judge has passed calibration, so the Vision Council and the pairwise protocol report "
+             "NOT_MEASURED in jobs") + "."),
             "* **Design benchmarking:** APEX Design Bench (15 page types) and the GraphicDesignBench smoke bundle "
             "through the $0 broker.",
             "* **Not running:** every specialist checkpoint above whose weights are unreachable or too large; their "
@@ -230,6 +233,26 @@ def design_bench_md(bench: dict[str, Any] | None, rows: list[dict[str, Any]], un
 # ---------------------------------------------------------------- build
 
 
+def gdb_report_valid(rep: Any) -> bool:
+    """A GDB run counts only if it produced at least one numeric score and no top-level error."""
+    if not isinstance(rep, dict) or rep.get("error"):
+        return False
+
+    def nums(x: Any) -> bool:
+        if isinstance(x, bool):
+            return False
+        if isinstance(x, (int, float)):
+            return True
+        if isinstance(x, dict):
+            return any(nums(v) for k, v in x.items() if "score" in str(k).lower() or "acc" in str(k).lower()
+                       or isinstance(v, (dict, list)))
+        if isinstance(x, list):
+            return any(nums(v) for v in x)
+        return False
+
+    return nums(rep)
+
+
 def build_reports(repo: Path | None = None) -> dict[str, str]:
     from apex_one.compute.local import load_catalogue
     from apex_one.compute.registry import load_registry
@@ -250,7 +273,7 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
     gdb_runs: dict[str, Any] = {}
     for d in (bench / "gdb").glob("*/report.json") if (bench / "gdb").exists() else []:
         rep = _load(d) or {}
-        gdb_runs[d.parent.name] = {"scores": rep, "summary": json.dumps(rep)[:120]}
+        gdb_runs[d.parent.name] = {"scores": rep, "valid": gdb_report_valid(rep), "summary": json.dumps(rep)[:120]}
         shutil.copy(d, evidence / f"gdb_{d.parent.name}.json")
     _, specs = load_catalogue()
     reg = load_registry()

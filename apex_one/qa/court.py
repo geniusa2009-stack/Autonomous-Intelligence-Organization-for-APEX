@@ -13,6 +13,7 @@ CRITICAL_JUDGES = {"FactJudge", "RTLJudge", "PrintJudge", "LicenseJudge"}
 
 def verdict_from_metric(judge: str, metric: Metric, threshold: float | None, *, critical: bool = False,
                         lower_is_better: bool = False, engine: str = "deterministic") -> JudgeVerdict:
+    critical = critical or judge in CRITICAL_JUDGES      # the declared critical set is enforced, not advisory
     if metric.status != MetricStatus.MEASURED or metric.value is None:
         return JudgeVerdict(judge=judge, metric=metric, passed=None, critical=critical, engine=engine,
                             rationale=[metric.reason or "not measured"])

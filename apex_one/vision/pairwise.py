@@ -40,9 +40,17 @@ class PairwiseResult:
     votes: dict[str, str | None] = field(default_factory=dict)      # model -> first|second|None(inconsistent)
     raw: dict[str, list[Any]] = field(default_factory=dict)
     disagreements: list[str] = field(default_factory=list)
+    failures: list[str] = field(default_factory=list)       # calls that did not execute / did not parse
+    executed_judges: int = 0                                 # judges whose BOTH calls returned a valid answer
+
+    @property
+    def measured(self) -> bool:
+        return self.executed_judges > 0
 
     def as_dict(self) -> dict[str, Any]:
-        return {"winner": self.winner, "votes": self.votes, "raw": self.raw, "disagreements": self.disagreements}
+        return {"status": "MEASURED" if self.measured else "NOT_MEASURED", "winner": self.winner, "votes": self.votes,
+                "raw": self.raw, "disagreements": self.disagreements, "failures": self.failures,
+                "executed_judges": self.executed_judges}
 
 
 class PairwiseJudge:
@@ -63,8 +71,13 @@ class PairwiseJudge:
                 w, why = _winner(out.text or "") if out.executed else (None, out.decision.outcome.value)
                 picks.append((map_.get(w) if w else None, why))
             res.raw[mid] = picks
-            (p1, _), (p2, _) = picks
-            if p1 is not None and p1 == p2:
+            (p1, w1), (p2, w2) = picks
+            if p1 is None or p2 is None:
+                res.votes[mid] = None
+                res.failures.append(f"{mid}: no valid answer ({w1 if p1 is None else w2}) — vote not cast")
+                continue
+            res.executed_judges += 1
+            if p1 == p2:
                 res.votes[mid] = p1
             else:
                 res.votes[mid] = None

@@ -100,7 +100,7 @@ class ComputeBroker:
                                      provider_model_id=cand.route.provider_model_id, outcome="ok", latency_ms=0.0,
                                      input_chars=sum(len(m.content) for m in messages), output_chars=0,
                                      estimated_cost_usd=fw.estimated_cost_usd if fw else 0.0,
-                                     prompt_template_version=PROMPT_TEMPLATE_VERSION)
+                                     prompt_template_version=PROMPT_TEMPLATE_VERSION, purpose=req.purpose)
             try:
                 res = adapter.chat(fw, cand.route, messages, max_tokens=max_tokens, temperature=temperature,
                                    json_mode=json_mode, timeout=timeout)

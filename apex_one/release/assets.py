@@ -77,3 +77,43 @@ def brand_production_metric(report: dict[str, Any]) -> Metric:
     return Metric.measured("brand.production_asset_failures", len(report["failures"]),
                            "asset contract validation (config/asset_contract.yaml)", unit="count",
                            evidence=[f"{k}:{v['status']}" for k, v in report["assets"].items()])
+
+
+# ---------------------------------------------------------------- what the compiler embeds
+
+_CACHE: dict[tuple, dict[str, Any]] = {}
+FALLBACK = {"logo": "brand/apex_wordmark_placeholder.svg", "logo_on_dark": "brand/apex_wordmark_placeholder.svg",
+            "robot": "brand/apex_robot_signature.svg"}
+
+
+def _report_cached() -> dict[str, Any]:
+    s = get_settings()
+    adir = s.home / "assets" / "apex"
+    key = (str(adir), tuple(sorted((p.name, p.stat().st_mtime_ns) for p in adir.glob("*"))) if adir.exists() else ())
+    if key not in _CACHE:
+        _CACHE.clear()
+        _CACHE[key] = validate_assets()
+    return _CACHE[key]
+
+
+def brand_svg(name: str) -> tuple[str, str]:
+    """(svg markup, sha256) of the asset the compiler must embed: the contract file when it validates, otherwise the
+    bundled placeholder. The sha is written into the page so the release gate checks what actually SHIPS."""
+    from apex_one.design.assets.svg import ASSETS
+
+    rep = _report_cached()
+    r = rep["assets"].get(name, {})
+    if r.get("status") == "VALID":
+        contract = yaml.safe_load((get_settings().config_dir / "asset_contract.yaml").read_text(encoding="utf-8"))
+        p = Path(rep["asset_dir"]) / contract["required"][name]["file"]
+    else:
+        p = ASSETS / FALLBACK[name]
+    svg = p.read_text(encoding="utf-8")
+    return svg[svg.index("<svg"):], _sha(p)
+
+
+def embedded_asset_failures(html_text: str, report: dict[str, Any]) -> list[str]:
+    """Brand assets actually embedded in final.html that are not VALID contract assets (e.g. placeholders)."""
+    valid = {r["sha256"] for r in report["assets"].values() if r.get("status") == "VALID"}
+    shas = set(re.findall(r'data-asset-sha="([0-9a-f]{64})"', html_text))
+    return sorted(f"embedded asset {s[:12]}… is not a validated APEX asset" for s in shas - valid)

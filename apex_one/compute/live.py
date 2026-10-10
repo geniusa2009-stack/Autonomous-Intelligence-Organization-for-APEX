@@ -119,7 +119,11 @@ def live_test_route(registry: ArsenalRegistry, model: ModelEntry, route: Provide
     rec["quota_headers"] = dict(adapter.last_headers)
     rec["cost_basis"] = ("local llama-server process on 127.0.0.1 — no billing surface" if provider.kind == "local"
                          else "free tier per attestation / live price check")
-    rec["status"] = (LiveStatus.LIVE_TESTED if res.text.strip() else LiveStatus.LIVE_FAILED).value
+    # LIVE_TESTED means the route executed AND solved the structured task; a wrong answer is a live failure
+    rec["status"] = (LiveStatus.LIVE_TESTED if passed else LiveStatus.LIVE_FAILED).value
+    if not passed:
+        rec["detail"] = "responded, but the structured task answer was wrong or unparseable" if res.text.strip() \
+            else "empty response"
     return rec
 
 

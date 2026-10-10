@@ -163,9 +163,30 @@ def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path],
             checks[k] = None if g is None or b is None else bool(g > b)
         valid = [v for v in checks.values() if v is not None]
         rate = sum(valid) / len(valid) if valid else None
-        result["models"][mid] = {"checks": checks, "discrimination_rate": rate,
-                                 "reliable": rate is not None and rate >= 0.6}
+        complete = len(valid) == len(checks) and len(checks) > 0     # one lucky data point is not calibration
+        result["models"][mid] = {"checks": checks, "discrimination_rate": rate, "valid_checks": len(valid),
+                                 "reliable": complete and rate is not None and rate >= 0.6,
+                                 "errors": {k: br.errors.get(mid) for k, br in bad_reviews.items() if br.errors.get(mid)}
+                                 | ({"good": good.errors[mid]} if good.errors.get(mid) else {})}
     return result
+
+
+def model_digest(model_id: str) -> str | None:
+    """sha256 digest of the local GGUF serving `model_id` (None if it is not a local model)."""
+    from apex_one.compute.local import load_catalogue
+
+    try:
+        _, specs = load_catalogue()
+    except Exception:  # noqa: BLE001
+        return None
+    for spec in specs.values():
+        man = spec.dir / "apex_manifest.json"
+        if spec.registry_model == model_id and man.exists():
+            files = json.loads(man.read_text(encoding="utf-8"))["files"]
+            main = next((f for f in files if f["file"].endswith(".gguf") and "mmproj" not in f["file"]), None)
+            return main["digest"] if main else None
+    return None
+
 
 
 # ---------------------------------------------------------------- pipeline integration (VISION_QA)
@@ -175,6 +196,7 @@ def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path],
 ROLE_METRIC = {"TypographyJudge": "design.typography", "APEXBrandJudge": "design.brand_fit",
                "ReaderAttentionJudge": "reader.comprehension", "AIClicheJudge": "editorial.human_or_model_judgement",
                "VisualHierarchyJudge": "council.visual_hierarchy", "EditorialDesignJudge": "council.editorial_design"}
+MAX_CALIBRATION_AGE_DAYS = 30
 PAGE_BUDGET = {"draft": 0, "standard": 2, "high": 4, "ultra": 6}
 PRIORITY = ["Cover", "OpportunitySnapshot", "Opening", "ApexTake", "Closing", "HeroFact", "Timeline", "FundingChapter"]
 
@@ -190,9 +212,26 @@ def reliable_judges(path: Path | None = None) -> tuple[list[str], dict[str, Any]
     path = path or calibration_path()
     if not path.exists():
         return [], {"reason": f"no calibration results at {path}"}
+    from datetime import UTC, datetime, timedelta
+
     data = json.loads(path.read_text(encoding="utf-8"))
     models = data.get("models", {})
-    return sorted(m for m, r in models.items() if r.get("reliable")), models
+    ok = []
+    for m, r in models.items():
+        if not r.get("reliable"):
+            continue
+        why = None
+        if r.get("valid_checks") != len(r.get("checks", {})) or not r.get("checks"):
+            why = "incomplete calibration"
+        elif not r.get("at") or datetime.fromisoformat(r["at"]) < datetime.now(UTC) - timedelta(days=MAX_CALIBRATION_AGE_DAYS):
+            why = "calibration missing a timestamp or older than %d days" % MAX_CALIBRATION_AGE_DAYS
+        elif r.get("model_digest") != model_digest(m):
+            why = "calibrated a different model build (digest mismatch)"
+        if why:
+            r["rejected"] = why
+        else:
+            ok.append(m)
+    return sorted(ok), models
 
 
 def page_budget(mode: str) -> int:

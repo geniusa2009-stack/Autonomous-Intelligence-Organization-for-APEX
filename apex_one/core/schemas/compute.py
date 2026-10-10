@@ -216,6 +216,11 @@ class RoutingDecision(ApexModel):
     at: datetime = Field(default_factory=utcnow)
 
 
+# Task prefixes whose output is a JUDGEMENT or MEASUREMENT, never shipped content. Only these may run with
+# purpose="evaluation" (which admits UNKNOWN-licence models); the firewall enforces it.
+EVALUATION_TASKS = ("vision.", "bench.", "eval.", "live.")
+
+
 class ModelCallRecord(ApexModel):
     call_id: str
     job_id: str | None
@@ -230,4 +235,5 @@ class ModelCallRecord(ApexModel):
     estimated_cost_usd: float
     error: str | None = None
     prompt_template_version: str = ""
+    purpose: str = "production"
     at: datetime = Field(default_factory=utcnow)

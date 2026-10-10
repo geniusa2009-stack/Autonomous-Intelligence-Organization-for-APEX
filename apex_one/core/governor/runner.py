@@ -78,6 +78,10 @@ class JobRunner:
                **kw: Any) -> "JobRunner":
         if budget != 0.0:
             raise ValueError("APEX cost policy: --budget must be 0 (paid APIs are never used)")
+        if offline_fixture:
+            from apex_one.research.swarm import fixture_dir
+
+            fixture_dir(offline_fixture)
         mission, risk, privacy = MissionAnalyzer().analyze(mission_text)
         mode = QualityMode(quality)
         policy = JobPolicy(quality=quality_profile(mode), seed=seed)
@@ -548,8 +552,8 @@ class JobRunner:
         intent = f"{node.semantic_type.value}, reading mode {node.reading_mode.value}"
         res = PairwiseJudge(self.broker, self._pairwise_judges(), workspace=self.ws).compare(
             t.dir / a.screenshot_path, t.dir / b.screenshot_path, intent)
-        record = {"status": "MEASURED", "first": a.candidate_id, "second": b.candidate_id, **res.as_dict()}
-        if res.winner:
+        record = {"first": a.candidate_id, "second": b.candidate_id, **res.as_dict()}
+        if res.winner and res.measured:
             win, lose = (a, b) if res.winner == "first" else (b, a)
             win.metrics["pairwise_preference"] = Metric.measured("pairwise_preference", 100, "order-swapped pairwise "
                                                                  "council (consistent majority)", evidence=[str(res.votes)])
@@ -843,9 +847,8 @@ class JobRunner:
             nxt = self.h_deterministic_qa()
             if isinstance(nxt, FailureKind):
                 raise Pause(JobStatus.BLOCKED, f"mutation round produced a {nxt.value} failure")
-            # the pages changed: council reviews of the old render must not reach the release gates
-            if self.ws.exists("qa/vision_council.json") and self._read("qa/vision_council.json")["status"] == "MEASURED":
-                self.h_vision_qa()
+            # the pages changed: no vision verdict (judges or council) on the old render may reach the release gates
+            self.h_vision_qa()
         self.checks(S.MUTATION, {"mutation.failure_classified": (True, f"weak pages: {len(weak)}")})
         return S.DOCUMENT_QA
 
@@ -946,9 +949,14 @@ class JobRunner:
         calls = self.ws.model_calls.read()
         lic_report, lic_metric = license_guard(self.registry, engines, calls)
         metrics[lic_metric.name] = lic_metric
-        from apex_one.release.assets import brand_production_metric, validate_assets
+        from apex_one.release.assets import brand_production_metric, embedded_asset_failures, validate_assets
 
         asset_report = validate_assets()
+        # judge what SHIPS: every brand asset embedded in final.html must be a validated contract asset
+        embedded = embedded_asset_failures((self.ws.root / "final.html").read_text(encoding="utf-8"), asset_report)
+        asset_report["embedded_failures"] = embedded
+        asset_report["failures"] = [*asset_report["failures"], *embedded]
+        asset_report["production_ready"] = not asset_report["failures"]
         metrics["brand.production_asset_failures"] = brand_production_metric(asset_report)
         self.ws.write_json("qa/asset_report.json", asset_report)
         self.ws.write_json("license_report.json", lic_report)
@@ -1054,6 +1062,9 @@ class JobRunner:
     # ================================================================== human actions
     def approve(self, approver: str, notes: str = "") -> Job:
         from apex_one.release import write_approval
+
+        if not approver or not approver.strip():
+            raise RuntimeError("release approval needs a named human approver")
 
         if self.sm.state != S.HUMAN_APPROVAL or self.job.status not in (JobStatus.RELEASE_CANDIDATE,
                                                                          JobStatus.AWAITING_HUMAN):

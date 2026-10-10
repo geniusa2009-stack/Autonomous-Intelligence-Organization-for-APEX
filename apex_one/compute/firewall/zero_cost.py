@@ -26,6 +26,7 @@ from apex_one.compute.cost import CostEstimator
 from apex_one.compute.registry.loader import ArsenalRegistry
 from apex_one.core.policies.cost import COST_POLICY
 from apex_one.core.schemas.compute import (
+    EVALUATION_TASKS,
     CapabilityRequest,
     FirewallDecision,
     FirewallVerdict,
@@ -124,6 +125,9 @@ class ZeroCostFirewall:
                 reasons.append("mock provider can never serve production output")
         elif not self.registry.research_allowed(model):
             reasons.append(f"licence BLOCKED even for {request.purpose}")
+        if request.purpose == "evaluation" and not request.task.startswith(EVALUATION_TASKS):
+            reasons.append(f"purpose=evaluation is only for judging/benchmark tasks {EVALUATION_TASKS}, "
+                           f"not task {request.task!r}")
 
         # Privacy
         if request.privacy_class == "private-student-data" and not provider.privacy.private_student_data_allowed:
