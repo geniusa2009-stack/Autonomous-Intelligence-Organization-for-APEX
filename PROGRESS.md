@@ -1,23 +1,36 @@
 # APEX ONE ULTRA — Progress log
 
-Last updated: 2026-10-09 (end of build session 1)
+Last updated: 2026-10-10 (session 2: Phase 14+ activation and hardening)
+
+**Overall maturity: FOUNDATION COMPLETE + PARTIAL ACTIVATION. Not finished.** Real local model inference runs
+($0, llama.cpp), but every cloud free tier is network-blocked here, no local model licence is verified for
+production, no specialist design checkpoint is reachable, original APEX brand assets are missing, and no real
+opportunity job can reach its primary sources from this container. See ULTRA_QUALITY_REPORT.md.
+
+## Session 1 (foundation) — phases 0–13: DONE (111 tests) — see git history up to 7th commit.
+
+## Session 2 — phases 14–30
 
 | Phase | Status | Evidence |
 |---|---|---|
-| 0 Repository audit | DONE | docs/APEX_ONE_ULTRA_AUDIT.md |
-| 1 Schemas + state machine + persistence | DONE | 33 states, 199 checks, Alembic 0001/0002, tests/test_state_machine.py, test_persistence.py |
-| 2 Compute broker + registries + $0 firewall | DONE | 55 models/engines, 13 providers, 42 licence records; tests/test_zero_cost.py (19 tests) |
-| 3 Research + evidence + fact lock + KG | DONE | swarm, extractor, contradictions, verifier, FactLock, semantic diff, KG; tests/test_research.py |
-| 4 Editorial + Voice Genome + Document AST | DONE | voice/, writer, critics; tests/test_editorial.py |
-| 5 Design Genome + intent + compiler | DONE | config/apex_brand.yaml, 9 archetypes, compiler with fact spans + bidi |
-| 6 Design model arsenal adapters | DONE (honest levels) | endpoint adapters CONFIGURED_BUT_UNTESTED, methods NOT_YET_SUPPORTED, native IMPLEMENTED |
-| 7 Playwright renderer + deterministic QA | DONE | geometry/typography/RTL/contrast/brand/print/DOM-facts; tests/test_render_qa.py |
-| 8 Vision + PosterReward interface + tournament | DONE | native vision proxy; model judge + PosterReward return NOT_MEASURED without a route |
-| 9 Reader Lab + Quality Court | DONE | 9 personas, disagreement resolver, gates |
-| 10 Memory + preference learning | DONE | 8 stores, APEXPreferencePair, Bradley-Terry scorer (approval-gated) |
-| 11 CLI + API | DONE | apex-one (doctor, providers, models, license, create-guide, resume, inspect, approve, reject, export, prefer, facts, benchmark, lab, reproduce, api, worker); FastAPI + studio |
-| 12 Benchmarks + docs | DONE | APEX Design Bench 19/19 measured pass, 2 NOT_MEASURED; docs/* |
-| 13 End-to-end demo | DONE | golden ultra benchmark: RELEASE_CANDIDATE at human gate; reproduction identical |
+| 14 Live providers | DONE (honest statuses) | LIVE_PROVIDER_REPORT.md; `apex-one providers live-test`; 5 cloud providers NETWORK_BLOCKED, Gemini CREDENTIALS_REQUIRED, local llama.cpp LIVE_TESTED per model (stored in artifacts/live/local_live_results.json) |
+| 14b Local inference | DONE | llama.cpp built from source; 4 GGUF models acquired from Docker Hub `ai/` (sha256 verified): Gemma 3 4B, Qwen3-VL 4B, Nemotron 3 Nano 4B, gpt-oss 20B; `apex-one local status|acquire|serve|stop` |
+| 15 General council benchmark | RUNNING (CPU, sequential) | apex_one/compute/benchmark/council.py, scripts/run_local_council.py; results → artifacts/bench/council_scores.json → registry overlay (`capability_source: apex-benchmark`) |
+| 16 Design arsenal activation | DONE (evidence per system) | DESIGN_MODEL_ACTIVATION.md, config/design_activation.yaml — 30 systems; none of the specialist checkpoints is reachable (HF denied) |
+| 17 APEX design bench (15 page types) | NATIVE DONE, LLM RUNNING | APEX_DESIGN_BENCH.md, apex_one/lab/benchmarks/apex_design_bench.py; native baseline vs tournament measured on all 15 types; local LLM page writers queued (5 key types each) |
+| 18 Vision Council | WIRED; JUDGE CALIBRATION RUNNING | apex_one/vision/council.py; VISION_QA runs only calibrated-reliable judges (stamped by model digest), else NOT_MEASURED; weak pages → MUTATION |
+| 19 PosterReward | PROTOCOL_REIMPLEMENTED (weights unreachable) | apex_one/vision/pairwise.py: order-swapped, consistency-required, strict-majority pairwise; disagreements + failures stored |
+| 20 Comprehension ≥ 95, rhythm ≥ 93 | DONE | golden ULTRA J-9aee654ead70: comprehension 98.9, rhythm 94.0, all 10 targets PASS (incl. new arabic_typography 100) |
+| 21 Genome extraction | DONE (no approved APEX documents supplied yet) | apex_one/design/genome_extraction.py, `apex-one genome ingest|principles`; tested on our own PDF only |
+| 22 Anti-copy / anti-repetition | DONE | apex_one/design/similarity.py; tournament novelty; per-job qa/anti_copy.json (brand vs layout similarity separate) |
+| 23 Ultra evolution | DONE | ULTRA = 64 seeded candidates for important pages (APEX_ULTRA_CANDIDATES ≤ 256), 844 candidates in golden ULTRA; pairwise finalists when reliable judges exist |
+| 24 Mixture of design experts | DONE | apex_one/design/models/moe.py: semantic gate (type → reading family → default), measured evidence, margin rule, licence-gated |
+| 25 A/B/C preference dataset | DONE (no human labels yet) | `apex-one preference sheet|record`; winner, ranking, reason, controlled tags; never auto-trained |
+| 26 GraphicDesignBench | PACKAGE + PROVIDER DONE; LOCAL RUN QUEUED | lica-gdb 0.2.1; apex_one/lab/benchmarks/gdb_provider.py via the $0 broker; full dataset on HF is unreachable → smoke bundle only |
+| 27 Asset contracts | DONE; ASSETS MISSING | assets/apex/, config/asset_contract.yaml, `apex-one assets validate`; compiler embeds what validates; Brand Production Gate blocks real jobs (currently 4 assets MISSING) |
+| 28 Arabic typography | DONE (deterministic) + council TypographyJudge when calibrated | qa/typography: letter-spacing, italics, leading, punctuation, tatweel; rendered detect cases 4/4 |
+| 29 Real opportunity job | BLOCKED (environment) | `create-guide "Berea College Fall 2027"` → BLOCKED at SOURCE_DISCOVERY; berea.edu, educationusa, studyinthestates, commonapp, travel.state.gov all denied by egress proxy (403) |
+| 30 Adversarial audit | DONE; 12 of 13 findings fixed, 1 partial | independent audit → commit "Phase 30 adversarial audit fixes"; partial: approval now needs a named approver, but the local API still has no authentication (bind to 127.0.0.1 only) |
 
-Test status: `python -m pytest` → 111 passed (75.9 s).
-Push status: BLOCKED — GitHub 403 (Claude GitHub App lacks access); commits are local.
+Test status: `.venv/bin/python -m pytest` → 146 passed.
+Push status: pushed to origin/claude/charming-archimedes-2guzc9.

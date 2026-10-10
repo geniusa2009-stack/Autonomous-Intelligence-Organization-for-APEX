@@ -1,21 +1,35 @@
 # Next actions (ordered)
 
-1. **Restore GitHub access and push** `claude/charming-archimedes-2guzc9` (connect GitHub / install the Claude GitHub App).
-2. **Supply the original APEX logo** → `apex_one/assets/brand/`, set `is_placeholder: false` in `config/apex_brand.yaml`.
-3. **First real job**: save Berea's official international-admissions + financial-aid pages/PDFs for the Fall 2027
-   cycle with a `sources.yaml`, then
-   `apex-one create-guide --opportunity "Berea College Fall 2027" --quality ultra --budget 0 --sources <dir>`
-   (or run SearXNG: `docker compose --profile research up -d searxng` and set `SEARXNG_URL`).
-4. **Enable $0 models** (optional, improves extraction/vision/language judging):
-   * local: `ollama pull qwen2.5vl:7b` (vision judge) and `gpt-oss:20b` if RAM ≥ 16 GB;
-   * free tiers: add keys, `apex-one providers attest <id> --by <name>`, `apex-one providers --probe`;
-   * licences: `apex-one license verify <lic-id> ...` after reading each licence.
-5. **Reader comprehension target (93.3 < 95)**: skim personas miss one item; consider moving the decision-critical
-   warning onto the snapshot page for skimmers (editorial decision for a human).
-6. **Rhythm target (92 < 93)**: tune the document-level tournament penalty weights through ONE Lab
-   (`apex-one lab propose --weakness rhythm --overlay '{"tournament.weights": {...}}'`).
-7. **Specialist design models**: serve PosterCopilot-7B / WebGenAgent / PosterReward on a GPU you control behind
-   `APEX_DESIGN_ENDPOINT_*`, verify licences, run `apex-one benchmark --suite design` and a Lab experiment.
-8. **PostgreSQL + pgvector**: `docker compose --profile db up -d postgres`; set `APEX_DATABASE_URL`; `apex-one db-upgrade`.
-9. **Preference learning**: record human rankings from the studio (`/studio`) and train a CANDIDATE scorer
-   (`apex-one lab train-preference --approved-by <name>`) once ≥ 30 pairs exist.
+## Needs a human (nothing below can be done honestly by the system alone)
+
+1. **Supply the original APEX brand assets** into `assets/apex/` per `config/asset_contract.yaml`
+   (`logo.svg`, `logo-on-dark.svg`, `robot.svg`, `brand.yaml` with `approved_by/approved_at/palette/fonts`), then
+   `apex-one assets validate`. Until then every real job is blocked by the Brand Production Gate.
+2. **Primary sources for a real job** — this container cannot reach any official site (egress 403). Either run on a
+   machine whose network allows the official hosts and set `SEARXNG_URL`, or save the official Berea Fall 2027
+   pages/PDFs with a `sources.yaml` and run
+   `apex-one create-guide --opportunity "Berea College Fall 2027" --quality ultra --sources <dir>`.
+   The job must stop at HUMAN_APPROVAL; approve with `apex-one approve <job> --by <name>`.
+3. **Licence verification** for local models you want to use for PRODUCTION (content), after reading each licence:
+   `apex-one license verify lic-gemma --license "Gemma Terms of Use" --state PRODUCTION_ALLOWED --source <url> --by <name>`
+   (same for lic-qwen-open — the Qwen3-VL artifact ships an Apache-2.0 LICENSE file —, lic-gpt-oss,
+   lic-nvidia-nemotron-nano). Until then they are evaluation-only.
+4. **Approved reference documents** (ALA, TGS, FLEX, Berea guides you consider excellent; PDFs or screenshots):
+   `apex-one genome ingest <files> --verdict approved --reason "..."`; rejected examples with `--verdict rejected`.
+5. **A/B/C preferences**: `apex-one preference sheet <job>` then `apex-one preference record ...` for important
+   pages; train a CANDIDATE scorer only with explicit approval once ≥ 30 pairs exist.
+
+## System work (continue)
+
+6. Let `scripts/run_local_council.py` → `scripts/run_local_design_evals.py` finish (chained, detached; logs in the
+   session scratchpad), then `apex-one reports` and commit `docs/evidence/` + regenerated reports.
+7. If any vision judge is calibrated RELIABLE: run golden ULTRA again (`apex-one benchmark --suite golden --quality
+   ultra`) — the Vision Council and pairwise finalists then run for real; record council-vs-DOM disagreements.
+8. If no judge calibrates reliably: try a larger local VLM only if it fits RAM (≤ ~10 GB GGUF) — e.g. Qwen3-VL 8B
+   Q4 — and re-calibrate; never lower the reliability bar.
+9. API authentication for `/jobs/*/approve` before exposing the API beyond 127.0.0.1.
+10. Cloud free tiers (NVIDIA NIM, Groq, OpenRouter, Cloudflare, HF): on a network that allows them, add keys,
+    `apex-one providers attest <id> --by <name>`, then `apex-one providers live-test`.
+11. Specialist design checkpoints (PosterCopilot, WebGenAgent, MarkupDM, OmniSVG, StarVector, PosterReward): need
+    Hugging Face access + a GPU; serve behind `APEX_DESIGN_ENDPOINT_*`, verify licences, benchmark with
+    `apex-one benchmark --suite apex-design --job <job> --llm <id>`.
