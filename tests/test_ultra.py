@@ -566,3 +566,18 @@ def test_egyptian_checker_counts_whole_dialect_words():
     assert s_egyptian("يا عم الحاج، لازم الطالب يخلص الأوراق قبل ١٥ الشهر، تمام؟")[1].startswith("dialect_markers=3")
     assert s_egyptian("التقديم قبل 15 ديسمبر")[0] == 0          # «ديسمبر» is not the dialect word «دي»
     assert s_egyptian("يرجى العلم بأنه يتعين التقديم قبل 15")[0] == 0
+
+
+def test_council_empty_output_is_not_measured(tmp_path):
+    from types import SimpleNamespace
+
+    from apex_one.compute.benchmark.council import run_council
+
+    class Thinker:   # spends the whole budget on hidden reasoning
+        def complete(self, req, messages, **kw):
+            return SimpleNamespace(executed=True, text="", decision=SimpleNamespace(outcome=SimpleNamespace(value="OK")))
+
+    data = run_council(Thinker(), ["m"], tmp_path, only=["reasoning"])
+    assert "reasoning" not in data["models"]["m"] and data["models"]["m"]["overall"] is None
+    row = json.loads((tmp_path / "council_runs.jsonl").read_text().splitlines()[0])
+    assert row["score"] is None and "NOT_MEASURED" in row["detail"]

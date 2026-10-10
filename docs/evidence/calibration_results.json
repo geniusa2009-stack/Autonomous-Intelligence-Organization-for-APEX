@@ -14,6 +14,21 @@
       "at": "2026-10-10T16:52:34+00:00",
       "model_digest": "sha256:04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19",
       "stamp_note": "stamped after the run from the server log: the run started before stamping existed; the served model was gemma3-4b-q4km"
+    },
+    "qwen-vl-current": {
+      "checks": {
+        "low_contrast": false,
+        "card_overuse": false,
+        "gradient": true,
+        "cramped": false,
+        "no_hierarchy": false
+      },
+      "discrimination_rate": 0.2,
+      "reliable": false,
+      "valid_checks": 5,
+      "at": "2026-10-10T17:28:26+00:00",
+      "model_digest": "sha256:a5563711a524defc06d67438a497ce4ba9a0fb126f28456a9f207e2ad104eb75",
+      "stamp_note": "stamped after the run from the council log: the run started before stamping existed; the served model was qwen3-vl-4b-q4kxl"
     }
   }
 }

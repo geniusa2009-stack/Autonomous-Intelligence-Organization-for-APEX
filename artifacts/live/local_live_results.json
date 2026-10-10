@@ -68,5 +68,75 @@
     "quota_headers": {},
     "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
     "status": "LIVE_TESTED"
+  },
+  "qwen3-vl-4b-q4kxl": {
+    "provider": "llamacpp_local",
+    "model": "qwen-vl-current",
+    "provider_model_id": "qwen3-vl-4b-q4kxl",
+    "kind": "local",
+    "at": "2026-10-10T17:07:01.703706+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 43.5,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "qwen3-vl-4b-q4kxl"
+    ],
+    "structured_ms": 4130.1,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 25,
+      "prompt_tokens": 57,
+      "total_tokens": 82,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED"
+  },
+  "gpt-oss-20b-mxfp4": {
+    "provider": "llamacpp_local",
+    "model": "gpt-oss-20b",
+    "provider_model_id": "gpt-oss-20b-mxfp4",
+    "kind": "local",
+    "at": "2026-10-10T17:33:37.538692+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 46.3,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "gpt-oss-20b-mxfp4"
+    ],
+    "structured_ms": 13520.6,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 88,
+      "prompt_tokens": 112,
+      "total_tokens": 200,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED"
   }
 }

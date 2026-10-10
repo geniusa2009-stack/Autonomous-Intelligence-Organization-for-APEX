@@ -81,7 +81,8 @@ CHECKER_VERSION = 2
 
 
 def s_egyptian(text: str) -> tuple[float, str]:
-    words = re.findall(r"[\u0621-\u064A\u0671-\u06D3]+", text)   # letters only: «؟» / «،» are not part of words
+    bare = re.sub(r"[\u064B-\u0652\u0670\u0640]", "", text)   # drop diacritics/tatweel so «تذكّر» stays one word
+    words = re.findall(r"[\u0621-\u064A\u0671-\u06D3]+", bare)   # letters only: «؟» / «،» are not part of words
     hits = sum(1 for w in words if w in DIALECT_WORDS or (len(w) >= 5 and w.startswith(VERB_PREFIXES)))
     msa = sum(1 for m in MSA if m in text)
     keeps = "15" in text or "١٥" in text
@@ -217,7 +218,7 @@ def _pairwise_hierarchy(broker, model_id: str, calib_dir: Path, ws=None) -> tupl
 
 
 def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | None = None,
-                only: list[str] | None = None) -> dict[str, Any]:
+                only: list[str] | None = None, max_tokens: int | None = None) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
     scores_path = out_dir / "council_scores.json"
     data = json.loads(scores_path.read_text(encoding="utf-8")) if scores_path.exists() else {"models": {}, "runs": []}
@@ -233,10 +234,16 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
                 text = ""
             else:
                 req = CapabilityRequest(task=f"bench.{t.name}", purpose="evaluation", model_id=mid)
-                res = broker.complete(req, t.build(), json_mode=t.json_mode, max_tokens=t.max_tokens,
+                res = broker.complete(req, t.build(), json_mode=t.json_mode, max_tokens=max_tokens or t.max_tokens,
                                       temperature=0.0, timeout=900)
                 text = res.text or ""
-                score, detail = t.score(text) if res.executed else (None, f"not executed: {res.decision.outcome.value}")
+                if not res.executed:
+                    score, detail = None, f"not executed: {res.decision.outcome.value}"
+                elif not text.strip():
+                    # reasoning models can spend the whole budget on hidden reasoning: NOT a wrong answer
+                    score, detail = None, f"empty output at max_tokens={max_tokens or t.max_tokens} (NOT_MEASURED)"
+                else:
+                    score, detail = t.score(text)
             rec = {"model": mid, "task": t.name, "score": score, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
                    "output": text[:1200]}
             log.write(json.dumps(rec, ensure_ascii=False) + "\n")
@@ -262,8 +269,10 @@ def rescore(out_dir: Path) -> dict[str, Any]:
     for r in rows:   # later runs of the same (model, task) win
         t = by_name.get(r["task"])
         score = r["score"]
-        if t is not None and not t.vision and r.get("output") and score is not None:
+        if t is not None and not t.vision and r.get("output", "").strip() and score is not None:
             score, r["detail"] = t.score(r["output"])
+        elif t is not None and not t.vision and not r.get("output", "").strip():
+            score = None                      # empty output: not measured (see run_council)
         entry = data["models"].setdefault(r["model"], {})
         if score is not None:
             entry[r["task"]] = score
