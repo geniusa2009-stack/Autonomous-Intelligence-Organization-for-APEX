@@ -421,5 +421,41 @@ def test_arabic_typography_rules():
     assert checks == {"qa.arabic_letter_spacing", "qa.arabic_italic", "qa.arabic_leading", "qa.arabic_punctuation",
                       "qa.arabic_tatweel"}
     assert any(i.severity == "critical" for i in issues) and m["typography.arabic"].value < 60
+    ok, _ = check_arabic_typography({"pageId": "p", "items": [item(text="قدّم الـ tuition والـ deadline")]})
+    assert ok == []    # «الـ» before a Latin term is the accepted convention, not stretching
     _, m = check_arabic_typography({"pageId": "p", "items": [item(text="English only")]})
     assert m["typography.arabic"].value is None
+
+
+def test_reports_print_pending_instead_of_numbers():
+    from apex_one.lab.reports import design_bench_md, live_provider_md
+
+    assert "NOT_MEASURED" in live_provider_md(None)
+    assert "NOT_MEASURED" in design_bench_md(None, [], None)
+    rows = [{"provider": "groq", "status": "NETWORK_BLOCKED", "network": "egress proxy denied CONNECT"},
+            {"provider": "llamacpp_local", "model": "m", "status": "LIVE_TESTED", "structured_correct": True,
+             "structured_ms": 4594.8, "structured_output": "{}", "cost_basis": "local"}]
+    md = live_provider_md(rows)
+    assert "**NETWORK_BLOCKED**" in md and "4.6 s" in md and "LIVE_TESTED 1" in md
+
+
+def test_model_activation_report_marks_unrun_models_pending(registry, tmp_path):
+    from apex_one.compute.local.acquisition import LocalModelSpec
+    from apex_one.lab.reports import model_activation_md
+
+    class Spec(LocalModelSpec):
+        @property
+        def dir(self):
+            return tmp_path / self.key
+
+    spec = Spec(key="k", registry_model="gemma-multimodal", repository="ai/x", tag="t", port=1)
+    md = model_activation_md({"k": spec}, None, None, None, registry)
+    assert "NOT ACQUIRED" in md and "PENDING" in md and "LIVE_TESTED" not in md.split("## General")[0].split("|---|")[-1]
+
+
+def test_moe_holds_default_on_saturated_evidence(registry):
+    from apex_one.design.models.moe import DesignMoE
+
+    rows = [_row("native-baseline", "Cover", 100), _row("native-tournament", "Cover", 99.2)]
+    ch = DesignMoE(registry, rows).route("Cover")
+    assert ch.experts[0] == "native-tournament" and "default-held" in ch.gate

@@ -1,0 +1,37 @@
+{
+  "gemma3-4b-q4km": {
+    "provider": "llamacpp_local",
+    "model": "gemma-multimodal",
+    "provider_model_id": "gemma3-4b-q4km",
+    "kind": "local",
+    "at": "2026-10-10T16:23:22.245814+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 48.2,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "gemma3-4b-q4km"
+    ],
+    "structured_ms": 4594.8,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 30,
+      "prompt_tokens": 60,
+      "total_tokens": 90,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED"
+  }
+}

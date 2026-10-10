@@ -61,7 +61,9 @@ def check_typography(page: dict, typo: dict, brand_fonts: list[str]) -> tuple[li
 
 ARABIC = re.compile(r"[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]")
 LATIN_PUNCT_IN_ARABIC = re.compile(r"[\u0600-\u06FF]\s?[,;?](?=\s|$)")
-TATWEEL = "\u0640"
+# Stretching = tatweel between two Arabic letters or repeated. «الـ» before a Latin term (الـ deadline) is the
+# accepted Egyptian convention for the definite article and is NOT flagged.
+TATWEEL_STRETCH = re.compile(r"[\u0621-\u064A]\u0640+[\u0621-\u064A]|\u0640{2,}")
 
 
 def check_arabic_typography(page: dict, min_arabic_leading: float = 1.6) -> tuple[list[QAIssue], dict[str, Metric]]:
@@ -96,7 +98,7 @@ def check_arabic_typography(page: dict, min_arabic_leading: float = 1.6) -> tupl
             issues.append(QAIssue(check="qa.arabic_punctuation", severity="minor", page=pid, selector=i["id"],
                                   message="Latin , ; ? after Arabic text (use \u060c \u061b \u061f)"))
             penalty += 2
-        if TATWEEL * 2 in txt or (TATWEEL in txt and i["role"] not in ("hero", "heading")):
+        if TATWEEL_STRETCH.search(txt):
             issues.append(QAIssue(check="qa.arabic_tatweel", severity="minor", page=pid, selector=i["id"],
                                   message="tatweel used to stretch text"))
             penalty += 2

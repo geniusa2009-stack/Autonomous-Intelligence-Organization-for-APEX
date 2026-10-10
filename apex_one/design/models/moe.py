@@ -33,6 +33,7 @@ FAMILY_OF = {t.value: fam for fam, ts in FAMILY.items() for t in ts}
 QUALITY = ["design.hierarchy", "design.typography", "design.brand_fit", "rtl.quality", "accessibility.contrast"]
 NATIVE = {"native-tournament", "native-baseline"}
 DEFAULT = "native-tournament"
+MARGIN = 2.0          # quality points another expert must gain over the default (same failure rate) to be preferred
 
 
 @dataclass
@@ -105,6 +106,13 @@ class DesignMoE:
             stats = {e: _expert_stats(rs) for e in eligible if (rs := [r for r in self.rows if r["system"] == e and match(r)])}
             if stats:
                 ranked = sorted(stats, key=lambda e: stats[e]["gate_key"], reverse=True)
+                if DEFAULT in stats and ranked[0] != DEFAULT:
+                    top, dflt = stats[ranked[0]]["gate_key"], stats[DEFAULT]["gate_key"]
+                    if top[0] == dflt[0] and top[1] - dflt[1] < MARGIN:
+                        # saturated / near-equal evidence is not a reason to leave the default expert
+                        ranked.remove(DEFAULT)
+                        ranked.insert(0, DEFAULT)
+                        gate += f"+default-held(margin<{MARGIN})"
                 return ExpertChoice(page_type, ranked[: self.k], gate, {e: stats[e] for e in ranked}, excluded)
         return ExpertChoice(page_type, [DEFAULT], "default", {"reason": "no measured evidence for this page family"},
                             excluded)

@@ -1,0 +1,117 @@
+[
+  {
+    "provider": "nvidia_nim",
+    "status": "NETWORK_BLOCKED",
+    "network": "egress proxy denied CONNECT to integrate.api.nvidia.com (403 Forbidden)",
+    "credentials": "set NVIDIA_API_KEY"
+  },
+  {
+    "provider": "groq",
+    "status": "NETWORK_BLOCKED",
+    "network": "egress proxy denied CONNECT to api.groq.com (403 Forbidden)",
+    "credentials": "set GROQ_API_KEY"
+  },
+  {
+    "provider": "gemini",
+    "status": "CREDENTIALS_REQUIRED",
+    "network": "reachable (HTTP 404 unauthenticated)",
+    "credentials": "set GEMINI_API_KEY"
+  },
+  {
+    "provider": "openrouter",
+    "status": "NETWORK_BLOCKED",
+    "network": "egress proxy denied CONNECT to openrouter.ai (403 Forbidden)",
+    "credentials": "set OPENROUTER_API_KEY"
+  },
+  {
+    "provider": "cloudflare",
+    "status": "NETWORK_BLOCKED",
+    "network": "egress proxy denied CONNECT to api.cloudflare.com (403 Forbidden)",
+    "credentials": "set CLOUDFLARE_API_TOKEN"
+  },
+  {
+    "provider": "huggingface",
+    "status": "NETWORK_BLOCKED",
+    "network": "egress proxy denied CONNECT to router.huggingface.co (403 Forbidden)",
+    "credentials": "set HF_TOKEN"
+  },
+  {
+    "provider": "ollama",
+    "status": "LIVE_FAILED",
+    "detail": "http://localhost:11434: network: ConnectError: [Errno 111] Connection refused"
+  },
+  {
+    "provider": "llamacpp",
+    "status": "LIVE_FAILED",
+    "detail": "http://localhost:8080: network: ConnectError: [Errno 111] Connection refused"
+  },
+  {
+    "provider": "mlx",
+    "status": "LIVE_FAILED",
+    "detail": "http://localhost:8081: MLX requires Apple Silicon (macOS arm64)"
+  },
+  {
+    "provider": "vllm",
+    "status": "CREDENTIALS_REQUIRED",
+    "detail": "no endpoint configured (VLLM_BASE_URL)"
+  },
+  {
+    "provider": "sglang",
+    "status": "CREDENTIALS_REQUIRED",
+    "detail": "no endpoint configured (SGLANG_BASE_URL)"
+  },
+  {
+    "provider": "llamacpp_local",
+    "model": "gpt-oss-20b-mxfp4",
+    "status": "UNKNOWN",
+    "detail": "acquired but server not running (apex-one local serve)"
+  },
+  {
+    "provider": "llamacpp_local",
+    "model": "nemotron-3-nano-4b-q4km",
+    "status": "UNKNOWN",
+    "detail": "acquired but server not running (apex-one local serve)"
+  },
+  {
+    "provider": "llamacpp_local",
+    "model": "qwen3-vl-4b-q4kxl",
+    "status": "UNKNOWN",
+    "detail": "acquired but server not running (apex-one local serve)"
+  },
+  {
+    "provider": "llamacpp_local",
+    "model": "gemma-multimodal",
+    "provider_model_id": "gemma3-4b-q4km",
+    "kind": "local",
+    "at": "2026-10-10T16:23:22.245814+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 48.2,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "gemma3-4b-q4km"
+    ],
+    "structured_ms": 4594.8,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 30,
+      "prompt_tokens": 60,
+      "total_tokens": 90,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED",
+    "detail": "stored live result from 2026-10-10T16:23:22.245814+00:00"
+  }
+]

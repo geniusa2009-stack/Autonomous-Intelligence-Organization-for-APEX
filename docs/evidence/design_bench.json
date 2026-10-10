@@ -1,0 +1,157 @@
+{
+  "cases": [
+    {
+      "case": "arabic_rtl",
+      "status": "PASS",
+      "expectation": "pass:qa.rtl_direction",
+      "detail": "clean"
+    },
+    {
+      "case": "arabic_english_mix",
+      "status": "PASS",
+      "expectation": "pass:qa.ltr_isolation",
+      "detail": "clean"
+    },
+    {
+      "case": "arabic_dollar",
+      "status": "PASS",
+      "expectation": "pass:qa.currency",
+      "detail": "clean"
+    },
+    {
+      "case": "arabic_percent",
+      "status": "PASS",
+      "expectation": "pass:qa.percent",
+      "detail": "clean"
+    },
+    {
+      "case": "arabic_date",
+      "status": "PASS",
+      "expectation": "pass:qa.dom_fact_integrity",
+      "detail": "clean"
+    },
+    {
+      "case": "very_long_arabic_title",
+      "status": "PASS",
+      "expectation": "pass:qa.overflow",
+      "detail": "clean"
+    },
+    {
+      "case": "dense_funding_page",
+      "status": "PASS",
+      "expectation": "pass:qa.page_bounds",
+      "detail": "issues: qa.arabic_leading"
+    },
+    {
+      "case": "deadline_visibility",
+      "status": "PASS",
+      "expectation": "pass:design.hierarchy>=80",
+      "detail": "design.hierarchy=100.0"
+    },
+    {
+      "case": "brand_consistency",
+      "status": "PASS",
+      "expectation": "pass:brand.palette",
+      "detail": "clean"
+    },
+    {
+      "case": "card_overuse",
+      "status": "PASS",
+      "expectation": "detect:vision.card_overuse",
+      "detail": "detected"
+    },
+    {
+      "case": "gradient_forbidden",
+      "status": "PASS",
+      "expectation": "detect:brand.gradients",
+      "detail": "detected"
+    },
+    {
+      "case": "mixed_direction_punctuation",
+      "status": "PASS",
+      "expectation": "detect:qa.mixed_runs",
+      "detail": "detected"
+    },
+    {
+      "case": "unisolated_latin",
+      "status": "PASS",
+      "expectation": "detect:qa.ltr_isolation",
+      "detail": "detected"
+    },
+    {
+      "case": "long_url",
+      "status": "PASS",
+      "expectation": "pass:qa.overflow",
+      "detail": "clean"
+    },
+    {
+      "case": "beautiful_but_misleading",
+      "status": "PASS",
+      "expectation": "detect:qa.dom_fact_integrity",
+      "detail": "detected"
+    },
+    {
+      "case": "boring_but_correct",
+      "status": "PASS",
+      "expectation": "pass:qa.dom_fact_integrity",
+      "detail": "clean"
+    },
+    {
+      "case": "low_contrast_detect",
+      "status": "PASS",
+      "expectation": "detect:qa.contrast",
+      "detail": "detected"
+    },
+    {
+      "case": "overflow_detect",
+      "status": "PASS",
+      "expectation": "detect:qa.overflow",
+      "detail": "detected"
+    },
+    {
+      "case": "arabic_letter_spacing_detect",
+      "status": "PASS",
+      "expectation": "detect:qa.arabic_letter_spacing",
+      "detail": "detected"
+    },
+    {
+      "case": "arabic_italic_detect",
+      "status": "PASS",
+      "expectation": "detect:qa.arabic_italic",
+      "detail": "detected"
+    },
+    {
+      "case": "arabic_tight_leading_detect",
+      "status": "PASS",
+      "expectation": "detect:qa.arabic_leading",
+      "detail": "detected"
+    },
+    {
+      "case": "arabic_typography_clean",
+      "status": "PASS",
+      "expectation": "pass:qa.arabic_letter_spacing",
+      "detail": "clean"
+    },
+    {
+      "case": "print_fidelity",
+      "status": "PASS",
+      "expectation": "pass:print",
+      "detail": "print.fidelity=100.0"
+    },
+    {
+      "case": "screenshot_to_code_regression",
+      "status": "NOT_MEASURED",
+      "expectation": "not_measured:requires ScreenCoder/DCGen (not available on a $0 licence-verified route)",
+      "detail": "requires ScreenCoder/DCGen (not available on a $0 licence-verified route)"
+    },
+    {
+      "case": "graphic_design_bench_gdb",
+      "status": "NOT_MEASURED",
+      "expectation": "not_measured:GDB runs separately (apex-one bench gdb): lica-gdb is installed, but the full dataset host (Hugging Face) is unreachable from this container",
+      "detail": "GDB runs separately (apex-one bench gdb): lica-gdb is installed, but the full dataset host (Hugging Face) is unreachable from this container"
+    }
+  ],
+  "measured": 23,
+  "passed": 23,
+  "not_measured": 2
+}

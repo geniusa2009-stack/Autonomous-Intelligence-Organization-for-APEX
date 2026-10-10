@@ -89,7 +89,7 @@ systems:
     reported_license: {value: "not found", evidence: none}
     hardware: "8B VLM: CPU GGUF Q4 would be ~5 GB and slow (minutes per pair)"
     status: [WEIGHTS_UNREACHABLE, PROTOCOL_REIMPLEMENTED]
-    apex_use: "PosterReward-style PAIRWISE protocol (order-swapped twice, consistency required) runs on local Qwen3-VL / Gemma 3 judges — clearly labelled as protocol, not PosterReward weights"
+    apex_use: "PosterReward-style PAIRWISE protocol (order-swapped twice, consistency required) runs on local vision judges ONLY when calibration marks them reliable — clearly labelled as protocol, not PosterReward weights"
   LayerD:
     source: {paper: "ICCV 2025 (CyberAgent, Tohoku)", code: "github.com/CyberAgentAILab/LayerD", evidence: secondary}
     checkpoint: {params: "matting/segmentation models", host: github/huggingface, reachable: false}

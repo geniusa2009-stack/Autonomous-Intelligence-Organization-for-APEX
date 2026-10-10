@@ -109,7 +109,8 @@ def providers(ctx: typer.Context, probe: bool = typer.Option(False, help="Networ
 
 
 @providers_app.command("live-test")
-def providers_live_test(out: Path = typer.Option(None), structured: bool = typer.Option(True)):
+def providers_live_test(out: Path = typer.Option(None), structured: bool = typer.Option(True),
+                        retest: bool = typer.Option(False, help="re-run local models even if a stored result exists")):
     """Phase 14: real network/credential checks for every provider + real structured task on every runnable route."""
     from apex_one.compute.live import live_test_route, provider_level_report, save_report
     from apex_one.compute.local.server import LocalServer
@@ -128,10 +129,13 @@ def providers_live_test(out: Path = typer.Option(None), structured: bool = typer
                 rows.append({"provider": "llamacpp_local", "model": spec.key, "status": "UNKNOWN",
                              "detail": "not acquired (apex-one local acquire)"})
                 continue
+            stored_path = get_settings().artifacts_dir / "live" / "local_live_results.json"
+            stored = json.loads(stored_path.read_text()).get(spec.key) if stored_path.exists() else None
+            if stored and not retest:   # measured while its server was up (one model fits in RAM at a time)
+                rows.append({**stored, "detail": f"stored live result from {stored.get('at')}"})
+                continue
             if not LocalServer(spec).healthy():
-                stored_path = get_settings().artifacts_dir / "live" / "local_live_results.json"
-                stored = json.loads(stored_path.read_text()).get(spec.key) if stored_path.exists() else None
-                if stored:   # measured earlier while its server was up (one model fits in RAM at a time)
+                if stored:
                     rows.append({**stored, "detail": f"stored live result from {stored.get('at')}"})
                     continue
                 rows.append({"provider": "llamacpp_local", "model": spec.key, "status": "UNKNOWN",
@@ -502,8 +506,11 @@ def facts_confirm(job_id: str, slot: str, claim: str = typer.Option(..., "--clai
 
 # ---------------------------------------------------------------- benchmarks / lab
 @app.command()
-def benchmark(suite: str = typer.Option("design", help="design | models | golden"),
-              out: Path = typer.Option(None), quality: str = typer.Option("standard")):
+def benchmark(suite: str = typer.Option("design", help="design | apex-design | models | golden"),
+              out: Path = typer.Option(None), quality: str = typer.Option("standard"),
+              job: str = typer.Option(None, help="apex-design: source job id"),
+              llm: str = typer.Option("", help="apex-design: comma-separated local model ids (evaluation only)"),
+              llm_only: bool = typer.Option(False, help="apex-design: skip the native systems")):
     """Run the APEX Design Bench, the model benchmark (free routes only) or the golden end-to-end benchmark."""
     from apex_one.settings import get_settings
 
@@ -530,8 +537,26 @@ def benchmark(suite: str = typer.Option("design", help="design | models | golden
 
         res = run_golden(quality=quality)
         console.print_json(json.dumps(res, default=str))
+    elif suite == "apex-design":
+        from apex_one.lab.benchmarks.apex_design_bench import run_apex_design_bench
+
+        if not job:
+            raise typer.BadParameter("--job (a completed job whose AST and fact locks supply the content) is required")
+        res = run_apex_design_bench(job, base / "apex_design", [m for m in llm.split(",") if m] if llm else None,
+                                    include_native=not llm_only)
+        console.print_json(json.dumps(res["systems"], ensure_ascii=False))
     else:
-        raise typer.BadParameter("suite must be design | models | golden")
+        raise typer.BadParameter("suite must be design | apex-design | models | golden")
+
+
+@app.command("reports")
+def reports_build():
+    """Regenerate the Phase 14+ reports (LIVE_PROVIDER, MODEL_ACTIVATION, DESIGN_MODEL_ACTIVATION, APEX_DESIGN_BENCH)
+    from measured artifacts; copies the evidence JSON into docs/evidence/."""
+    from apex_one.lab.reports import build_reports
+
+    for name, path in build_reports().items():
+        console.print(f"{name}: {path}")
 
 
 @lab_app.command("propose")

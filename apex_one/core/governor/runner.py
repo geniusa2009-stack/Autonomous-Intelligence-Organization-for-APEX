@@ -422,13 +422,16 @@ class JobRunner:
         router = self._design_router()
         intents = [derive_intent(n) for n in ast.pages()]
         routes = [router.route_for(n.semantic_type.value).to_dict() for n in ast.pages()]
-        from apex_one.design.models.moe import NATIVE, DesignMoE
+        from apex_one.design.models.moe import DesignMoE
 
         moe = DesignMoE(self.registry)
         for route, n in zip(routes, ast.pages()):
             ch = moe.route(n.semantic_type.value, purpose="production")
-            executed = next((e for e in ch.experts if e in NATIVE), "native-tournament")
-            route["experts"] = {"gate": ch.gate, "ranked": ch.experts, "executed": executed,
+            # the production pipeline has exactly one executable page designer: the native tournament
+            route["experts"] = {"gate": ch.gate, "ranked": ch.experts, "executed": "native-tournament",
+                                "note": ("" if ch.experts[0] == "native-tournament" else
+                                         f"gate preferred {ch.experts[0]}, which the production pipeline cannot "
+                                         "execute; native-tournament ran"),
                                 "evidence": ch.evidence, "excluded": ch.excluded}
         self.ws.write_json("design_intent.json", intents)
         self.ws.write_json("design_routes.json", routes)
@@ -680,6 +683,7 @@ class JobRunner:
         self.ws.write_json("qa/deterministic_report.json", report)
         self.ws.write_json("qa/pages.json", [{"page_id": p.page_id, "predicted_first": p.predicted_first,
                                               "issues": p.issues, "metrics": p.metrics} for p in pages])
+        self.ws.write_json("qa/anti_copy.json", self._anti_copy(metrics))
         crit = report.critical
         self.checks(S.DETERMINISTIC_QA, {c: not any(i.check == c and i.severity == "critical" for i in report.issues)
                                          for c in CHECKS[S.DETERMINISTIC_QA]})
@@ -694,6 +698,33 @@ class JobRunner:
             self.ws.write_json("layout_redo.json", sorted({i.page for i in layout_crit if i.page}))
             return FailureKind.GEOMETRY
         return S.VISION_QA
+
+    def _anti_copy(self, metrics: dict) -> dict:
+        """Phase 22: SAME DNA, DIFFERENT ORGANISM — brand similarity (want high) and layout similarity (want
+        controlled) reported separately per page, against this document and remembered layouts."""
+        from apex_one.design.genome import load_genome
+        from apex_one.design.similarity import AntiCopyEngine, occupancy_grid
+        from apex_one.memory import DesignMemory
+        from apex_one.vision.page import dhash
+
+        inv = load_genome().invariants
+        chosen = {c["page_id"]: c for c in (self._read("layout_chosen.json") if self.ws.exists("layout_chosen.json") else [])}
+        shots = sorted((self.ws.root / "screenshots").glob("page-*.png"))
+        engine = AntiCopyEngine(inv, DesignMemory(self.db_url).layout_references())
+        hashes = {pm["pageId"]: dhash(shot) for pm, shot in zip(metrics["pages"], shots)}
+        doc = {pm["pageId"]: {"grid": occupancy_grid(pm), "signature": chosen.get(pm["pageId"], {}).get(
+            "structural_signature"), "dhash": hashes.get(pm["pageId"])} for pm in metrics["pages"]}
+        pages = []
+        for pm in metrics["pages"]:
+            pid = pm["pageId"]
+            others = {f"doc:{k}": v for k, v in doc.items() if k != pid}
+            v = engine.check(pm, doc[pid]["signature"] or "", metrics.get("fonts", []), same_document=others,
+                             dhash=hashes.get(pid))
+            pages.append({"page_id": pid, "node_type": pm.get("nodeType"), "brand_similarity": v.brand_similarity,
+                          "layout_similarity_max": v.layout_similarity_max, "nearest": v.nearest, "verdict": v.verdict})
+        return {"pages": pages, "references": len(engine.references),
+                "flagged": [p for p in pages if p["verdict"] != "OK"],
+                "note": "brand similarity and layout similarity are computed from different features and never merged"}
 
     def h_vision_qa(self) -> S:
         from apex_one.core.schemas.common import Metric as M
