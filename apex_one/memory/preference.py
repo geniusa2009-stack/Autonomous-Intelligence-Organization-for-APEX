@@ -129,3 +129,113 @@ class PreferenceScorer:
     def load(cls, path: Path) -> "PreferenceScorer":
         d = json.loads(path.read_text(encoding="utf-8"))
         return cls(d["weights"], d["means"], d["scales"], d["meta"])
+
+
+# ---------------------------------------------------------------- Phase 25: A/B/C preference dataset
+
+TAGS = ["hierarchy", "typography", "arabic-shaping", "rhythm", "whitespace", "density", "brand", "premium",
+        "generic", "card-like", "numbers", "contrast", "novelty", "too-similar", "calm", "busy"]
+LABELS = "ABCDEF"
+
+
+class APEXPreferenceRecord(ApexModel):
+    """One human judgement over an A/B/C sheet. Stored as a dataset row; NEVER used for training automatically."""
+
+    job_id: str
+    page_id: str
+    labels: dict[str, str]          # A -> candidate_id
+    ranking: list[str]              # labels best-first, e.g. ["B", "A", "C"]
+    winner: str                     # label
+    reason: str
+    tags: list[str] = []
+    annotator: str
+    at: str = ""
+
+
+def validate_record(rec: APEXPreferenceRecord) -> list[str]:
+    probs = []
+    if sorted(rec.ranking) != sorted(rec.labels):
+        probs.append(f"ranking {rec.ranking} must order exactly the labels {sorted(rec.labels)}")
+    if rec.ranking and rec.winner != rec.ranking[0]:
+        probs.append("winner must be the first label of the ranking")
+    bad = [t for t in rec.tags if t not in TAGS]
+    if bad:
+        probs.append(f"unknown tags {bad}; allowed: {TAGS}")
+    if not rec.reason.strip():
+        probs.append("a reason is required")
+    return probs
+
+
+def build_abc_sheet(runner, page_id: str, out_dir: Path | None = None) -> dict[str, Any]:
+    """Render the page's tournament finalists and write an A/B/C sheet (HTML) with SEPARATE metrics per option."""
+    from apex_one.design.genome import load_genome
+    from apex_one.document.compiler import compile_document, compile_page
+    from apex_one.core.schemas.design import LayoutCandidate
+    from apex_one.vision.render import Renderer, ensure_fonts
+
+    search = {r["page_id"]: r for r in runner.ws.read_json("layout_search.json")}
+    if page_id not in search:
+        raise KeyError(f"page {page_id} not in layout_search.json")
+    cands = [LayoutCandidate.model_validate(c) for c in search[page_id]["top"]][: len(LABELS)]
+    pages = runner._ast().pages()
+    node = next(n for n in pages if n.node_id == page_id)
+    page_no = pages.index(node) + 1
+    out = out_dir or runner.ws.root / "preference"
+    out.mkdir(parents=True, exist_ok=True)
+    ensure_fonts(out)
+    genome = load_genome()
+    locks = {lk.slot: lk for lk in runner.locks}
+    compiled = [compile_page(node, c.genes, genome, locks, page_no=page_no, total_pages=len(pages),
+                             synthetic=runner.synthetic, seed=runner.job.policy.seed + page_no,
+                             scope=f"c-{c.candidate_id}") for c in cands]
+    html = out / f"finalists-{page_id}.html"
+    html.write_text(compile_document(compiled, genome, title="finalists", synthetic=runner.synthetic), encoding="utf-8")
+    with Renderer() as r:
+        res = r.measure(html, float(genome.invariants["page"]["min_margin_mm"]), screenshot_dir=out,
+                        screenshot_prefix=f"abc-{page_id}")
+    labels = {LABELS[i]: c.candidate_id for i, c in enumerate(cands)}
+    shown = ["design.hierarchy", "design.typography", "design.brand_fit", "density_fit", "novelty", "ink"]
+    cells = []
+    for i, (c, shot) in enumerate(zip(cands, res.page_screenshots)):
+        rows = "".join(f"<tr><td>{m}</td><td>{'' if c.metrics.get(m) is None or c.metrics[m].value is None else round(c.metrics[m].value, 1)}</td></tr>"
+                       for m in shown)
+        cells.append(f'<figure><figcaption>{LABELS[i]}</figcaption><img src="{shot.name}" alt="option {LABELS[i]}">'
+                     f"<table>{rows}</table><p>{c.genes.archetype} · {c.genes.tone}</p></figure>")
+    sheet = out / f"abc-{page_id}.html"
+    sheet.write_text(
+        "<!doctype html><meta charset='utf-8'><title>A/B/C</title><style>body{font-family:sans-serif;background:#ECEFF3;"
+        "margin:16px}main{display:flex;gap:16px;flex-wrap:wrap}figure{background:#fff;margin:0;padding:12px;width:300px}"
+        "img{width:100%;border:1px solid #A9B3C1}figcaption{font-size:28px;font-weight:700;color:#0A1A33}"
+        "td{font-size:12px;padding:2px 6px}</style>"
+        f"<h1>{node.semantic_type.value} · {page_id}</h1><p>Rank the options (e.g. B > A > C), give one reason and tags "
+        f"from: {', '.join(TAGS)}. Metrics are shown separately on purpose — there is no single score.</p>"
+        f"<main>{''.join(cells)}</main>", encoding="utf-8")
+    (out / f"abc-{page_id}.json").write_text(json.dumps({"labels": labels}, indent=2), encoding="utf-8")
+    return {"sheet": str(sheet), "labels": labels}
+
+
+def record_abc(runner, page_id: str, ranking: list[str], reason: str, tags: list[str], annotator: str,
+               dataset: Path | None = None, db_url: str | None = None) -> APEXPreferenceRecord:
+    """Store one A/B/C judgement: a dataset row (JSONL) + the implied pairwise preferences (DB)."""
+    from apex_one.settings import get_settings
+
+    lab = runner.ws.root / "preference" / f"abc-{page_id}.json"
+    if not lab.exists():
+        raise FileNotFoundError("build the A/B/C sheet first (apex-one preference sheet)")
+    labels = json.loads(lab.read_text(encoding="utf-8"))["labels"]
+    rec = APEXPreferenceRecord(job_id=runner.job.job_id, page_id=page_id, labels=labels, ranking=ranking,
+                               winner=ranking[0] if ranking else "", reason=reason, tags=tags, annotator=annotator,
+                               at=datetime.now(UTC).isoformat())
+    probs = validate_record(rec)
+    if probs:
+        raise ValueError("; ".join(probs))
+    search = {r["page_id"]: r for r in runner.ws.read_json("layout_search.json")}
+    feats = {c["candidate_id"]: candidate_features(c["genes"], c["metrics"]) for c in search[page_id]["top"]}
+    PreferenceMemory(db_url).record_ranking([labels[x] for x in ranking], reasons=[reason, *(f"tag:{t}" for t in tags)],
+                                            annotator=annotator, features=feats, job_id=runner.job.job_id,
+                                            page_id=page_id)
+    path = dataset or get_settings().artifacts_dir / "preference" / "abc_dataset.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(rec.model_dump_json() + "\n")
+    return rec

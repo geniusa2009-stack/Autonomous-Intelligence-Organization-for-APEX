@@ -140,11 +140,23 @@ def cases() -> list[Case]:
                       lambda html: html.replace("</style>", ".blk-paragraph{color:#D5DBE3}</style>"))),
         Case("overflow_detect", "detect:qa.overflow",
              lambda: (_node(NodeType.FUNDING_CHAPTER, [H] + _paragraphs(40)), _g(base_font_px=18.0), None)),
+        Case("arabic_letter_spacing_detect", "detect:qa.arabic_letter_spacing",
+             lambda: (_node(NodeType.OPENING, [H] + _paragraphs(1)), _g(),
+                      lambda html: html.replace("</style>", ".blk-heading{letter-spacing:.12em}</style>"))),
+        Case("arabic_italic_detect", "detect:qa.arabic_italic",
+             lambda: (_node(NodeType.OPENING, [H] + _paragraphs(1)), _g(),
+                      lambda html: html.replace("</style>", ".blk-paragraph{font-style:italic}</style>"))),
+        Case("arabic_tight_leading_detect", "detect:qa.arabic_leading",
+             lambda: (_node(NodeType.OPENING, [H] + _paragraphs(2)), _g(),
+                      lambda html: html.replace("</style>", ".blk-paragraph{line-height:1.45 !important}</style>"))),
+        Case("arabic_typography_clean", "pass:qa.arabic_letter_spacing",
+             lambda: (_node(NodeType.OPENING, [H] + _paragraphs(2)), _g(), None)),
         Case("print_fidelity", "pass:print",
              lambda: (_node(NodeType.OPENING, [H] + _paragraphs(1)), _g(), None)),
         Case("screenshot_to_code_regression", "not_measured:requires ScreenCoder/DCGen (not available on a $0 "
                                               "licence-verified route)", lambda: (None, None, None)),  # type: ignore[arg-type]
-        Case("graphic_design_bench_gdb", "not_measured:GraphicDesignBench dataset not downloaded; licence unverified",
+        Case("graphic_design_bench_gdb", "not_measured:GDB runs separately (apex-one bench gdb): lica-gdb is installed, "
+                                         "but the full dataset host (Hugging Face) is unreachable from this container",
              lambda: (None, None, None)),  # type: ignore[arg-type]
     ]
 

@@ -10,8 +10,11 @@ from apex_one.research.swarm import plan_workers
 MODE_PARAMS = {
     QualityMode.DRAFT: dict(initial_important=6, initial_other=4, population=4, generations=1, directions=1),
     QualityMode.STANDARD: dict(initial_important=12, initial_other=8, population=6, generations=2, directions=1),
-    QualityMode.HIGH: dict(initial_important=20, initial_other=12, population=8, generations=3, directions=2),
-    QualityMode.ULTRA: dict(initial_important=32, initial_other=16, population=10, generations=4, directions=3),
+    QualityMode.HIGH: dict(initial_important=20, initial_other=12, population=8, generations=3, directions=2,
+                           pairwise_pages=2),
+    # Phase 23: ultra evolution — 64 seeded candidates for important pages (APEX_ULTRA_CANDIDATES raises it to 256)
+    QualityMode.ULTRA: dict(initial_important=64, initial_other=16, population=12, generations=5, directions=3,
+                            pairwise_pages=4),
 }
 
 
@@ -55,3 +58,12 @@ class Governor:
                          f"{params['initial_other']} otherwise; population {params['population']}; "
                          f"{params['generations']} generations; {params['directions']} creative directions",
                          f"retry budget per failure kind: {job.policy.retry.max_recovery_loops}"])
+
+
+def ultra_candidates(base: int) -> int:
+    """Seeded candidates for an important page in ULTRA mode: 64 by default, APEX_ULTRA_CANDIDATES in [64, 256]."""
+    import os
+
+    raw = os.environ.get("APEX_ULTRA_CANDIDATES", "")
+    n = int(raw) if raw.isdigit() else base
+    return max(64, min(256, n))

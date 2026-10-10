@@ -54,7 +54,9 @@ class LocalServer:
             raise FileNotFoundError(f"llama-server not built at {binary}")
         model, mmproj = self.model_files()
         cmd = [str(binary), "-m", str(model), "--host", "127.0.0.1", "--port", str(self.spec.port),
-               "-c", str(self.spec.ctx), "-t", str(self.threads), "--jinja", "--alias", self.spec.key, "--no-webui"]
+               "-c", str(self.spec.ctx), "-t", str(self.threads), "--jinja", "--alias", self.spec.key, "--no-webui",
+               # one sequential client: a single slot and a small prompt cache keep RAM for the next model
+               "-np", "1", "--cache-ram", "512"]
         if mmproj is not None and self.spec.vision:
             cmd += ["--mmproj", str(mmproj)]
         log = self.logfile.open("ab")

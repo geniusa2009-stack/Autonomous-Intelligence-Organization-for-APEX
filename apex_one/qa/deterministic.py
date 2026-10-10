@@ -16,7 +16,7 @@ from apex_one.qa.geometry import check_geometry
 from apex_one.qa.hierarchy import check_hierarchy
 from apex_one.qa.print import check_pdf
 from apex_one.qa.rtl import check_rtl
-from apex_one.qa.typography import check_typography
+from apex_one.qa.typography import check_arabic_typography, check_typography
 
 LAYOUT_CRITICAL = {"qa.overflow", "qa.clipping", "qa.collision", "qa.margins", "qa.page_bounds", "qa.long_urls",
                    "qa.rtl_direction"}
@@ -41,6 +41,7 @@ def page_qa(page: dict, genome: DesignGenome, locks: list[FactLock], *, allowed_
     limits = {**inv["typography"]}
     for fn in (lambda: check_geometry(page, float(inv["page"]["min_margin_mm"]), limits),
                lambda: check_typography(page, inv["typography"], list(inv["fonts"].values())),
+               lambda: check_arabic_typography(page),
                lambda: check_rtl(page, html_dir),
                lambda: check_accessibility(page),
                lambda: check_brand(page, inv, fonts_loaded),
@@ -94,7 +95,8 @@ def document_qa(metrics: dict, genome: DesignGenome, locks: list[FactLock], *, a
         report.issues += pq.issues
     for name, method in (("design.typography", "typography rules"), ("rtl.quality", "bidi rules"),
                          ("design.brand_fit", "brand invariants"), ("design.hierarchy", "DOM saliency"),
-                         ("accessibility.contrast", "WCAG contrast"), ("geometry.alignment", "edge alignment")):
+                         ("accessibility.contrast", "WCAG contrast"), ("geometry.alignment", "edge alignment"),
+                         ("typography.arabic", "Arabic typography rules")):
         report.metrics[name] = _mean([pq.metrics[name] for pq in pages if name in pq.metrics], name, method)
     fact_issues, fact_metrics = check_dom_facts(metrics["pages"], locks, allowed_years)
     report.metrics.update(fact_metrics)

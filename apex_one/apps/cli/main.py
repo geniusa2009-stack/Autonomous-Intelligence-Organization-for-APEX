@@ -26,6 +26,8 @@ local_app = typer.Typer(help="Local open-weight models: explicit acquisition (OC
 app.add_typer(local_app, name="local")
 assets_app = typer.Typer(help="APEX brand asset contract (assets/apex): placeholders fail the Brand Production Gate.")
 app.add_typer(assets_app, name="assets")
+preference_app = typer.Typer(help="A/B/C design preference dataset (human judgements; never auto-trained).")
+app.add_typer(preference_app, name="preference")
 genome_app = typer.Typer(help="Design genome extraction from approved/rejected documents (principles, never copies).")
 app.add_typer(genome_app, name="genome")
 console = Console()
@@ -127,6 +129,11 @@ def providers_live_test(out: Path = typer.Option(None), structured: bool = typer
                              "detail": "not acquired (apex-one local acquire)"})
                 continue
             if not LocalServer(spec).healthy():
+                stored_path = get_settings().artifacts_dir / "live" / "local_live_results.json"
+                stored = json.loads(stored_path.read_text()).get(spec.key) if stored_path.exists() else None
+                if stored:   # measured earlier while its server was up (one model fits in RAM at a time)
+                    rows.append({**stored, "detail": f"stored live result from {stored.get('at')}"})
+                    continue
                 rows.append({"provider": "llamacpp_local", "model": spec.key, "status": "UNKNOWN",
                              "detail": "acquired but server not running (apex-one local serve)"})
                 continue
@@ -441,6 +448,30 @@ def prefer(job_id: str, page: str = typer.Option(..., help="page id"),
     pairs = PreferenceMemory().record_ranking(ids, reasons=[x.strip() for x in reasons.split(",") if x.strip()],
                                               annotator=by, features=feats, job_id=job_id, page_id=page)
     console.print(f"recorded {len(pairs)} preference pairs")
+
+
+@preference_app.command("sheet")
+def preference_sheet(job_id: str, page: str = typer.Option(None, help="page id (default: every important page)")):
+    """Render the tournament finalists of a page as an A/B/C sheet with separate metrics."""
+    from apex_one.memory.preference import build_abc_sheet
+
+    r = _runner(job_id)
+    pages = [page] if page else [n.node_id for n in r._ast().pages() if n.importance >= 4]
+    for pid in pages:
+        res = build_abc_sheet(r, pid)
+        console.print(f"{pid}: {res['sheet']}  {res['labels']}")
+
+
+@preference_app.command("record")
+def preference_record(job_id: str, page: str = typer.Option(...), ranking: str = typer.Option(..., help="e.g. B,A,C"),
+                      reason: str = typer.Option(...), tags: str = typer.Option("", help="comma separated"),
+                      by: str = typer.Option(..., help="annotator name")):
+    """Record a human A/B/C judgement (winner, ranking, reason, tags)."""
+    from apex_one.memory.preference import record_abc
+
+    rec = record_abc(_runner(job_id), page, [x.strip().upper() for x in ranking.split(",") if x.strip()], reason,
+                     [t.strip() for t in tags.split(",") if t.strip()], by)
+    console.print(f"recorded: winner {rec.winner} ({rec.labels[rec.winner]}), ranking {rec.ranking}, tags {rec.tags}")
 
 
 @facts_app.command("list")

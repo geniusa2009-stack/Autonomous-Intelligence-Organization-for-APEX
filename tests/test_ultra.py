@@ -325,3 +325,101 @@ def test_council_document_metrics_and_weak_pages():
     assert dm["VisualHierarchyJudge"].name == "council.visual_hierarchy"
     weak = weak_pages(reviews)
     assert list(weak) == ["p2"] and any("critical" in w for w in weak["p2"])
+
+
+class _FakeBroker:
+    """Answers pairwise prompts: 'fair' prefers the page whose image is `good`; 'biased' always says A."""
+
+    def __init__(self, good_b64: str):
+        self.good = good_b64
+
+    def complete(self, req, messages, **kw):
+        from types import SimpleNamespace
+
+        imgs = messages[0].images_b64_png
+        if req.model_id == "fair":
+            w = "A" if imgs[0] == self.good else "B"
+        else:
+            w = "A"
+        return SimpleNamespace(executed=True, text=json.dumps({"winner": w, "reason": "r"}),
+                               decision=SimpleNamespace(outcome=SimpleNamespace(value="EXECUTED")))
+
+
+def test_pairwise_counts_only_order_consistent_votes(tmp_path):
+    from apex_one.vision.council import encode_png
+    from apex_one.vision.pairwise import PairwiseJudge
+
+    good = _page_png(tmp_path / "good.png", dark=False, hero=True)
+    bad = _page_png(tmp_path / "bad.png", dark=True, hero=False)
+    broker = _FakeBroker(encode_png(good, 640))
+    res = PairwiseJudge(broker, ["fair"]).compare(bad, good, "intent")
+    assert res.winner == "second" and res.votes == {"fair": "second"}
+    biased = PairwiseJudge(broker, ["biased"]).compare(bad, good, "intent")
+    assert biased.winner is None and "position bias" in biased.disagreements[0]
+    # one consistent vote out of two judges is not a strict majority
+    assert PairwiseJudge(broker, ["fair", "biased"]).compare(bad, good, "intent").winner is None
+
+
+def test_ultra_candidate_budget(monkeypatch):
+    from apex_one.core.governor.governor import MODE_PARAMS, ultra_candidates
+    from apex_one.core.schemas.mission import QualityMode
+
+    assert MODE_PARAMS[QualityMode.ULTRA]["initial_important"] == 64
+    assert ultra_candidates(64) == 64
+    monkeypatch.setenv("APEX_ULTRA_CANDIDATES", "512")
+    assert ultra_candidates(64) == 256
+    monkeypatch.setenv("APEX_ULTRA_CANDIDATES", "128")
+    assert ultra_candidates(64) == 128
+
+
+def test_abc_record_validation():
+    from apex_one.memory.preference import APEXPreferenceRecord, validate_record
+
+    ok = APEXPreferenceRecord(job_id="J", page_id="P", labels={"A": "1", "B": "2", "C": "3"}, ranking=["B", "A", "C"],
+                              winner="B", reason="clearer deadline", tags=["hierarchy", "numbers"], annotator="dir")
+    assert validate_record(ok) == []
+    bad = ok.model_copy(update={"ranking": ["B", "A"], "winner": "A", "tags": ["vibes"], "reason": " "})
+    assert len(validate_record(bad)) == 4
+
+
+def _row(system, ptype, val, critical=False, contract=()):
+    return {"system": system, "page_type": ptype, "produced": True, "critical": critical, "contract": list(contract),
+            "metrics": {m: val for m in ("design.hierarchy", "design.typography", "design.brand_fit")}}
+
+
+def test_moe_routes_by_measured_evidence_and_semantic_family(registry):
+    from apex_one.design.models.moe import DesignMoE
+
+    rows = [_row("native-tournament", "Timeline", 92), _row("native-baseline", "Timeline", 80),
+            _row("llm:gemma-multimodal", "Timeline", 99), _row("llm:qwen-vl-current", "Timeline", 100, critical=True),
+            _row("native-baseline", "Cover", 95), _row("native-tournament", "Cover", 90)]
+    moe = DesignMoE(registry, rows, k=2)
+    ev = moe.route("Timeline", purpose="evaluation")
+    assert ev.gate == "exact-type" and ev.experts == ["llm:gemma-multimodal", "native-tournament"]
+    prod = moe.route("Timeline", purpose="production")      # UNKNOWN licences never route for production
+    assert prod.experts == ["native-tournament", "native-baseline"] and "llm:gemma-multimodal" in prod.excluded
+    fam = moe.route("Checklist", purpose="production")      # no Checklist evidence -> same reading family (scan)
+    assert fam.gate == "family" and fam.experts[0] == "native-tournament"
+    assert moe.route("Breath").experts[0] == "native-baseline"   # glance family evidence (Cover)
+    assert DesignMoE(registry, [], k=2).route("Closing").gate == "default"
+
+
+def test_arabic_typography_rules():
+    from apex_one.qa.typography import check_arabic_typography
+
+    def item(**kw):
+        base = {"id": "b", "role": "paragraph", "text": "النص العربي هنا", "fontPx": 16, "lineHeightPx": 28, "lines": 3,
+                "letterSpacing": "normal", "fontStyle": "normal"}
+        return {**base, **kw}
+
+    clean, m = check_arabic_typography({"pageId": "p", "items": [item()]})
+    assert clean == [] and m["typography.arabic"].value == 100
+    issues, m = check_arabic_typography({"pageId": "p", "items": [
+        item(letterSpacing="1.92px"), item(fontStyle="italic"), item(lineHeightPx=22),
+        item(text="هل تقدر?  ده مهم, جداً"), item(text="مـــهم")]})
+    checks = {i.check for i in issues}
+    assert checks == {"qa.arabic_letter_spacing", "qa.arabic_italic", "qa.arabic_leading", "qa.arabic_punctuation",
+                      "qa.arabic_tatweel"}
+    assert any(i.severity == "critical" for i in issues) and m["typography.arabic"].value < 60
+    _, m = check_arabic_typography({"pageId": "p", "items": [item(text="English only")]})
+    assert m["typography.arabic"].value is None

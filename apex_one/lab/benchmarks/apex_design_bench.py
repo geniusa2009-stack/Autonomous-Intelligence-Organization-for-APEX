@@ -146,7 +146,7 @@ def _summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | None = None, *,
                           population: int = 10, generations: int = 4, initial: int = 32,
-                          only_types: list[str] | None = None) -> dict[str, Any]:
+                          only_types: list[str] | None = None, include_native: bool = True) -> dict[str, Any]:
     from apex_one.compute.broker import ComputeBroker
     from apex_one.compute.providers import ChatMessage
     from apex_one.core.governor.runner import JobRunner
@@ -200,22 +200,23 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
             page = compile_page(node, _baseline_genes(node), genome, lock_map, page_no=i, total_pages=total,
                                 synthetic=runner.synthetic, seed=7)
             base_html = compile_document([page], genome, title=f"bench-{ptype}", synthetic=runner.synthetic)
-            mets, crit, shot = measure(r, base_html, f"{ptype}--native-baseline", node)
-            record({"system": "native-baseline", "page_type": ptype, "produced": True, "metrics": mets,
-                    "critical": crit, "contract": [], "latency_s": round(time.perf_counter() - t0, 1),
-                    "screenshot": str(shot) if shot else None, "detail": "editorial-column defaults"})
-            # tournament
-            t0 = time.perf_counter()
-            out = t.run_page(node, i, total, [], initial=initial)
-            best = out.best
-            page = compile_page(node, best.genes, genome, lock_map, page_no=i, total_pages=total,
-                                synthetic=runner.synthetic, seed=runner.job.policy.seed + i)
-            html = compile_document([page], genome, title=f"bench-{ptype}", synthetic=runner.synthetic)
-            mets, crit, shot = measure(r, html, f"{ptype}--native-tournament", node)
-            record({"system": "native-tournament", "page_type": ptype, "produced": True, "metrics": mets,
-                    "critical": crit, "contract": [], "latency_s": round(time.perf_counter() - t0, 1),
-                    "screenshot": str(shot) if shot else None,
-                    "detail": f"{best.genes.archetype}/{best.genes.tone}; evaluated {out.evaluated}"})
+            if include_native:
+                mets, crit, shot = measure(r, base_html, f"{ptype}--native-baseline", node)
+                record({"system": "native-baseline", "page_type": ptype, "produced": True, "metrics": mets,
+                        "critical": crit, "contract": [], "latency_s": round(time.perf_counter() - t0, 1),
+                        "screenshot": str(shot) if shot else None, "detail": "editorial-column defaults"})
+                # tournament
+                t0 = time.perf_counter()
+                out = t.run_page(node, i, total, [], initial=initial)
+                best = out.best
+                page = compile_page(node, best.genes, genome, lock_map, page_no=i, total_pages=total,
+                                    synthetic=runner.synthetic, seed=runner.job.policy.seed + i)
+                html = compile_document([page], genome, title=f"bench-{ptype}", synthetic=runner.synthetic)
+                mets, crit, shot = measure(r, html, f"{ptype}--native-tournament", node)
+                record({"system": "native-tournament", "page_type": ptype, "produced": True, "metrics": mets,
+                        "critical": crit, "contract": [], "latency_s": round(time.perf_counter() - t0, 1),
+                        "screenshot": str(shot) if shot else None,
+                        "detail": f"{best.genes.archetype}/{best.genes.tone}; evaluated {out.evaluated}"})
             # local LLM page generators
             for mid in llm_models or []:
                 t0 = time.perf_counter()
@@ -237,8 +238,9 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
                 record({"system": f"llm:{mid}", "page_type": ptype, "produced": True, "metrics": mets,
                         "critical": crit, "contract": probs, "latency_s": lat,
                         "screenshot": str(shot) if shot else None, "detail": f"{len(section)} chars"})
-    summary = {"job_id": job_id, "page_types": [n.semantic_type.value for n in nodes],
-               "systems": _summarise(rows), "rows": len(rows),
+    all_rows = [json.loads(x) for x in rows_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+    summary = {"job_id": job_id, "page_types": sorted({r["page_type"] for r in all_rows}),
+               "systems": _summarise(all_rows), "rows": len(all_rows),
                "note": "separate metrics per system; no single aggregate score by design"}
     (out_dir / "apex_design_bench.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     return summary

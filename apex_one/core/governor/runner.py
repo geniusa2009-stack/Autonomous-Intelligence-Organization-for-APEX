@@ -19,7 +19,7 @@ from apex_one import PROMPT_TEMPLATE_VERSION, WORKFLOW_VERSION
 from apex_one.compute.broker import ComputeBroker
 from apex_one.compute.hardware import find_chromium
 from apex_one.compute.registry.loader import ArsenalRegistry, load_registry
-from apex_one.core.governor.governor import MODE_PARAMS, Governor, quality_profile
+from apex_one.core.governor.governor import MODE_PARAMS, Governor, quality_profile, ultra_candidates
 from apex_one.core.governor.mission import MissionAnalyzer
 from apex_one.core.policies.cost import COST_POLICY
 from apex_one.core.schemas.common import Metric, MetricStatus, utcnow
@@ -422,6 +422,14 @@ class JobRunner:
         router = self._design_router()
         intents = [derive_intent(n) for n in ast.pages()]
         routes = [router.route_for(n.semantic_type.value).to_dict() for n in ast.pages()]
+        from apex_one.design.models.moe import NATIVE, DesignMoE
+
+        moe = DesignMoE(self.registry)
+        for route, n in zip(routes, ast.pages()):
+            ch = moe.route(n.semantic_type.value, purpose="production")
+            executed = next((e for e in ch.experts if e in NATIVE), "native-tournament")
+            route["experts"] = {"gate": ch.gate, "ranked": ch.experts, "executed": executed,
+                                "evidence": ch.evidence, "excluded": ch.excluded}
         self.ws.write_json("design_intent.json", intents)
         self.ws.write_json("design_routes.json", routes)
         return S.CREATIVE_DIRECTIONS
@@ -489,6 +497,7 @@ class JobRunner:
         geometry_loops = self.sm.recovery_counts.get(FailureKind.GEOMETRY.value, 0)
         with Renderer() as r:
             t = self._tournament(r, direction, "search", seed_offset=geometry_loops * 1000)
+            pairwise_left = p.get("pairwise_pages", 0) if self._pairwise_judges() else 0
             prev: list[Chosen] = []
             pages = ast.pages()
             for i, n in enumerate(pages, 1):
@@ -500,19 +509,55 @@ class JobRunner:
                                        best.occupancy))
                     continue
                 initial = p["initial_important"] if n.importance >= 4 else p["initial_other"]
+                if n.importance >= 4 and self.mode == QualityMode.ULTRA:
+                    initial = ultra_candidates(initial)
                 out = t.run_page(n, i, len(pages), prev, initial=initial)
+                pw = None
+                if n.importance >= 4 and pairwise_left > 0 and len(out.top) >= 2:
+                    pairwise_left -= 1
+                    pw = self._pairwise_finalists(t, n, out)
                 prev.append(Chosen(n.node_id, out.best.genes.archetype, out.best.genes.tone,
                                    out.best.structural_signature, out.best.occupancy))
                 results.append({"page_id": n.node_id, "node_type": n.semantic_type.value,
                                 "evaluated": out.evaluated, "generations": out.generations,
                                 "rejected_critical": out.rejected_critical, "fitness_history": out.history,
-                                "top": [c.model_dump(mode="json") for c in out.top]})
+                                "pairwise": pw, "top": [c.model_dump(mode="json") for c in out.top]})
         self.ws.write_json("layout_search.json", results)
         if self.ws.exists("layout_redo.json"):
             (self.ws.root / "layout_redo.json").unlink()
         self.checks(S.LAYOUT_SEARCH, {"layout.candidates_generated": (True, str(sum(x["evaluated"] for x in results))),
                                       "layout.license_safe_engines": True})
         return S.LAYOUT_TOURNAMENT
+
+    def _pairwise_judges(self) -> list[str]:
+        from apex_one.vision.council import reliable_judges
+
+        return reliable_judges()[0]
+
+    def _pairwise_finalists(self, t, node, out) -> dict:
+        """Phase 23: the two best locally-filtered finalists go to the calibrated pairwise council. A consistent
+        majority adds a transparent +5 preference to the winner's fitness; ties leave the deterministic order."""
+        from apex_one.vision.pairwise import PairwiseJudge
+
+        a, b = out.top[0], out.top[1]
+        if not (a.screenshot_path and b.screenshot_path):
+            return {"status": "NOT_MEASURED", "reason": "finalist screenshots missing"}
+        intent = f"{node.semantic_type.value}, reading mode {node.reading_mode.value}"
+        res = PairwiseJudge(self.broker, self._pairwise_judges(), workspace=self.ws).compare(
+            t.dir / a.screenshot_path, t.dir / b.screenshot_path, intent)
+        record = {"status": "MEASURED", "first": a.candidate_id, "second": b.candidate_id, **res.as_dict()}
+        if res.winner:
+            win, lose = (a, b) if res.winner == "first" else (b, a)
+            win.metrics["pairwise_preference"] = Metric.measured("pairwise_preference", 100, "order-swapped pairwise "
+                                                                 "council (consistent majority)", evidence=[str(res.votes)])
+            lose.metrics["pairwise_preference"] = Metric.measured("pairwise_preference", 0, "lost pairwise council",
+                                                                  evidence=[str(res.votes)])
+            win.fitness = round((win.fitness or 0.0) + 5.0, 3)
+            win.rationale = [*win.rationale, "pairwise council preferred (+5)"]
+            out.top.sort(key=lambda c: -(c.fitness or -1e9))
+            out.best = out.top[0]
+        self.ws.events.emit("pairwise", page=node.node_id, winner=res.winner, disagreements=res.disagreements)
+        return record
 
     def h_layout_tournament(self) -> S:
         """Document-level tournament: choose one of each page's top candidates to maximise total fitness

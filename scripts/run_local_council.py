@@ -24,6 +24,24 @@ def log(msg: str) -> None:
     print(time.strftime("%H:%M:%S"), msg, flush=True)
 
 
+def record_local_live(spec) -> dict:
+    """Phase 14: the real structured-output live test on this model's local route, stored for the live report."""
+    from apex_one.compute.live import live_test_route
+    from apex_one.compute.registry import load_registry
+
+    reg = load_registry()
+    m = reg.models.get(spec.registry_model)
+    route = next((r for r in (m.routes if m else []) if r.provider == "llamacpp_local"
+                  and r.provider_model_id == spec.key), None)
+    rec = live_test_route(reg, m, route) if route else {"status": "UNKNOWN", "detail": "no local route in registry"}
+    path = get_settings().artifacts_dir / "live" / "local_live_results.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = json.loads(path.read_text()) if path.exists() else {}
+    data[spec.key] = rec
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+    return rec
+
+
 def main(keys: list[str]) -> None:
     _, specs = load_catalogue()
     bench = get_settings().artifacts_dir / "bench"
@@ -50,6 +68,9 @@ def main(keys: list[str]) -> None:
             continue
         broker = ComputeBroker()
         rid = spec.registry_model
+        log(f"{key}: live structured test")
+        live = record_local_live(spec)
+        log(f"{key}: live {live.get('status')} correct={live.get('structured_correct')} {live.get('structured_ms')} ms")
         if spec.vision and (calib / "calibration_pages.json").exists():
             log(f"{key}: vision calibration")
             res = run_calibration([rid], calib)

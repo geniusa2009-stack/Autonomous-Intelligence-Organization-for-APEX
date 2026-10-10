@@ -13,6 +13,7 @@ critical:
 targets:
   reader_comprehension:   {threshold: 95, metric: reader.comprehension}
   typography:             {threshold: 95, metric: design.typography}
+  arabic_typography:      {threshold: 98, metric: typography.arabic}
   visual_hierarchy:       {threshold: 95, metric: design.hierarchy}
   apex_brand_fit:         {threshold: 95, metric: design.brand_fit}
   editorial_quality:      {threshold: 95, metric: editorial.quality}

@@ -67,6 +67,7 @@
           .map(x => parseFloat(getComputedStyle(x).fontSize) || 0)), fontFamily: cs.fontFamily, fontWeight: cs.fontWeight,
         lineHeightPx: parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5,
         color: cs.color, bg: effectiveBg(el), dir: cs.direction, textAlign: cs.textAlign,
+        letterSpacing: cs.letterSpacing, fontStyle: cs.fontStyle, textTransform: cs.textTransform,
         lines: lines.length, lineWidths: widths, chars: text.length, text: text.slice(0, 400), diffText: diffText.slice(0, 600),
         overflowX: el.scrollWidth - el.clientWidth, overflowY: el.scrollHeight - el.clientHeight,
         overflowStyle: cs.overflowX + '/' + cs.overflowY,
