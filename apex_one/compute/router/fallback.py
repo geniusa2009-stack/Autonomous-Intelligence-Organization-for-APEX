@@ -24,6 +24,25 @@ NATIVE_FALLBACK_TASKS = {
     "reader.simulate", "research.query_plan",
 }
 WAIT_THRESHOLD_SECONDS = 60.0
+_LOCAL_CACHE: dict[str, tuple[float, bool]] = {}
+
+
+def local_endpoint_ok(base_url: str, ttl: float = 20.0) -> tuple[bool, str]:
+    """Per-route health for local llama-server instances (each model has its own port)."""
+    import time
+
+    import httpx
+
+    now = time.time()
+    hit = _LOCAL_CACHE.get(base_url)
+    if hit and now - hit[0] < ttl:
+        return hit[1], "" if hit[1] else "local server not running (cached)"
+    try:
+        ok = httpx.get(base_url.rstrip("/").removesuffix("/v1") + "/health", timeout=1.5).status_code == 200
+    except httpx.HTTPError:
+        ok = False
+    _LOCAL_CACHE[base_url] = (now, ok)
+    return ok, "" if ok else f"local server not running at {base_url} (apex-one local serve)"
 
 
 class FallbackPlanner:
@@ -46,11 +65,15 @@ class FallbackPlanner:
             if fw.verdict == FirewallVerdict.BLOCK:
                 considered.append({**entry, "rejected": "firewall", "reasons": fw.reasons})
                 continue
-            ok, why = self.health.usable(cand.route.provider)
+            if cand.route.base_url and self.router.registry.providers[cand.route.provider].kind == "local":
+                ok, why = local_endpoint_ok(cand.route.base_url)
+            else:
+                ok, why = self.health.usable(cand.route.provider)
             if not ok:
                 considered.append({**entry, "rejected": "health", "reasons": [why]})
                 continue
-            if cand.route.provider in self.health.state and self.health.get(cand.route.provider).verified_model_ids:
+            if not cand.route.base_url and cand.route.provider in self.health.state and \
+                    self.health.get(cand.route.provider).verified_model_ids:
                 ids = self.health.get(cand.route.provider).verified_model_ids
                 if cand.route.provider_model_id not in ids:
                     considered.append({**entry, "rejected": "model_not_listed",

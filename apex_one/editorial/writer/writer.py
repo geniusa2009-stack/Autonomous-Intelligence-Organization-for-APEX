@@ -183,11 +183,13 @@ class APEXEgyptianWriter:
                 lk = self.locks[slot]
                 tpl = ("حوالي " if lk.hedge else "") + "{{" + slot + "}}"
                 node.content.append(self.block("stat", tpl, label=label, hedge=lk.hedge))
+        # Decision-critical yes/no facts are scannable ledger rows, never footnotes (Reader Lab finding:
+        # skimming personas missed them when they were small notes).
         if "test_requirement.sat_act" in self.locks:
-            node.content.append(self.block("note", "الـ [[SAT]] والـ [[ACT]]: {{test_requirement.sat_act?مطلوبين|مش مطلوبين}}، "
-                                                   "لكن الإنجليزي مطلوب."))
+            node.content.append(self.block("stat", "{{test_requirement.sat_act?مطلوبين|مش مطلوبين}}",
+                                           label="الـ [[SAT]] والـ [[ACT]]", textual=True))
         if "eligibility.financial_need" in self.locks:
-            node.content.append(self.block("note", "شرط أساسي: {{eligibility.financial_need}}."))
+            node.content.append(self.block("stat", "{{eligibility.financial_need}}", label="شرط أساسي", textual=True))
         if self.voice.ctas:
             node.content.append(self.block("cta", "أول خطوة: " + self.voice.ctas[(self.seed + 2) % len(self.voice.ctas)]))
         for slot in sp.emphasis_slots:

@@ -79,6 +79,16 @@ class DesignMemory(_Store):
         return out
 
 
+    def layout_references(self, limit: int = 400) -> dict[str, dict]:
+        """Approved layouts + layouts of previous guides, for the anti-copy engine (geometry, not pixels)."""
+        refs = {}
+        for r in self.all(limit):
+            occ = (r.payload or {}).get("occupancy")
+            if occ and r.verdict in ("approved", "neutral"):
+                refs[f"memory:{r.job_id}:{r.key}"] = {"grid": occ, "signature": r.key}
+        return refs
+
+
 class VoiceMemory(_Store):
     """Approved/rejected phrasing from human edits."""
     row = VoiceMemoryRow

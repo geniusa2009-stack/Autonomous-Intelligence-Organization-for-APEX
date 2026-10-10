@@ -1,0 +1,42 @@
+# Local model acquisition catalogue (explicit selection only — nothing downloads automatically).
+# Source: Docker Hub official `ai/` model catalogue (OCI artifacts, GGUF), reachable from this environment.
+# Each entry maps an APEX registry model id to a concrete, size-checked artifact. Runtime: llama.cpp `llama-server`.
+schema_version: 1
+runtime:
+  server_binary: var/build/llama_cpp_python-0.3.36/vendor/llama.cpp/build/bin/llama-server
+  models_dir: var/models
+  host: 127.0.0.1
+models:
+  - key: gpt-oss-20b-mxfp4
+    registry_model: gpt-oss-20b
+    source: {kind: oci, registry: registry-1.docker.io, repository: ai/gpt-oss, tag: latest}
+    port: 8091
+    ctx: 8192
+    vision: false
+    approx_gb: 12.1
+    min_ram_gb: 14
+    chat_template_kwargs: {reasoning_effort: low}
+  - key: nemotron-3-nano-4b-q4km
+    registry_model: nemotron-nano-omni
+    source: {kind: oci, registry: registry-1.docker.io, repository: ai/nemotron-3-nano, tag: 4b}
+    port: 8092
+    ctx: 8192
+    vision: false
+    approx_gb: 2.9
+    min_ram_gb: 5
+  - key: qwen3-vl-4b-q4kxl
+    registry_model: qwen-vl-current
+    source: {kind: oci, registry: registry-1.docker.io, repository: ai/qwen3-vl, tag: 4B-UD-Q4_K_XL}
+    port: 8093
+    ctx: 8192
+    vision: true
+    approx_gb: 3.3
+    min_ram_gb: 6
+  - key: gemma3-4b-q4km
+    registry_model: gemma-multimodal
+    source: {kind: oci, registry: registry-1.docker.io, repository: ai/gemma3, tag: 4b-q4_K_M}
+    port: 8094
+    ctx: 8192
+    vision: true
+    approx_gb: 3.3
+    min_ram_gb: 6

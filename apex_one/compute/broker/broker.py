@@ -83,7 +83,7 @@ class ComputeBroker:
     # ---------- execution ----------
     def complete(self, req: CapabilityRequest, messages: list[ChatMessage], *, job_id: str | None = None,
                  workspace: JobWorkspace | None = None, max_tokens: int = 1024, temperature: float = 0.2,
-                 json_mode: bool = False) -> BrokerResult:
+                 json_mode: bool = False, timeout: float = 60.0) -> BrokerResult:
         exclude: set[tuple[str, str]] = set()
         calls: list[ModelCallRecord] = []
         decision: RoutingDecision | None = None
@@ -103,7 +103,7 @@ class ComputeBroker:
                                      prompt_template_version=PROMPT_TEMPLATE_VERSION)
             try:
                 res = adapter.chat(fw, cand.route, messages, max_tokens=max_tokens, temperature=temperature,
-                                   json_mode=json_mode)
+                                   json_mode=json_mode, timeout=timeout)
             except ProviderError as e:
                 record.outcome, record.error = f"error:{e.kind}", redact_text(str(e))[:300]
                 calls.append(record)

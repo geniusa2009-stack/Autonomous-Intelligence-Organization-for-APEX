@@ -9,8 +9,9 @@ Decision table (all must hold for ALLOW):
                                               OR human attestation 'free_tier_no_billing')
      A live observation of any non-zero price blocks, even if an attestation exists.
   4. OpenRouter routes must be ':free' variants.
-  5. Licence: production purpose requires a VERIFIED production licence; research purpose
-     requires a licence that is not BLOCKED.
+  5. Licence: production purpose requires a VERIFIED production licence; research and evaluation
+     purposes require a licence that is not BLOCKED. Evaluation output (judgements, benchmark scores)
+     never enters a deliverable; the release LicenseGuard enforces that.
   6. Provider terms: production purpose on a remote provider requires terms verification.
   7. Privacy: private student data only to providers that allow it (local by default).
   8. Estimated cost must be exactly 0.0.
@@ -122,7 +123,7 @@ class ZeroCostFirewall:
             if provider.kind == "mock":
                 reasons.append("mock provider can never serve production output")
         elif not self.registry.research_allowed(model):
-            reasons.append("licence BLOCKED even for research")
+            reasons.append(f"licence BLOCKED even for {request.purpose}")
 
         # Privacy
         if request.privacy_class == "private-student-data" and not provider.privacy.private_student_data_allowed:

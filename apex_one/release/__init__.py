@@ -11,6 +11,9 @@ from apex_one.compute.registry.loader import ArsenalRegistry
 from apex_one.core.schemas.common import Metric
 from apex_one.core.security import contains_secret
 
+# Model calls with these task prefixes only JUDGE or MEASURE; their text never enters final.html/final.pdf.
+EVALUATION_TASKS = ("vision.", "bench.", "eval.", "live.")
+
 REQUIRED_ARTIFACTS = ["final.html", "final.pdf", "sources.json", "evidence.json", "claims.json", "contradictions.json",
                       "document_ast.json", "design_decisions.json", "model_routing.json", "quality_report.json",
                       "license_report.json", "contact_sheet.png", "job.json", "execution_plan.json",
@@ -21,7 +24,10 @@ def license_guard(registry: ArsenalRegistry, engines: list[str], model_calls: li
                   purpose: str = "production") -> tuple[dict, Metric]:
     """Every engine/model that contributed to output must be production-allowed (verified licence)."""
     rows, prohibited = [], []
-    used = sorted(set(engines) | {c["model_id"] for c in model_calls if c.get("outcome") == "ok"})
+    content_calls = [c for c in model_calls if c.get("outcome") == "ok" and not str(c.get("task", "")).startswith(EVALUATION_TASKS)]
+    evaluators = sorted({c["model_id"] for c in model_calls if c.get("outcome") == "ok"
+                         and str(c.get("task", "")).startswith(EVALUATION_TASKS)})
+    used = sorted(set(engines) | {c["model_id"] for c in content_calls})
     for mid in used:
         if mid not in registry.models:
             rows.append({"engine": mid, "state": "PIPELINE_STEP", "production_allowed": True})
@@ -34,6 +40,7 @@ def license_guard(registry: ArsenalRegistry, engines: list[str], model_calls: li
         if not ok and purpose == "production":
             prohibited.append(mid)
     report = {"purpose": purpose, "engines": rows, "prohibited_in_output": prohibited,
+              "evaluation_only_models": evaluators,
               "checked_at": datetime.now(UTC).isoformat()}
     return report, Metric.measured("license.prohibited_engines_in_output", len(prohibited),
                                    "licence registry check of every contributing engine", unit="count",

@@ -68,6 +68,7 @@ class LayoutCandidate(ApexModel):
     fitness: float | None = None
     rationale: list[str] = Field(default_factory=list)
     structural_signature: str = ""
+    occupancy: list[int] = Field(default_factory=list)   # 12x16 rendered-block grid (anti-copy engine)
 
 
 class DesignDecision(ApexModel):

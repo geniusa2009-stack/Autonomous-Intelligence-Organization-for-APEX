@@ -80,7 +80,8 @@ class Renderer:
             shots: list[Path] = []
             if screenshot_dir is not None:
                 screenshot_dir.mkdir(parents=True, exist_ok=True)
-                for i, el in enumerate(page.query_selector_all("section.page"), start=1):
+                visible = [el for el in page.query_selector_all("section.page") if el.is_visible()]
+                for i, el in enumerate(visible, start=1):
                     p = screenshot_dir / f"{screenshot_prefix}-{i:02d}.png"
                     el.screenshot(path=str(p))
                     shots.append(p)

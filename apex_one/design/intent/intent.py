@@ -7,7 +7,7 @@ from apex_one.core.schemas.document import DocNode, NodeType
 
 ARCHETYPES_FOR: dict[NodeType, list[str]] = {
     NodeType.COVER: ["cover-monument"],
-    NodeType.OPENING: ["editorial-column", "split-asymmetric", "manifesto"],
+    NodeType.OPENING: ["editorial-column", "split-asymmetric"],   # quiet role: no loud archetypes (hero fatigue)
     NodeType.OPPORTUNITY_SNAPSHOT: ["ledger", "split-asymmetric", "hero-number"],
     NodeType.HERO_FACT: ["hero-number", "manifesto"],
     NodeType.FUNDING_CHAPTER: ["ledger", "split-asymmetric", "editorial-column"],
@@ -16,9 +16,9 @@ ARCHETYPES_FOR: dict[NodeType, list[str]] = {
     NodeType.BREATH: ["quiet-breath"],
     NodeType.APPLICATION_JOURNEY: ["checklist-sheet", "ledger", "split-asymmetric"],
     NodeType.TIMELINE: ["timeline-rail"],
-    NodeType.APEX_TAKE: ["split-asymmetric", "editorial-column", "manifesto"],
+    NodeType.APEX_TAKE: ["split-asymmetric", "editorial-column"],
     NodeType.CHECKLIST: ["checklist-sheet", "timeline-rail"],
-    NodeType.CLOSING: ["manifesto", "editorial-column"],
+    NodeType.CLOSING: ["manifesto"],      # strong close (rhythm analysis: light editorial closings flatten the ending)
 }
 TONE_FOR_RHYTHM = {"loud": "dark", "quiet": "light", "information": "light", "story": "silver", "warning": "light",
                    "breath": "silver", "action": "light", "close": "dark"}
@@ -36,5 +36,6 @@ def derive_intent(node: DocNode) -> DesignIntent:
                         rhythm_role=node.rhythm_role, emphasis=emphasis, density_target=node.visual_density,
                         tone_hint=TONE_FOR_RHYTHM.get(node.rhythm_role, "light"), first_fixation=node.first_fixation,
                         archetype_preferences=prefs,
-                        archetype_strict=node.semantic_type in (NodeType.COVER, NodeType.BREATH, NodeType.TIMELINE),
+                        archetype_strict=node.semantic_type in (NodeType.COVER, NodeType.BREATH, NodeType.TIMELINE,
+                                                               NodeType.CLOSING),
                         rationale=rationale)

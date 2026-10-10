@@ -91,6 +91,7 @@ bdi.term,bdi.url{{unicode-bidi:isolate}}
 .tone-dark .logo{{color:var(--white)}}
 .ledger-row{{display:flex;justify-content:space-between;align-items:baseline;gap:6mm;border-top:1px solid var(--rule)}}
 .ledger-row .stat-label{{display:inline}}
+.blk.stat-text .stat-value{{font-family:var(--f-display);font-weight:500;font-size:1.35em !important;line-height:1.35}}
 .ledger-row .stat-value{{display:inline;text-align:end}}
 .numeral{{font-family:var(--f-fig);color:var(--rule);line-height:.9}}
 .band{{border-top:6px solid var(--accent)}}

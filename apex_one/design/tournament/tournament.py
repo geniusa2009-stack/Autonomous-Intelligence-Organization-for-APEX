@@ -47,6 +47,7 @@ class Chosen:
     archetype: str
     tone: str
     signature: str
+    occupancy: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -64,7 +65,8 @@ class LayoutTournament:
     def __init__(self, genome: DesignGenome, locks: list[FactLock], renderer: Renderer, work_dir: Path, *,
                  population: int, generations: int, elite: int, epsilon: float, seed: int, synthetic: bool,
                  allowed_years: set[int], direction: str = "quiet-precision",
-                 history_signatures: dict[str, str] | None = None, reward_fn=None):
+                 history_signatures: dict[str, str] | None = None, reward_fn=None,
+                 layout_refs: dict[str, dict] | None = None):
         self.genome, self.locks = genome, locks
         self.lock_map = {lk.slot: lk for lk in locks}
         self.renderer, self.dir = renderer, work_dir
@@ -75,6 +77,7 @@ class LayoutTournament:
         self.direction_name = direction
         self.history = history_signatures or {}
         self.reward_fn = reward_fn
+        self.layout_refs = layout_refs or {}
         self.dir.mkdir(parents=True, exist_ok=True)
         ensure_fonts(self.dir)
         self._batch = 0
@@ -123,7 +126,10 @@ class LayoutTournament:
             c.metrics = dict(pq.metrics)
             c.critical_failures = [f"{i.check}: {i.message}" for i in pq.critical]
             c.metrics["density_fit"] = self._density_fit(pm["coverage"], intent.density_target)
-            c.metrics["novelty"] = self._novelty(c, prev)
+            from apex_one.design.similarity import occupancy_grid
+
+            c.occupancy = occupancy_grid(pm)
+            c.metrics["novelty"] = self._novelty(c, prev, strict=intent.archetype_strict)
             if self.reward_fn is not None:
                 c.metrics["specialist_reward"] = self.reward_fn(node, c)
             else:
@@ -138,7 +144,7 @@ class LayoutTournament:
         return Metric.measured("density_fit", max(0.0, 100 - abs(coverage - target) * 250),
                                "coverage vs intent density target", evidence=[f"cov={coverage:.2f}", f"target={target:.2f}"])
 
-    def _novelty(self, c: LayoutCandidate, prev: list[Chosen]) -> Metric:
+    def _novelty(self, c: LayoutCandidate, prev: list[Chosen], strict: bool = False) -> Metric:
         score, why = 100.0, []
         if prev and prev[-1].archetype == c.genes.archetype:
             score -= 35
@@ -156,6 +162,23 @@ class LayoutTournament:
         if c.genes.archetype in loud and sum(1 for p in prev if p.archetype in loud) >= 3:
             score -= 30
             why.append("hero fatigue: already 3+ loud pages")
+        # Phase 22 anti-copy: geometric layout similarity vs this document AND approved/previous layouts
+        from apex_one.design.similarity import MUTATE_AT, REJECT_AT, layout_similarity
+
+        me = {"grid": c.occupancy, "signature": c.structural_signature, "dhash": None}
+        refs = {f"doc:{p.page_id}": {"grid": p.occupancy, "signature": p.signature} for p in prev if p.occupancy}
+        if not strict:   # strict archetypes (cover, breath, timeline, closing) are brand DNA across guides
+            refs.update(self.layout_refs)
+        sims = {k: layout_similarity(me, v) for k, v in refs.items()}
+        if sims:
+            nearest = max(sims, key=sims.get)
+            mx = sims[nearest]
+            if mx >= REJECT_AT:
+                score -= 45
+                why.append(f"LAYOUT_SIMILARITY {mx:.2f} >= {REJECT_AT} vs {nearest} (near-copy)")
+            elif mx >= MUTATE_AT:
+                score -= 20
+                why.append(f"LAYOUT_SIMILARITY {mx:.2f} >= {MUTATE_AT} vs {nearest}")
         verdict = self.history.get(c.structural_signature)
         if verdict == "rejected":
             score -= 30
@@ -182,6 +205,25 @@ class LayoutTournament:
         if c.critical_failures:
             f -= 1000
         return round(f, 3), parts
+
+    def _screenshot_top(self, node: DocNode, top: list[LayoutCandidate], page_no: int, total: int) -> None:
+        """Real screenshots of the finalists: measured visual weight (ink) for document rhythm, and A/B/C images
+        for human preference review."""
+        from apex_one.vision.page import ink_stats
+
+        compiled = [compile_page(node, c.genes, self.genome, self.lock_map, page_no=page_no, total_pages=total,
+                                 synthetic=self.synthetic, seed=self.seed + page_no, scope=f"c-{c.candidate_id}")
+                    for c in top]
+        path = self.dir / f"top-{node.node_id}.html"
+        path.write_text(compile_document(compiled, self.genome, title="finalists", synthetic=self.synthetic),
+                        encoding="utf-8")
+        res = self.renderer.measure(path, float(self.genome.invariants["page"]["min_margin_mm"]),
+                                    screenshot_dir=self.dir, screenshot_prefix=f"top-{node.node_id}")
+        for c, shot in zip(top, res.page_screenshots):
+            lum, ink = ink_stats(shot)
+            c.screenshot_path = str(shot.name)
+            c.metrics["ink"] = Metric.measured("ink", ink, "screenshot ink density (same measure as rhythm analysis)",
+                                               unit="ratio", evidence=[f"luminance={lum:.3f}"])
 
     # ------------------------------------------------------------------ evolution
     def _tournament_pick(self, ranked: list[LayoutCandidate], k: int = 3) -> LayoutCandidate:
@@ -246,5 +288,6 @@ class LayoutTournament:
             all_c += self.evaluate(node, children, page_no, total, prev, gen, parents, muts)
             del elites
         final = sorted([c for c in all_c if not c.critical_failures] or all_c, key=lambda c: -(c.fitness or -1e9))
+        self._screenshot_top(node, final[:3], page_no, total)
         return PageOutcome(best=final[0], top=final[:3], evaluated=len(all_c), generations=gens,
                            rejected_critical=sum(1 for c in all_c if c.critical_failures), history=best_hist)

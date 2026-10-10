@@ -137,6 +137,47 @@ def _load_attestations(db_url: str | None) -> list[dict[str, Any]]:
         return []
 
 
+def _overlay_local_models(models: dict[str, ModelEntry], providers: dict[str, ProviderEntry], cfg: Path) -> None:
+    """Add a llamacpp_local route for every model actually acquired on disk (config/local_models.yaml)."""
+    import os
+
+    path = cfg / "local_models.yaml"
+    if os.environ.get("APEX_DISABLE_LOCAL_MODELS") == "1" or not path.exists() or "llamacpp_local" not in providers:
+        return
+    from apex_one.core.schemas.compute import Pricing, ProviderRoute
+
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    mdir = Path(data["runtime"]["models_dir"])
+    mdir = mdir if mdir.is_absolute() else get_settings().home / mdir
+    for m in data.get("models", []):
+        if m["registry_model"] not in models or not (mdir / m["key"] / "apex_manifest.json").exists():
+            continue
+        entry = models[m["registry_model"]]
+        if any(r.provider == "llamacpp_local" and r.provider_model_id == m["key"] for r in entry.routes):
+            continue
+        entry.routes.append(ProviderRoute(provider="llamacpp_local", provider_model_id=m["key"], model_id_verified=True,
+                                          base_url=f"http://127.0.0.1:{m['port']}/v1",
+                                          pricing=Pricing(free_tier=True, input_per_mtok_usd=0.0, output_per_mtok_usd=0.0,
+                                                          per_request_usd=0.0, verified=True,
+                                                          note="local llama-server process on 127.0.0.1")))
+
+
+def _overlay_measured_scores(models: dict[str, ModelEntry]) -> None:
+    """Router learns from REAL measured benchmark scores (artifacts/bench/council_scores.json)."""
+    import os
+
+    path = get_settings().artifacts_dir / "bench" / "council_scores.json"
+    if os.environ.get("APEX_DISABLE_LOCAL_MODELS") == "1" or not path.exists():
+        return
+    import json
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for mid, scores in data.get("models", {}).items():
+        if mid in models:
+            models[mid].benchmark_scores.update({k: float(v) for k, v in scores.items() if v is not None})
+            models[mid].capability_source = "apex-benchmark"
+
+
 def load_registry(config_dir: Path | None = None, *, db_url: str | None = None,
                   with_db_overlay: bool = True) -> ArsenalRegistry:
     cfg = Path(config_dir or get_settings().config_dir)
@@ -164,6 +205,8 @@ def load_registry(config_dir: Path | None = None, *, db_url: str | None = None,
         if spec.get("native") and spec["native"] not in models:
             raise RegistryError(f"design role {role} names unknown native engine {spec['native']}")
 
+    _overlay_local_models(models, providers, cfg)
+    _overlay_measured_scores(models)
     if with_db_overlay:
         _overlay_license_verifications(licenses, db_url)
     attestations = _load_attestations(db_url) if with_db_overlay else []

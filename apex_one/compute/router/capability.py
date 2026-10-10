@@ -45,6 +45,8 @@ class CapabilityRouter:
                 continue
             if m.family == "mock" and not self.allow_mock:
                 continue
+            if req.model_id and m.id != req.model_id:
+                continue
             if not self.satisfies(m, req):
                 continue
             bench = m.benchmark_scores.get(req.task) or m.benchmark_scores.get("overall")

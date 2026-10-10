@@ -74,7 +74,7 @@ def render_block(b: Block, locks: dict[str, FactLock], genes: Genes, *, step_no:
     lang = _block_lang(b)
     dir_attr = ' dir="ltr"' if lang == "en" else ""
     cls = f"blk blk-{b.role}" + (" check" if b.data.get("check") else "") + (" critical" if b.data.get("critical") else "") \
-        + (" ff" if b.data.get("first_fixation") else "")
+        + (" ff" if b.data.get("first_fixation") else "") + (" stat-text" if b.data.get("textual") else "")
     attrs = f'class="{cls}" data-block="{b.block_id}" data-role="{b.role}" lang="{lang}"{dir_attr}'
     if b.data.get("opinion"):
         attrs += ' data-opinion="1"'

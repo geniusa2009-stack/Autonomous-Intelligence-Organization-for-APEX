@@ -438,7 +438,8 @@ class JobRunner:
                                 epsilon=self.job.policy.quality.convergence_epsilon,
                                 seed=self.job.policy.seed + seed_offset, synthetic=self.synthetic,
                                 allowed_years=self.allowed_years, direction=direction,
-                                history_signatures=DesignMemory(self.db_url).signature_verdicts())
+                                history_signatures=DesignMemory(self.db_url).signature_verdicts(),
+                                layout_refs=DesignMemory(self.db_url).layout_references())
 
     def h_creative_directions(self) -> S:
         from apex_one.design.tournament import CREATIVE_DIRECTIONS, Chosen
@@ -495,12 +496,13 @@ class JobRunner:
                     rec = previous[n.node_id]
                     results.append(rec)
                     best = LayoutCandidate.model_validate(rec["top"][0])
-                    prev.append(Chosen(n.node_id, best.genes.archetype, best.genes.tone, best.structural_signature))
+                    prev.append(Chosen(n.node_id, best.genes.archetype, best.genes.tone, best.structural_signature,
+                                       best.occupancy))
                     continue
                 initial = p["initial_important"] if n.importance >= 4 else p["initial_other"]
                 out = t.run_page(n, i, len(pages), prev, initial=initial)
                 prev.append(Chosen(n.node_id, out.best.genes.archetype, out.best.genes.tone,
-                                   out.best.structural_signature))
+                                   out.best.structural_signature, out.best.occupancy))
                 results.append({"page_id": n.node_id, "node_type": n.semantic_type.value,
                                 "evaluated": out.evaluated, "generations": out.generations,
                                 "rejected_critical": out.rejected_critical, "fitness_history": out.history,
@@ -518,8 +520,27 @@ class JobRunner:
         search = self._read("layout_search.json")
         tops = [[LayoutCandidate.model_validate(c) for c in rec["top"]] for rec in search]
 
+        def cov(c: LayoutCandidate) -> float | None:
+            m = c.metrics.get("density_fit")
+            try:
+                return float(m.evidence[0].split("=")[1]) if m and m.evidence else None
+            except (ValueError, IndexError):
+                return None
+
+        def ink(c: LayoutCandidate) -> float | None:
+            m = c.metrics.get("ink")
+            return m.value if m is not None and m.value is not None else None
+
         def pair_pen(a: LayoutCandidate, b: LayoutCandidate) -> float:
             pen = 0.0
+            ia, ib = ink(a), ink(b)
+            if ia is not None and ib is not None:
+                if abs(ia - ib) < 0.01 and b.genes.archetype != "cover-monument":
+                    pen += 6  # flat visual weight: same measure the rhythm analysis uses
+            else:
+                ca, cb = cov(a), cov(b)
+                if ca is not None and cb is not None and abs(ca - cb) < 0.03:
+                    pen += 6
             if a.genes.archetype == b.genes.archetype:
                 pen += 12
             if a.genes.tone == b.genes.tone == "dark":
@@ -877,7 +898,8 @@ class JobRunner:
         if self.ws.exists("layout_chosen.json"):
             for c in self._read("layout_chosen.json"):
                 DesignMemory(self.db_url).add(c["structural_signature"], c["genes"]["archetype"],
-                                              {"genes": c["genes"]}, job_id=self.job.job_id, verdict=verdict)
+                                              {"genes": c["genes"], "occupancy": c.get("occupancy", [])},
+                                              job_id=self.job.job_id, verdict=verdict)
         for h in self.job.history:
             for f in h.failures:
                 FailureMemory(self.db_url).add(f.stage, f.message, job_id=self.job.job_id, failure_kind=f.kind)

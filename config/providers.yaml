@@ -176,3 +176,15 @@ providers:
     self_imposed_limits: {requests_per_minute: 30}
     notes: Each design model route names its own base_url_env (e.g. APEX_DESIGN_ENDPOINT_POSTERCOPILOT). Production use still requires the MODEL licence to be verified.
     integration_status: CONFIGURED_BUT_UNTESTED
+
+  - id: llamacpp_local
+    name: APEX-managed local llama.cpp servers (one llama-server per acquired GGUF model, see config/local_models.yaml)
+    kind: local
+    api_style: openai
+    base_url: http://127.0.0.1:8091/v1
+    free_tier: true
+    billing_can_be_enabled: false
+    privacy: {public_data_allowed: true, private_student_data_allowed: true, training_use_unknown: false, production_allowed: true}
+    self_imposed_limits: {requests_per_minute: 120}
+    notes: Routes carry their own base_url (127.0.0.1:<port>/v1). Processes run on this machine; $0 by construction.
+    integration_status: IMPLEMENTED

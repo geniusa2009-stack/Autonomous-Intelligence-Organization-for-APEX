@@ -118,6 +118,7 @@ class ProviderRoute(ApexModel):
     provider_model_id: str
     model_id_verified: bool = False     # true only after a live /models listing confirmed it
     base_url_env: str | None = None     # per-route endpoint (self-hosted design models)
+    base_url: str | None = None         # per-route static endpoint (local llama-server instances)
     pricing: Pricing = Field(default_factory=Pricing)
     quota: Quota | None = None
 
@@ -175,7 +176,8 @@ class CapabilityRequest(ApexModel):
     structured_output: bool = False
     design_role: str | None = None
     min_context: int = 0
-    purpose: str = "production"        # production | research
+    purpose: str = "production"        # production | research | evaluation (output never enters a deliverable)
+    model_id: str | None = None        # target one specific model (councils need independent judges)
     privacy_class: str = "public"
     max_cost_usd: float = 0.0
 

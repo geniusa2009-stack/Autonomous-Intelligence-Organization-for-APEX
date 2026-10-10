@@ -1,0 +1,241 @@
+"""Phase 15 — the real model council benchmark.
+
+Every task has a deterministic, inspectable scorer and a ground truth computed in code (never "graded by vibes").
+Results feed the CapabilityRouter: `artifacts/bench/council_scores.json` is overlaid onto the registry so routing
+learns from MEASURED performance on APEX work, not from reputation.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import time
+from dataclasses import dataclass
+from datetime import date, timedelta
+from pathlib import Path
+from typing import Any, Callable
+
+from bs4 import BeautifulSoup
+
+from apex_one.compute.providers import ChatMessage
+from apex_one.core.schemas.compute import CapabilityRequest
+
+# --------------------------------------------------------------------------- ground truths
+TODAY = date(2026, 10, 10)
+DEADLINE = date(2026, 11, 1)
+RESULT_DAYS = 10
+
+
+def _latest_saturday() -> str:
+    d = DEADLINE - timedelta(days=RESULT_DAYS)
+    while d.weekday() != 5:
+        d -= timedelta(days=1)
+    return d.isoformat()
+
+
+LATEST_SAT = _latest_saturday()
+
+LONG_DOC_FACT = "The Labor Program supervisor must approve schedule changes by 20 January 2027."
+
+
+def _long_doc() -> str:
+    filler = ("Students participate in campus life, attend convocations, and join service projects that connect "
+              "academic learning with community needs. Advising is available throughout the year. ")
+    parts = [f"Section {i}. " + filler * 4 for i in range(1, 40)]
+    parts.insert(27, "Section 27b. " + LONG_DOC_FACT + " " + filler)
+    return "\n".join(parts)
+
+
+@dataclass
+class CouncilTask:
+    name: str
+    maps_to: list[str]                      # pipeline task names whose routing this benchmark informs
+    build: Callable[[], list[ChatMessage]]
+    score: Callable[[str], tuple[float, str]]
+    json_mode: bool = False
+    vision: bool = False
+    max_tokens: int = 500
+
+
+def _json(text: str) -> dict[str, Any] | None:
+    try:
+        return json.loads(re.search(r"\{.*\}", text, re.S).group(0))  # type: ignore[union-attr]
+    except Exception:
+        return None
+
+
+def s_reasoning(text: str) -> tuple[float, str]:
+    d = _json(text) or {}
+    return (100.0 if str(d.get("date")) == LATEST_SAT else 0.0), f"expected {LATEST_SAT}, got {d.get('date')}"
+
+
+DIALECT = ["عشان", "علشان", "إزاي", "ازاي", "دلوقتي", "مش", "كده", "يعني", "بتاع", "لسه", "هت", "بت", "إنت", "انت", "خلي"]
+MSA = ["يرجى", "حيث أن", "حيث إن", "تجدر الإشارة", "الجدير بالذكر", "يتعين", "سوف"]
+
+
+def s_egyptian(text: str) -> tuple[float, str]:
+    words = re.findall(r"[؀-ۿ]+", text)
+    hits = sum(1 for w in words if any(w.startswith(m) for m in DIALECT))
+    msa = sum(1 for m in MSA if m in text)
+    keeps = "15" in text or "١٥" in text
+    score = min(100.0, hits * 20) - 30 * msa - (0 if keeps else 40)
+    return max(0.0, score), f"dialect_markers={hits} msa={msa} number_kept={keeps}"
+
+
+def s_mixing(text: str) -> tuple[float, str]:
+    need = ["deadline", "deposit", "TOEFL"]
+    present = [t for t in need if t.lower() in text.lower()]
+    translit = any(x in text for x in ("ديدلاين", "ديبوزيت", "توفل"))
+    arabic = len(re.findall(r"[؀-ۿ]+", text))
+    score = 100.0 * len(present) / len(need) - (30 if translit else 0) - (0 if arabic >= 8 else 40)
+    return max(0.0, score), f"latin_terms={present} transliterated={translit} arabic_words={arabic}"
+
+
+EXTRACT_TEXT = ("Applicants from Egypt may apply. The international application deadline is February 1, 2027. "
+                "The enrollment deposit is $200, refundable until May 1, 2027. A minimum IELTS score of 7.0 is required.")
+EXTRACT_TRUTH = {"deadline": "2027-02-01", "deposit_usd": 200.0, "ielts_min": 7.0, "deposit_refund_until": "2027-05-01"}
+
+
+def s_extract(text: str) -> tuple[float, str]:
+    d = _json(text) or {}
+    ok = 0
+    for k, v in EXTRACT_TRUTH.items():
+        try:
+            ok += int(float(d.get(k)) == v) if isinstance(v, float) else int(str(d.get(k)) == v)
+        except (TypeError, ValueError):
+            pass
+    return 100.0 * ok / len(EXTRACT_TRUTH), f"{ok}/{len(EXTRACT_TRUTH)} fields exact"
+
+
+def s_fact_preservation(text: str) -> tuple[float, str]:
+    from apex_one.research.evidence.normalize import find_dates, find_money, to_ascii_digits
+
+    t = to_ascii_digits(text)
+    dates = {d.isoformat() for d, *_ in find_dates(t)}
+    money = {(c, a) for a, c, *_ in find_money(t)}
+    ok_date = "2026-11-01" in dates and dates <= {"2026-11-01"}
+    ok_money = ("USD", 50.0) in money and money <= {("USD", 50.0)}
+    return 50.0 * ok_date + 50.0 * ok_money, f"dates={sorted(dates)} money={sorted(money)}"
+
+
+def s_html(text: str) -> tuple[float, str]:
+    m = re.search(r"<section.*?</section>", text, re.S | re.I)
+    if not m:
+        return 0.0, "no <section>"
+    soup = BeautifulSoup(m.group(0), "lxml")
+    sec = soup.find("section")
+    checks = {
+        "rtl": (sec.get("dir") == "rtl") or "direction:rtl" in m.group(0).replace(" ", ""),
+        "h2": soup.find("h2") is not None,
+        "p": soup.find("p") is not None,
+        "no_script": soup.find("script") is None,
+        "no_gradient": "gradient" not in m.group(0).lower(),
+        "bdi_or_ltr": soup.find("bdi") is not None or 'dir="ltr"' in m.group(0),
+    }
+    return 100.0 * sum(checks.values()) / len(checks), json.dumps(checks)
+
+
+def s_critique(text: str) -> tuple[float, str]:
+    low = text.lower()
+    found = {"hierarchy": bool(re.search(r"hierarch|heading.*(same|equal|small)|size", low)),
+             "contrast": "contrast" in low,
+             "line_length": bool(re.search(r"line length|measure|characters per line|too wide", low)),
+             "cards": bool(re.search(r"card", low))}
+    return 100.0 * sum(found.values()) / len(found), json.dumps(found)
+
+
+def s_long(text: str) -> tuple[float, str]:
+    d = _json(text) or {}
+    return (100.0 if str(d.get("date")) == "2027-01-20" else 0.0), f"got {d.get('date')}"
+
+
+def tasks(calib_dir: Path | None = None) -> list[CouncilTask]:
+    out = [
+        CouncilTask("reasoning", ["mission.analyze", "opportunity.model"], lambda: [ChatMessage("user",
+            f"Today is {TODAY.isoformat()}. The application deadline is {DEADLINE.isoformat()}. English test results "
+            f"take {RESULT_DAYS} days to reach the college and must arrive on or before the deadline. Tests run only on "
+            "Saturdays. What is the LATEST Saturday the student can take the test? Think carefully, then return ONLY "
+            'JSON {"date": "YYYY-MM-DD"}.')], s_reasoning, json_mode=True, max_tokens=900),
+        CouncilTask("egyptian_arabic", ["editorial.write", "editorial.critique"], lambda: [ChatMessage("user",
+            "أعد كتابة الجملة دي بالعامية المصرية الطبيعية لطالب عنده 16 سنة، من غير ما تغيّر الرقم: "
+            "'يرجى العلم بأنه يتعين على الطالب تقديم الأوراق قبل يوم 15 من الشهر.' اكتب الجملة بس.")], s_egyptian),
+        CouncilTask("en_ar_mixing", ["editorial.write"], lambda: [ChatMessage("user",
+            "اكتب جملتين بالعامية المصرية لطالب عن التحضير للتقديم، واستخدم الكلمات الإنجليزية deadline و deposit و "
+            "TOEFL زي ما هي بالحروف الإنجليزية (متكتبهاش بالعربي).")], s_mixing),
+        CouncilTask("structured_json", ["evidence.extract", "live.structured"], lambda: [ChatMessage("user",
+            f"Extract facts from: \"{EXTRACT_TEXT}\" Return ONLY JSON with keys deadline (YYYY-MM-DD), deposit_usd "
+            "(number), ielts_min (number), deposit_refund_until (YYYY-MM-DD).")], s_extract, json_mode=True),
+        CouncilTask("fact_preservation", ["editorial.write"], lambda: [ChatMessage("user",
+            "أعد صياغة الفقرة دي بالعامية المصرية بأسلوب أخف، وحافظ على التاريخ والمبلغ زي ما هما بالظبط ومتضيفش أي أرقام "
+            "جديدة: 'آخر موعد للتقديم هو 1 نوفمبر 2026، ورسوم تأكيد المكان $50.'")], s_fact_preservation),
+        CouncilTask("html_css", ["design.html"], lambda: [ChatMessage("user",
+            "Write ONE HTML <section> (no <script>, no gradients) for an Arabic right-to-left guide page: dir=\"rtl\", "
+            "an <h2> heading, one <p> paragraph in Arabic, and wrap the English word deadline in <bdi dir=\"ltr\">. "
+            "Return only the HTML.")], s_html, max_tokens=700),
+        CouncilTask("design_criticism", ["design.reward"], lambda: [ChatMessage("user",
+            "A rendered A4 page measures: heading 16px, body 16px, body text color #C9D0DA on white (contrast 1.6:1), "
+            "average 140 characters per line, 9 rounded bordered cards with drop shadows. As a strict editorial art "
+            "director, list the problems and the fixes in English.")], s_critique, max_tokens=600),
+        CouncilTask("long_context", ["evidence.extract"], lambda: [ChatMessage("user",
+            _long_doc() + "\n\nQuestion: by which date must the Labor Program supervisor approve schedule changes? "
+            'Return ONLY JSON {"date": "YYYY-MM-DD"}.')], s_long, json_mode=True, max_tokens=300),
+    ]
+    if calib_dir is not None and (calib_dir / "good-01.png").exists():
+        out.append(CouncilTask("visual_hierarchy", ["vision.council", "vision.judge"], lambda: [], lambda t: (0.0, ""),
+                               vision=True))
+    return out
+
+
+def _pairwise_hierarchy(broker, model_id: str, calib_dir: Path, ws=None) -> tuple[float | None, str]:
+    """PosterReward-style pairwise protocol: ask twice with swapped order; count only consistent correct answers."""
+    from apex_one.vision.council import encode_png
+
+    good, bad = encode_png(calib_dir / "good-01.png", 640), encode_png(calib_dir / "no_hierarchy-01.png", 640)
+    answers = []
+    for first, second, correct in ((good, bad, "A"), (bad, good, "B")):
+        req = CapabilityRequest(task="bench.visual_hierarchy", vision=True, purpose="evaluation", model_id=model_id)
+        res = broker.complete(req, [ChatMessage("user", "Image A is first, image B is second. Which page has the "
+                                                        "clearer visual hierarchy (one obvious entry point, clear size "
+                                                        'contrast)? Return ONLY JSON {"winner": "A" or "B"}.',
+                                                images_b64_png=[first, second])],
+                              json_mode=True, max_tokens=60, temperature=0.0, timeout=900)
+        if not res.executed:
+            return None, "no route"
+        w = str((_json(res.text or "") or {}).get("winner", "")).upper()[:1]
+        answers.append(w == correct)
+    return (100.0 if all(answers) else 50.0 if any(answers) else 0.0), f"order-swapped answers correct={answers}"
+
+
+def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | None = None,
+                only: list[str] | None = None) -> dict[str, Any]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    scores_path = out_dir / "council_scores.json"
+    data = json.loads(scores_path.read_text(encoding="utf-8")) if scores_path.exists() else {"models": {}, "runs": []}
+    log = (out_dir / "council_runs.jsonl").open("a", encoding="utf-8")
+    for mid in model_ids:
+        entry = data["models"].setdefault(mid, {})
+        for t in tasks(calib_dir):
+            if only and t.name not in only:
+                continue
+            t0 = time.perf_counter()
+            if t.vision:
+                score, detail = _pairwise_hierarchy(broker, mid, calib_dir)  # type: ignore[arg-type]
+                text = ""
+            else:
+                req = CapabilityRequest(task=f"bench.{t.name}", purpose="evaluation", model_id=mid)
+                res = broker.complete(req, t.build(), json_mode=t.json_mode, max_tokens=t.max_tokens,
+                                      temperature=0.0, timeout=900)
+                text = res.text or ""
+                score, detail = t.score(text) if res.executed else (None, f"not executed: {res.decision.outcome.value}")
+            rec = {"model": mid, "task": t.name, "score": score, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
+                   "output": text[:1200]}
+            log.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            log.flush()
+            if score is not None:
+                entry[t.name] = score
+                for alias in t.maps_to:
+                    entry[alias] = max(entry.get(alias, 0.0), score) if alias != t.maps_to[0] else score
+        measured = [v for k, v in entry.items() if k in {x.name for x in tasks(calib_dir)}]
+        entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
+    scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return data

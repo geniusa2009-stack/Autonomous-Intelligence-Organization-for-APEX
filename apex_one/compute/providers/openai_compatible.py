@@ -30,6 +30,8 @@ def _v1(url: str) -> str:
 class OpenAICompatibleAdapter(ProviderAdapter):
     def _root(self, route: ProviderRoute | None = None) -> str:
         base = self.base_url(route)
+        if route is not None and route.base_url:
+            return route.base_url.rstrip("/")
         if not base:
             raise ProviderError("config", "no base url configured")
         return _v1(base) if self.provider.kind in LOCAL_KINDS else base.rstrip("/")
@@ -50,6 +52,7 @@ class OpenAICompatibleAdapter(ProviderAdapter):
         try:
             with self.client(timeout) as c:
                 resp = c.get(f"{self._root()}/models", headers=self._headers())
+            self.last_headers = {k: v for k, v in resp.headers.items() if "ratelimit" in k.lower()}
             raise_for_status(resp)
             ids = {m.get("id") for m in resp.json().get("data", []) if isinstance(m, dict)}
             return ProbeResult(Availability.AVAILABLE, f"{len(ids)} models listed", ids)
@@ -79,6 +82,7 @@ class OpenAICompatibleAdapter(ProviderAdapter):
                 resp = c.post(f"{self._root(route)}/chat/completions", json=payload, headers=self._headers())
         except httpx.HTTPError as e:
             raise ProviderError("network", f"{type(e).__name__}: {e}") from e
+        self.last_headers = {k: v for k, v in resp.headers.items() if "ratelimit" in k.lower() or k.lower() == "retry-after"}
         raise_for_status(resp)
         data = resp.json()
         try:

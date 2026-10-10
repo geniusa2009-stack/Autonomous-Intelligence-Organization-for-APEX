@@ -22,6 +22,8 @@ app.add_typer(providers_app, name="providers")
 app.add_typer(license_app, name="license")
 app.add_typer(facts_app, name="facts")
 app.add_typer(lab_app, name="lab")
+local_app = typer.Typer(help="Local open-weight models: explicit acquisition (OCI, sha256-verified) and llama-server lifecycle.")
+app.add_typer(local_app, name="local")
 console = Console()
 
 
@@ -98,6 +100,89 @@ def providers(ctx: typer.Context, probe: bool = typer.Option(False, help="Networ
         t.add_row(r["id"], r["kind"], r["integration"], r["availability"], str(r["free_tier_attested"]),
                   str(r["terms_production"]), r["detail"][:50])
     console.print(t)
+
+
+@providers_app.command("live-test")
+def providers_live_test(out: Path = typer.Option(None), structured: bool = typer.Option(True)):
+    """Phase 14: real network/credential checks for every provider + real structured task on every runnable route."""
+    from apex_one.compute.live import live_test_route, provider_level_report, save_report
+    from apex_one.compute.local.server import LocalServer
+    from apex_one.compute.local import load_catalogue
+    from apex_one.settings import get_settings
+
+    reg = _registry()
+    rows = provider_level_report(reg)
+    if structured:
+        _, specs = load_catalogue()
+        for spec in specs.values():
+            m = reg.models.get(spec.registry_model)
+            route = next((r for r in (m.routes if m else []) if r.provider == "llamacpp_local"
+                          and r.provider_model_id == spec.key), None)
+            if route is None:
+                rows.append({"provider": "llamacpp_local", "model": spec.key, "status": "UNKNOWN",
+                             "detail": "not acquired (apex-one local acquire)"})
+                continue
+            if not LocalServer(spec).healthy():
+                rows.append({"provider": "llamacpp_local", "model": spec.key, "status": "UNKNOWN",
+                             "detail": "acquired but server not running (apex-one local serve)"})
+                continue
+            rows.append(live_test_route(reg, m, route))
+    dest = out or get_settings().artifacts_dir / "live" / "provider_live_report.json"
+    save_report(rows, dest)
+    t = Table(title="Live provider test")
+    for c in ("provider", "model", "status", "detail"):
+        t.add_column(c)
+    for r in rows:
+        t.add_row(r["provider"], r.get("model", ""), r["status"],
+                  str(r.get("network") or r.get("detail") or r.get("structured_output", ""))[:70])
+    console.print(t)
+    console.print(f"report: {dest}")
+
+
+@local_app.command("status")
+def local_status_cmd():
+    """Show acquired local models and running servers."""
+    from apex_one.compute.local import LocalServer, load_catalogue, local_status
+
+    _, specs = load_catalogue()
+    t = Table(title="Local models")
+    for c in ("key", "registry model", "acquired", "running", "port", "files"):
+        t.add_column(c)
+    for row in local_status():
+        t.add_row(row["key"], row["registry_model"], str(row["acquired"]),
+                  str(LocalServer(specs[row["key"]]).healthy()), str(row["port"]), ", ".join(row["files"])[:50])
+    console.print(t)
+
+
+@local_app.command("acquire")
+def local_acquire(key: str):
+    """Explicitly download one catalogue model (disk-checked, resumable, sha256-verified)."""
+    from apex_one.compute.local import acquire, load_catalogue
+
+    _, specs = load_catalogue()
+    if key not in specs:
+        raise typer.BadParameter(f"unknown key; choose from {sorted(specs)}")
+    rec = acquire(specs[key], progress=lambda m: console.print(m))
+    console.print(f"[green]acquired[/] {key}: {[f['file'] for f in rec['files']]}")
+
+
+@local_app.command("serve")
+def local_serve(key: str):
+    """Start llama-server for an acquired model (OpenAI-compatible on 127.0.0.1)."""
+    from apex_one.compute.local import LocalServer, load_catalogue
+
+    _, specs = load_catalogue()
+    console.print(f"serving {key} at {LocalServer(specs[key]).start()}")
+
+
+@local_app.command("stop")
+def local_stop(key: str):
+    """Stop a local llama-server."""
+    from apex_one.compute.local import LocalServer, load_catalogue
+
+    _, specs = load_catalogue()
+    LocalServer(specs[key]).stop()
+    console.print(f"stopped {key}")
 
 
 @providers_app.command("attest")

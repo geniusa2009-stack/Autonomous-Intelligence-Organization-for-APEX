@@ -49,6 +49,7 @@ class ProviderAdapter(ABC):
         self.provider = provider
         self.transport = transport
         self.env = env if env is not None else os.environ
+        self.last_headers: dict[str, str] = {}
 
     # ---- configuration ----
     def api_key(self) -> str | None:
@@ -57,6 +58,8 @@ class ProviderAdapter(ABC):
         return self.env.get(self.provider.api_key_env) or None
 
     def base_url(self, route: ProviderRoute | None = None) -> str | None:
+        if route is not None and route.base_url:
+            return route.base_url
         if route is not None and route.base_url_env:
             return self.env.get(route.base_url_env) or None
         if self.provider.base_url_env and self.env.get(self.provider.base_url_env):
