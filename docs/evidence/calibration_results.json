@@ -1,0 +1,19 @@
+{
+  "models": {
+    "gemma-multimodal": {
+      "checks": {
+        "low_contrast": false,
+        "card_overuse": false,
+        "gradient": false,
+        "cramped": false,
+        "no_hierarchy": false
+      },
+      "discrimination_rate": 0.0,
+      "reliable": false,
+      "valid_checks": 5,
+      "at": "2026-10-10T16:52:34+00:00",
+      "model_digest": "sha256:04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19",
+      "stamp_note": "stamped after the run from the server log: the run started before stamping existed; the served model was gemma3-4b-q4km"
+    }
+  }
+}

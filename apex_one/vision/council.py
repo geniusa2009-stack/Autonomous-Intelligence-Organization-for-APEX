@@ -155,16 +155,18 @@ def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path],
                    "cramped": "EditorialDesignJudge", "no_hierarchy": "VisualHierarchyJudge"}
     bad_reviews = {k: council.review(f"calibration-{k}", p, intent) for k, p in bad_pngs.items()}
     for mid in council.models:
-        checks = {}
+        checks, scores = {}, {}
         for k, br in bad_reviews.items():
             role = target_role.get(k, "EditorialDesignJudge")
             g = good.reviews.get(mid, {}).get(role, {}).get("score")
             b = br.reviews.get(mid, {}).get(role, {}).get("score")
             checks[k] = None if g is None or b is None else bool(g > b)
+            scores[k] = {"role": role, "good": g, "broken": b}
         valid = [v for v in checks.values() if v is not None]
         rate = sum(valid) / len(valid) if valid else None
         complete = len(valid) == len(checks) and len(checks) > 0     # one lucky data point is not calibration
-        result["models"][mid] = {"checks": checks, "discrimination_rate": rate, "valid_checks": len(valid),
+        result["models"][mid] = {"checks": checks, "scores": scores, "discrimination_rate": rate,
+                                 "valid_checks": len(valid),
                                  "reliable": complete and rate is not None and rate >= 0.6,
                                  "errors": {k: br.errors.get(mid) for k, br in bad_reviews.items() if br.errors.get(mid)}
                                  | ({"good": good.errors[mid]} if good.errors.get(mid) else {})}
