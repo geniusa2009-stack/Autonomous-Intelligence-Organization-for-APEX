@@ -174,7 +174,8 @@ def _overlay_measured_scores(models: dict[str, ModelEntry]) -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     for mid, scores in data.get("models", {}).items():
         if mid in models:
-            models[mid].benchmark_scores.update({k: float(v) for k, v in scores.items() if v is not None})
+            models[mid].benchmark_scores.update({k: float(v) for k, v in scores.items()
+                                                 if v is not None and k != "measured_tasks"})
             models[mid].capability_source = "apex-benchmark"
 
 

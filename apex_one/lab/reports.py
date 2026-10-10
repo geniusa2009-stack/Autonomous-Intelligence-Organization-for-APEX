@@ -106,9 +106,17 @@ def model_activation_md(catalogue: dict[str, Any], scores: dict[str, Any] | None
     if not scores or not scores.get("models"):
         out.append("PENDING: the council benchmark has not produced scores yet.")
     else:
-        out += ["| model | " + " | ".join(tasks) + " | overall |", "|---|" + "---|" * (len(tasks) + 1)]
+        out += ["| model | " + " | ".join(tasks) + " | overall (mean of measured) | measured tasks |",
+                "|---|" + "---|" * (len(tasks) + 2)]
         for mid, e in scores["models"].items():
-            out.append(f"| {mid} | " + " | ".join(_fmt(e.get(t), 0) for t in tasks) + f" | {_fmt(e.get('overall'))} |")
+            n = e.get("measured_tasks", sum(1 for t in tasks if e.get(t) is not None))
+            out.append(f"| {mid} | " + " | ".join(_fmt(e.get(t), 0) for t in tasks)
+                       + f" | {_fmt(e.get('overall'))} | {n}/{len(tasks)} |")
+        out += ["", "`—` = NOT_MEASURED (not run, not applicable, or empty output because a reasoning model spent its "
+                "token budget on hidden reasoning; re-run with a larger budget). Overall means are over different task "
+                "counts and are not directly comparable across rows. "
+                + (f"Checker version {scores.get('checker_version')}: scores recomputed from stored outputs."
+                   if scores.get("checker_version") else "")]
         out += ["", "These measured scores overwrite the registry's prior estimates (`capability_source: "
                 "apex-benchmark`), so the CapabilityRouter now ranks local models by what they actually did here."]
     out += ["", "## Vision judge calibration (Phase 18)", "",

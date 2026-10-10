@@ -1,7 +1,7 @@
 {
   "metadata": {
     "benchmarks": [
-      "category-1"
+      "typography-1"
     ],
     "models": [
       "custom:apex_one.lab.benchmarks.gdb_provider:APEXBrokerModel"
@@ -9,12 +9,12 @@
     "input_modality": null
   },
   "results": {
-    "category-1": {
+    "typography-1": {
       "custom:apex_one.lab.benchmarks.gdb_provider:APEXBrokerModel": {
         "scores": {
-          "top1_accuracy": 0.0,
-          "top5_accuracy": 0.0,
-          "macro_f1": 0.0
+          "accuracy_top1": 0.5,
+          "f1_montserrat": 0.6666666666666666,
+          "f1_macro": 0.6666666666666666
         },
         "count": 2,
         "success_count": 2,

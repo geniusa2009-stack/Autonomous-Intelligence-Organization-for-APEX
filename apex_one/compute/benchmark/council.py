@@ -78,6 +78,7 @@ DIALECT_WORDS = {"عشان", "علشان", "إزاي", "ازاي", "دلوقتي
 VERB_PREFIXES = ("هت", "هي", "بت", "بي", "هن", "بن")
 MSA = ["يرجى", "حيث أن", "حيث إن", "تجدر الإشارة", "الجدير بالذكر", "يتعين", "سوف"]
 CHECKER_VERSION = 2
+STORED_OUTPUT_CHARS = 1200
 
 
 def s_egyptian(text: str) -> tuple[float, str]:
@@ -245,7 +246,7 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
                 else:
                     score, detail = t.score(text)
             rec = {"model": mid, "task": t.name, "score": score, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
-                   "output": text[:1200]}
+                   "output": text[:STORED_OUTPUT_CHARS]}
             log.write(json.dumps(rec, ensure_ascii=False) + "\n")
             log.flush()
             if score is not None:
@@ -269,7 +270,8 @@ def rescore(out_dir: Path) -> dict[str, Any]:
     for r in rows:   # later runs of the same (model, task) win
         t = by_name.get(r["task"])
         score = r["score"]
-        if t is not None and not t.vision and r.get("output", "").strip() and score is not None:
+        complete = len(r.get("output", "")) < STORED_OUTPUT_CHARS     # truncated outputs keep their live score
+        if t is not None and not t.vision and r.get("output", "").strip() and score is not None and complete:
             score, r["detail"] = t.score(r["output"])
         elif t is not None and not t.vision and not r.get("output", "").strip():
             score = None                      # empty output: not measured (see run_council)
@@ -285,5 +287,6 @@ def rescore(out_dir: Path) -> dict[str, Any]:
                     entry[a] = entry[name] if a == maps[0] else max(entry.get(a, 0.0), entry[name])
         measured = [v for k, v in entry.items() if k in names]
         entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
+        entry["measured_tasks"] = len(measured)
     scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return data
