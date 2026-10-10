@@ -33,5 +33,40 @@
     "quota_headers": {},
     "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
     "status": "LIVE_TESTED"
+  },
+  "nemotron-3-nano-4b-q4km": {
+    "provider": "llamacpp_local",
+    "model": "nemotron-nano-omni",
+    "provider_model_id": "nemotron-3-nano-4b-q4km",
+    "kind": "local",
+    "at": "2026-10-10T16:57:40.653371+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 37.6,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "nemotron-3-nano-4b-q4km"
+    ],
+    "structured_ms": 15997.7,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 98,
+      "prompt_tokens": 67,
+      "total_tokens": 165,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED"
   }
 }

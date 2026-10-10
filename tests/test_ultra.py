@@ -558,3 +558,11 @@ def test_openrouter_missing_or_image_price_is_not_free():
     from datetime import UTC, datetime
 
     assert not PriceObservation("openrouter", "x:free", 0.0, 0.0, None, datetime.now(UTC)).is_zero()
+
+
+def test_egyptian_checker_counts_whole_dialect_words():
+    from apex_one.compute.benchmark.council import s_egyptian
+
+    assert s_egyptian("يا عم الحاج، لازم الطالب يخلص الأوراق قبل ١٥ الشهر، تمام؟")[1].startswith("dialect_markers=3")
+    assert s_egyptian("التقديم قبل 15 ديسمبر")[0] == 0          # «ديسمبر» is not the dialect word «دي»
+    assert s_egyptian("يرجى العلم بأنه يتعين التقديم قبل 15")[0] == 0

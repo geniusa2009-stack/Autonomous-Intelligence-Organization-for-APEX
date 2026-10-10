@@ -69,16 +69,23 @@ def s_reasoning(text: str) -> tuple[float, str]:
     return (100.0 if str(d.get("date")) == LATEST_SAT else 0.0), f"expected {LATEST_SAT}, got {d.get('date')}"
 
 
-DIALECT = ["عشان", "علشان", "إزاي", "ازاي", "دلوقتي", "مش", "كده", "يعني", "بتاع", "لسه", "هت", "بت", "إنت", "انت", "خلي"]
+# Egyptian markers. Whole words only (prefix matching made «دي» hit «ديسمبر»); verb prefixes are matched only on
+# words long enough to be inflected verbs.
+DIALECT_WORDS = {"عشان", "علشان", "إزاي", "ازاي", "دلوقتي", "مش", "كده", "كدا", "يعني", "بتاع", "بتاعة", "بتاعك", "لسه",
+                 "إنت", "انت", "انتي", "لازم", "تمام", "عايز", "عايزة", "عاوز", "ده", "دي", "دول", "بقى", "اللي", "فين",
+                 "إمتى", "امتى", "ليه", "إيه", "ايه", "برضه", "أوي", "اوي", "خالص", "كمان", "يلا", "طب", "معلش", "خلي",
+                 "خليك", "يخلص", "تخلص", "هتخلص", "بيقول", "هيقدم"}
+VERB_PREFIXES = ("هت", "هي", "بت", "بي", "هن", "بن")
 MSA = ["يرجى", "حيث أن", "حيث إن", "تجدر الإشارة", "الجدير بالذكر", "يتعين", "سوف"]
+CHECKER_VERSION = 2
 
 
 def s_egyptian(text: str) -> tuple[float, str]:
-    words = re.findall(r"[؀-ۿ]+", text)
-    hits = sum(1 for w in words if any(w.startswith(m) for m in DIALECT))
+    words = re.findall(r"[\u0621-\u064A\u0671-\u06D3]+", text)   # letters only: «؟» / «،» are not part of words
+    hits = sum(1 for w in words if w in DIALECT_WORDS or (len(w) >= 5 and w.startswith(VERB_PREFIXES)))
     msa = sum(1 for m in MSA if m in text)
     keeps = "15" in text or "١٥" in text
-    score = min(100.0, hits * 20) - 30 * msa - (0 if keeps else 40)
+    score = min(100.0, hits * 25) - 30 * msa - (0 if keeps else 40)
     return max(0.0, score), f"dialect_markers={hits} msa={msa} number_kept={keeps}"
 
 
@@ -114,6 +121,9 @@ def s_fact_preservation(text: str) -> tuple[float, str]:
     dates = {d.isoformat() for d, *_ in find_dates(t)}
     money = {(c, a) for a, c, *_ in find_money(t)}
     ok_date = "2026-11-01" in dates and dates <= {"2026-11-01"}
+    if not ok_date and "نوفمبر" in t and "2026" in t:
+        return 50.0 * ok_date + 50.0 * (("USD", 50.0) in money and money <= {("USD", 50.0)}), (
+            f"date reworded (not kept exactly as instructed); dates={sorted(dates)} money={sorted(money)}")
     ok_money = ("USD", 50.0) in money and money <= {("USD", 50.0)}
     return 50.0 * ok_date + 50.0 * ok_money, f"dates={sorted(dates)} money={sorted(money)}"
 
@@ -236,6 +246,35 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
                 for alias in t.maps_to:
                     entry[alias] = max(entry.get(alias, 0.0), score) if alias != t.maps_to[0] else score
         measured = [v for k, v in entry.items() if k in {x.name for x in tasks(calib_dir)}]
+        entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
+    scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return data
+
+
+def rescore(out_dir: Path) -> dict[str, Any]:
+    """Re-apply the CURRENT deterministic checkers to stored outputs (no re-inference) and rebuild the scores.
+    Vision pairwise rows carry no text output and keep their measured score."""
+    runs_path, scores_path = out_dir / "council_runs.jsonl", out_dir / "council_scores.json"
+    rows = [json.loads(x) for x in runs_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+    by_name = {t.name: t for t in tasks(None)}
+    data = {"models": {}, "checker_version": CHECKER_VERSION,
+            "note": "scores recomputed from stored outputs with the current checkers"}
+    for r in rows:   # later runs of the same (model, task) win
+        t = by_name.get(r["task"])
+        score = r["score"]
+        if t is not None and not t.vision and r.get("output") and score is not None:
+            score, r["detail"] = t.score(r["output"])
+        entry = data["models"].setdefault(r["model"], {})
+        if score is not None:
+            entry[r["task"]] = score
+    names = {t.name for t in tasks(Path("."))}
+    alias = {t.name: t.maps_to for t in tasks(Path("."))}
+    for entry in data["models"].values():
+        for name, maps in alias.items():
+            if name in entry:
+                for a in maps:
+                    entry[a] = entry[name] if a == maps[0] else max(entry.get(a, 0.0), entry[name])
+        measured = [v for k, v in entry.items() if k in names]
         entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
     scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return data
