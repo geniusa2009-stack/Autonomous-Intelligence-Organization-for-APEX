@@ -176,13 +176,22 @@ def acquire(spec: LocalModelSpec, progress: Callable[[str], None] = print, reser
                     cfg = {}
     record = {"key": spec.key, "registry_model": spec.registry_model, "source": f"{spec.registry}/{spec.repository}:{spec.tag}",
               "artifact_type": m.get("artifactType"), "files": files, "config": cfg,
-              "licence_files": [f["file"] for f in files if "licen" in f["file"].lower()]}
+              "licence_files": [f["file"] for f in files if "licen" in f["file"].lower() or "license" in f["media_type"]]}
     (spec.dir / "apex_manifest.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
     return record
 
 
+# Older Docker model artifacts carry no filepath annotation; the media type names the role of each layer.
+_DOCKER_AI_NAMES = {"application/vnd.docker.ai.gguf.v3": "model.gguf",
+                    "application/vnd.docker.ai.mmproj": "mmproj-model.gguf",
+                    "application/vnd.docker.ai.license": "LICENSE"}
+
+
 def _fname(layer: dict[str, Any]) -> str:
-    return Path(layer.get("annotations", {}).get("org.cncf.model.filepath") or layer["digest"].replace(":", "_")).name
+    ann = (layer.get("annotations") or {}).get("org.cncf.model.filepath")
+    if ann:
+        return Path(ann).name
+    return _DOCKER_AI_NAMES.get(layer.get("mediaType", ""), layer["digest"].replace(":", "_"))
 
 
 def local_status() -> list[dict[str, Any]]:

@@ -673,9 +673,49 @@ class JobRunner:
             verdicts += model.judge(shot, json.dumps(intent.get("rationale", []), ensure_ascii=False), self.ws)
             out.append({"page_id": pm["pageId"], "screenshot": shot.name, "verdicts": verdicts})
         self.ws.write_json("qa/vision_report.json", out)
+        council = self._vision_council(metrics["pages"], shots, intents)
+        self.ws.write_json("qa/vision_council.json", council)
+        measured = council["status"] == "MEASURED"
         self.checks(S.VISION_QA, {"vision.first_fixation": (True, "DOM saliency proxy"),
-                                  "vision.memorable": (False, "NOT_MEASURED without a $0 vision model")})
+                                  "vision.council": (measured, f"{council['status']}: {council.get('reason', '')} "
+                                                               f"judges={council['judges']}")})
         return S.DESIGN_JURY
+
+    def _vision_council(self, pages: list[dict], shots: list[Path], intents: dict) -> dict:
+        """Phase 18: independent, CALIBRATED vision models review screenshots (never the designer judging itself)."""
+        from apex_one.vision.council import (ROLES, VisionCouncil, document_metrics, page_budget, reliable_judges,
+                                             select_pages, weak_pages)
+
+        judges, calibration = reliable_judges()
+        budget = page_budget(self.mode.value)
+        report: dict = {"judges": judges, "calibration": calibration, "budget_pages": budget, "pages": [],
+                        "disagreements": [], "document_metrics": {}, "weak_pages": {}, "status": "NOT_MEASURED"}
+        if not judges:
+            report["reason"] = "no calibrated-reliable vision judge (see artifacts/bench/vision_calibration)"
+            return report
+        if budget <= 0:
+            report["reason"] = f"quality mode {self.mode.value} allots no council pages (APEX_VISION_COUNCIL_PAGES)"
+            return report
+        shot_by_id = {pm["pageId"]: shot for pm, shot in zip(pages, shots)}
+        council = VisionCouncil(self.broker, judges, workspace=self.ws)
+        reviews = []
+        for pid in select_pages(pages, budget):
+            intent = intents.get(pid, {})
+            text = f"{intent.get('node_type', '')}: " + "; ".join(intent.get("rationale", []))
+            pr = council.review(pid, shot_by_id[pid], text)
+            reviews.append(pr)
+            report["pages"].append({"page_id": pid, "reviews": pr.reviews, "errors": pr.errors,
+                                    "role_medians": {r: pr.role_metric(r).value for r in ROLES}})
+            report["disagreements"] += pr.disagreements()
+        valid = [r for r in reviews if r.reviews]
+        if not valid:
+            report["reason"] = "every council call failed: " + json.dumps([r.errors for r in reviews])[:300]
+            return report
+        report["document_metrics"] = {k: m.model_dump() for k, m in document_metrics(valid).items()}
+        report["weak_pages"] = weak_pages(valid)
+        report["status"] = "MEASURED"
+        report["reason"] = f"{len(valid)}/{len(reviews)} page(s) reviewed by {len(judges)} calibrated judge(s)"
+        return report
 
     def h_design_jury(self) -> S:
         from apex_one.vision.judges import PosterRewardJudge
@@ -702,7 +742,12 @@ class JobRunner:
                 weak.append(pq["page_id"])
             jury.append({"page_id": pq["page_id"], "reward_engine": reward_choice.engine, "verdicts": verdicts,
                          "deterministic": {"hierarchy": hier, "typography": typo}})
+        council = self._read("qa/vision_council.json") if self.ws.exists("qa/vision_council.json") else {}
+        for pid in council.get("weak_pages", {}):
+            if pid not in weak:
+                weak.append(pid)
         self.ws.write_json("qa/design_jury.json", {"pages": jury, "weak_pages": weak,
+                                                   "council_weak_pages": council.get("weak_pages", {}),
                                                    "reward_route": reward_choice.considered})
         return S.MUTATION
 
@@ -722,6 +767,9 @@ class JobRunner:
             nxt = self.h_deterministic_qa()
             if isinstance(nxt, FailureKind):
                 raise Pause(JobStatus.BLOCKED, f"mutation round produced a {nxt.value} failure")
+            # the pages changed: council reviews of the old render must not reach the release gates
+            if self.ws.exists("qa/vision_council.json") and self._read("qa/vision_council.json")["status"] == "MEASURED":
+                self.h_vision_qa()
         self.checks(S.MUTATION, {"mutation.failure_classified": (True, f"weak pages: {len(weak)}")})
         return S.DOCUMENT_QA
 
@@ -822,6 +870,11 @@ class JobRunner:
         calls = self.ws.model_calls.read()
         lic_report, lic_metric = license_guard(self.registry, engines, calls)
         metrics[lic_metric.name] = lic_metric
+        from apex_one.release.assets import brand_production_metric, validate_assets
+
+        asset_report = validate_assets()
+        metrics["brand.production_asset_failures"] = brand_production_metric(asset_report)
+        self.ws.write_json("qa/asset_report.json", asset_report)
         self.ws.write_json("license_report.json", lic_report)
         self.ws.write_json("model_routing.json", {"design_routes": self._read("design_routes.json"),
                                                   "routing_decisions": self.ws.routing.read(),
@@ -844,8 +897,15 @@ class JobRunner:
             for v in page["verdicts"]:
                 if v["metric"]["status"] == "MEASURED" and v["metric"]["name"] == "vision.hierarchy":
                     verdicts.append(verdict_from_metric(f"DesignJudge[{v['engine']}]", Metric.model_validate(v["metric"]), 85))
+        council = self._read("qa/vision_council.json") if self.ws.exists("qa/vision_council.json") else {}
+        for role, m in council.get("document_metrics", {}).items():
+            metric = Metric.model_validate(m)
+            if metric.value is not None:
+                verdicts.append(verdict_from_metric(f"VisionCouncil.{role}[{','.join(council['judges'])}]", metric, 85))
         resolved, disagreements = DisagreementResolver().resolve(verdicts)
-        report = evaluate_gates(self.job.job_id, metrics, self.registry.quality_gates, resolved, disagreements)
+        disagreements += [{**d, "source": "vision_council"} for d in council.get("disagreements", [])]
+        report = evaluate_gates(self.job.job_id, metrics, self.registry.quality_gates, resolved, disagreements,
+                                synthetic=self.synthetic)
         missing = artifacts_complete(self.ws.root)
         missing = [m for m in missing if m not in ("quality_report.json",)]
         if missing:

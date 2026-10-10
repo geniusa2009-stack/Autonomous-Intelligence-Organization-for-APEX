@@ -27,7 +27,10 @@ def run_golden(quality: str = "standard", seed: int = 20271, log=None) -> dict[s
     checks["stops_at_human_gate"] = job.state == "HUMAN_APPROVAL" and job.status == JobStatus.RELEASE_CANDIDATE
     checks["not_final_without_human"] = job.status != JobStatus.FINAL
     q = r.ws.read_json("quality_report.json") if r.ws.exists("quality_report.json") else {}
-    checks["critical_gates_pass"] = all(g["status"] == "PASS" for g in q.get("gates", []) if g["kind"] == "critical")
+    crit = [g for g in q.get("gates", []) if g["kind"] == "critical"]
+    # real-job-only gates (brand production assets) are explicitly NOT_APPLICABLE on this synthetic benchmark
+    checks["critical_gates_pass"] = bool(crit) and all(g["status"] in ("PASS", "NOT_APPLICABLE_SYNTHETIC") for g in crit)
+    checks["real_job_gates_reported"] = any(g["status"] == "NOT_APPLICABLE_SYNTHETIC" for g in crit)
     search = r.ws.read_json("layout_search.json") if r.ws.exists("layout_search.json") else []
     checks["multiple_layouts_evaluated"] = sum(x["evaluated"] for x in search) >= 2 * max(1, len(search))
     return {"job_id": job.job_id, "state": job.state, "status": job.status.value, "checks": checks,

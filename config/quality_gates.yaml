@@ -9,6 +9,7 @@ critical:
   unresolved_critical_contradictions: {max: 0, metric: fact.unresolved_critical_contradictions}
   critical_layout_failures:     {max: 0, metric: qa.critical_layout_failures}
   license_contamination:        {max: 0, metric: license.prohibited_engines_in_output}
+  brand_production_assets:      {max: 0, metric: brand.production_asset_failures, applies_to: real_jobs}
 targets:
   reader_comprehension:   {threshold: 95, metric: reader.comprehension}
   typography:             {threshold: 95, metric: design.typography}

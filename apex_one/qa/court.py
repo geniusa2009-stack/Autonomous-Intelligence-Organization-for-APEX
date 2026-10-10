@@ -62,9 +62,16 @@ class DisagreementResolver:
 
 
 def evaluate_gates(job_id: str, metrics: dict[str, Metric], gates_cfg: dict, verdicts: list[JudgeVerdict],
-                   disagreements: list[dict]) -> QualityReport:
+                   disagreements: list[dict], synthetic: bool = False) -> QualityReport:
     rep = QualityReport(job_id=job_id, verdicts=verdicts, disagreements=disagreements)
     for name, spec in gates_cfg.get("critical", {}).items():
+        if spec.get("applies_to") == "real_jobs" and synthetic:
+            m = metrics.get(spec["metric"]) or Metric.not_measured(spec["metric"], "not produced")
+            rep.gates.append(GateResult(gate=name, kind="critical", threshold=spec.get("max", spec.get("threshold")),
+                                        metric=m, status="NOT_APPLICABLE_SYNTHETIC"))
+            rep.warnings.append(f"{name}: not applied to a SYNTHETIC benchmark (would block a real job: "
+                                f"{m.evidence if m.value else 'ok'})")
+            continue
         m = metrics.get(spec["metric"]) or Metric.not_measured(spec["metric"], "metric not produced")
         if m.status != MetricStatus.MEASURED or m.value is None:
             status = "NOT_MEASURED"

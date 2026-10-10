@@ -166,3 +166,72 @@ def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path],
         result["models"][mid] = {"checks": checks, "discrimination_rate": rate,
                                  "reliable": rate is not None and rate >= 0.6}
     return result
+
+
+# ---------------------------------------------------------------- pipeline integration (VISION_QA)
+
+# Council roles that mirror a deterministic metric share its name, so the DisagreementResolver compares them
+# against the DOM measurement; the rest stay council-only.
+ROLE_METRIC = {"TypographyJudge": "design.typography", "APEXBrandJudge": "design.brand_fit",
+               "ReaderAttentionJudge": "reader.comprehension", "AIClicheJudge": "editorial.human_or_model_judgement",
+               "VisualHierarchyJudge": "council.visual_hierarchy", "EditorialDesignJudge": "council.editorial_design"}
+PAGE_BUDGET = {"draft": 0, "standard": 2, "high": 4, "ultra": 6}
+PRIORITY = ["Cover", "OpportunitySnapshot", "Opening", "ApexTake", "Closing", "HeroFact", "Timeline", "FundingChapter"]
+
+
+def calibration_path() -> Path:
+    from apex_one.settings import get_settings
+
+    return get_settings().artifacts_dir / "bench" / "vision_calibration" / "calibration_results.json"
+
+
+def reliable_judges(path: Path | None = None) -> tuple[list[str], dict[str, Any]]:
+    """Only judges that passed calibration may influence gates. No calibration => no council (NOT_MEASURED)."""
+    path = path or calibration_path()
+    if not path.exists():
+        return [], {"reason": f"no calibration results at {path}"}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    models = data.get("models", {})
+    return sorted(m for m, r in models.items() if r.get("reliable")), models
+
+
+def page_budget(mode: str) -> int:
+    import os
+
+    env = os.environ.get("APEX_VISION_COUNCIL_PAGES")
+    return int(env) if env and env.isdigit() else PAGE_BUDGET.get(mode, 0)
+
+
+def select_pages(pages: list[dict[str, Any]], budget: int) -> list[str]:
+    """Decision-critical and loud pages first; the rest in reading order."""
+    order = sorted(range(len(pages)), key=lambda i: (PRIORITY.index(pages[i].get("nodeType"))
+                                                     if pages[i].get("nodeType") in PRIORITY else len(PRIORITY), i))
+    return [pages[i]["pageId"] for i in order[:budget]]
+
+
+def document_metrics(reviews: list[PageReview]) -> dict[str, Metric]:
+    """Per role: median over reviewed pages of the per-page council median."""
+    out: dict[str, Metric] = {}
+    for role, name in ROLE_METRIC.items():
+        vals = [m.value for m in (r.role_metric(role) for r in reviews) if m.value is not None]
+        if not vals:
+            out[role] = Metric.not_measured(name, "vision council produced no valid review for this role")
+            continue
+        out[role] = Metric.measured(name, statistics.median(vals),
+                                    f"vision council {role}: median over {len(vals)} page(s) of the cross-model median",
+                                    evidence=[f"{r.page_id}={r.role_metric(role).value}" for r in reviews
+                                              if r.role_metric(role).value is not None])
+    return out
+
+
+def weak_pages(reviews: list[PageReview], floor: float = 70.0) -> dict[str, list[str]]:
+    """Pages the council says need repair: any role median below `floor` or a critical problem from any judge."""
+    weak: dict[str, list[str]] = {}
+    for r in reviews:
+        why = [f"{role} median {r.role_metric(role).value:.0f} < {floor:.0f}" for role in ROLES
+               if r.role_metric(role).value is not None and r.role_metric(role).value < floor]
+        why += [f"{m}/{role}: critical — {p['issue']}" for m, rv in r.reviews.items() for role, x in rv.items()
+                for p in x["problems"] if p["severity"] == "critical"]
+        if why:
+            weak[r.page_id] = why
+    return weak

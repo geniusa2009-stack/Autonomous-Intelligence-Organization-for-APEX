@@ -24,6 +24,10 @@ app.add_typer(facts_app, name="facts")
 app.add_typer(lab_app, name="lab")
 local_app = typer.Typer(help="Local open-weight models: explicit acquisition (OCI, sha256-verified) and llama-server lifecycle.")
 app.add_typer(local_app, name="local")
+assets_app = typer.Typer(help="APEX brand asset contract (assets/apex): placeholders fail the Brand Production Gate.")
+app.add_typer(assets_app, name="assets")
+genome_app = typer.Typer(help="Design genome extraction from approved/rejected documents (principles, never copies).")
+app.add_typer(genome_app, name="genome")
 console = Console()
 
 
@@ -183,6 +187,53 @@ def local_stop(key: str):
     _, specs = load_catalogue()
     LocalServer(specs[key]).stop()
     console.print(f"stopped {key}")
+
+
+@assets_app.command("validate")
+def assets_validate(as_json: bool = typer.Option(False, "--json")):
+    """Validate assets/apex against config/asset_contract.yaml. Exit code 1 when not production-ready."""
+    from apex_one.release.assets import validate_assets
+
+    rep = validate_assets()
+    if as_json:
+        console.print_json(json.dumps(rep))
+    else:
+        t = Table(title=f"APEX assets · {rep['asset_dir']}")
+        for c in ("asset", "status", "problems"):
+            t.add_column(c)
+        for name, r in rep["assets"].items():
+            t.add_row(name, r["status"], "; ".join(r["problems"])[:120])
+        console.print(t)
+        console.print(f"production_ready: [bold]{rep['production_ready']}[/]")
+    raise typer.Exit(0 if rep["production_ready"] else 1)
+
+
+@genome_app.command("ingest")
+def genome_ingest(paths: list[Path], verdict: str = typer.Option("approved", help="approved | rejected"),
+                  reason: str = typer.Option(""), out: Path = typer.Option(None)):
+    """Extract page signatures, principles and occupancy patterns from PDF / HTML / screenshots."""
+    from apex_one.design.genome_extraction import ingest
+    from apex_one.settings import get_settings
+
+    if verdict not in ("approved", "rejected"):
+        raise typer.BadParameter("verdict must be approved or rejected")
+    missing = [str(p) for p in paths if not p.exists()]
+    if missing:
+        raise typer.BadParameter(f"not found: {missing}")
+    res = ingest(paths, verdict, out or get_settings().artifacts_dir / "genome", reason=reason)
+    console.print_json(json.dumps(res))
+
+
+@genome_app.command("principles")
+def genome_principles(extraction: Path):
+    """Print the principles recorded in a genome extraction file."""
+    data = json.loads(extraction.read_text(encoding="utf-8"))
+    t = Table(title=f"Principles · {data['pages']} page(s) from {', '.join(data['documents'])}")
+    for c in ("principle", "value", "statement"):
+        t.add_column(c)
+    for p in data["principles"]:
+        t.add_row(p["name"], json.dumps(p["value"], ensure_ascii=False)[:60], p["statement"])
+    console.print(t)
 
 
 @providers_app.command("attest")

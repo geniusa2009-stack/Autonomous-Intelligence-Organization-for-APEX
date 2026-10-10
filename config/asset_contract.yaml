@@ -1,0 +1,12 @@
+schema_version: 1
+asset_dir: assets/apex
+placeholders:
+  - apex_one/assets/brand/apex_wordmark_placeholder.svg
+  - apex_one/assets/brand/apex_robot_signature.svg
+required:
+  logo: {file: logo.svg, kind: svg}
+  logo_on_dark: {file: logo-on-dark.svg, kind: svg}
+  robot: {file: robot.svg, kind: svg}
+  brand_manifest: {file: brand.yaml, kind: manifest, required_keys: [approved_by, approved_at, palette, fonts]}
+optional:
+  watermark: {file: watermark.svg, kind: svg}
