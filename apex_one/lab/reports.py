@@ -7,6 +7,7 @@ run is printed as NOT_MEASURED / PENDING with the reason. Regenerate with `apex-
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -339,7 +340,7 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
                                                           _load(art / "live" / "local_live_results.json"), reg),
         "DESIGN_MODEL_ACTIVATION.md": design_activation_md(
             yaml.safe_load((s.config_dir / "design_activation.yaml").read_text(encoding="utf-8"))["systems"], gdb_runs,
-            reliable_judges()[0]),
+            reliable_judges()[0]) + "\n".join(gdb_md(bench / "gdb")) + "\n",
         "APEX_DESIGN_BENCH.md": design_bench_md(_load(bench / "apex_design" / "apex_design_bench.json"),
                                                 list({(r["system"], r["page_type"]): r for r in rows}.values()),
                                                 _load(bench / "design" / "design_bench.json"),
@@ -518,3 +519,39 @@ def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, An
             out.append(f"* {title} — {mid}: {sum(1 for v in r.get('checks', {}).values() if v)}/5 → "
                        f"**{'QUALIFIED' if r.get('reliable') else 'NOT QUALIFIED'}**")
     return "\n".join(out) + "\n"
+
+
+def gdb_md(gdb_dir: Path) -> list[str]:
+    """Phase 12: what GraphicDesignBench actually ran — per model, per task — and what was skipped and why."""
+    import subprocess
+    import sys
+
+    out = ["## GraphicDesignBench (lica-gdb) — real runs", ""]
+    try:
+        listing = subprocess.run([str(Path(sys.executable).parent / "gdb"), "list"], capture_output=True, text=True,
+                                 timeout=60).stdout
+        all_ids = [ln.split()[0] for ln in listing.splitlines() if re.match(r"^[a-z]+-\d+\s", ln)]
+    except Exception:  # noqa: BLE001
+        all_ids = []
+    runs = {}
+    for rep in sorted(gdb_dir.glob("*/report.json")) if gdb_dir.exists() else []:
+        if rep.parent.name.startswith("_"):
+            continue
+        data = _load(rep) or {}
+        meta = _load(rep.parent / "run_meta.json") or {}
+        runs[rep.parent.name] = (data.get("results", {}), meta)
+    ran = sorted({t for res, _ in runs.values() for t in res})
+    out += [f"Benchmarks registered by the package: {len(all_ids)}. Ran here: {len(ran)} ({', '.join(ran) or 'none'}). "
+            f"Skipped: {len(all_ids) - len(ran)} — their data lives on the Hugging Face Hub, which the egress proxy "
+            "denies (dependency missing). Skipped tasks are NOT scored as zero and supported tasks are not passes: "
+            "only the numbers below were measured.", "",
+            "The offline verification bundle ships **2 samples per task**, so every score below is an n=2 smoke "
+            "measurement — enough to prove the pipeline runs a real model end-to-end, far too small to rank models.",
+            "", "| run | task | n | ok | failed | scores | runtime |", "|---|---|---|---|---|---|---|"]
+    for name, (res, meta) in runs.items():
+        for task, per_model in sorted(res.items()):
+            for _, r in per_model.items():
+                sc = ", ".join(f"{k}={v:.2f}" for k, v in (r.get("scores") or {}).items() if isinstance(v, (int, float)))
+                out.append(f"| {name} | {task} | {r.get('count')} | {r.get('success_count')} | {r.get('failure_count')} | "
+                           f"{sc} | {meta.get('runtime_s', '—')} s total |")
+    return out + [""]

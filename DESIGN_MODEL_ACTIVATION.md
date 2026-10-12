@@ -1,6 +1,6 @@
 # Design Model Activation (Phases 16, 19, 26)
 
-_Generated 2026-10-12 12:19 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-12 12:22 UTC by `apex-one reports build` from measured artifacts._
 
 Every design system named in the APEX spec, with the evidence actually gathered here. Statuses: ACTIVATED, PROTOCOL_REIMPLEMENTED, PACKAGE_INSTALLABLE, WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED, ARCHITECTURE_REFERENCE, NOT_RELEASED_OR_UNFOUND, LICENSE_BLOCKED, RESEARCH_ONLY. Nothing is marked ACTIVATED without a stored smoke-test artifact.
 
@@ -66,7 +66,7 @@ Environment facts behind most rows: huggingface.co / GitHub releases / arXiv are
 | ↳ | no public checkpoint/code could be confirmed | | | | | | | | | |
 | UI-TARS-2 | **DEPENDENCY_MISSING** |  (only UI-TARS-1.5 / 7B-DPO found) | not found for UI-TARS-2 |  | — | no | no | registry entry (UNAVAILABLE) | — | NOT_RELEASED_OR_UNFOUND |
 | ↳ | no public checkpoint/code could be confirmed | | | | | | | | | |
-| GraphicDesignBench | **LIVE_TESTED** | paper: arXiv 2604.04192 (LICA; 50 tasks, 5 axes); package: PyPI lica-gdb 0.2.1 (Apache-2.0 (primary-pypi) | package Apache-2.0 (PyPI metadata); paper CC BY 4.0; dataset terms unconfirmed | dataset: LICA layered-composition data (host to be determined by the package) | — | yes (package) | no | apex_one/lab/benchmarks/gdb_provider.py | gemma3-4b-q4km: {"metadata": {}, "results": {"category-1": {"custom:apex_one.lab.benchmarks.gdb_provider:APEXBrokerModel": {"scores": {" | ACTIVATED (smoke bundle) |
+| GraphicDesignBench | **LIVE_TESTED** | paper: arXiv 2604.04192 (LICA; 50 tasks, 5 axes); package: PyPI lica-gdb 0.2.1 (Apache-2.0 (primary-pypi) | package Apache-2.0 (PyPI metadata); paper CC BY 4.0; dataset terms unconfirmed | dataset: LICA layered-composition data (host to be determined by the package) | — | yes (package) | no | apex_one/lab/benchmarks/gdb_provider.py | qwen3-vl-4b-q4kxl-full: {"metadata": {}, "results": {"category-1": {"custom:apex_one.lab.benchmarks.gdb_provider:APEXBrokerModel": {"scores": {"; gemma3-4b-q4km | ACTIVATED (smoke bundle) |
 | ↳ | lica-gdb 0.2.1 ran the verification bundle against a real local model through the $0 broker; full dataset NETWORK_BLOCKED (Hugging Face) | | | | | | | | | |
 
 **Final states:** ADAPTER_TESTED_ONLY 1, DEPENDENCY_MISSING 6, HARDWARE_BLOCKED 7, LIVE_TESTED 1, NETWORK_BLOCKED 6, NOT_IMPLEMENTED 1, RESEARCH_ONLY 8
@@ -78,4 +78,25 @@ Environment facts behind most rows: huggingface.co / GitHub releases / arXiv are
 * **Design judging:** calibrated-reliable local vision judges: NONE — no judge has passed calibration, so the Vision Council and the pairwise protocol report NOT_MEASURED in jobs.
 * **Design benchmarking:** APEX Design Bench (15 page types) and the GraphicDesignBench smoke bundle through the $0 broker.
 * **Not running:** every specialist checkpoint above whose weights are unreachable or too large; their roles are filled by native engines and recorded as such in each job's `design_routes.json`.
+
+## GraphicDesignBench (lica-gdb) — real runs
+
+Benchmarks registered by the package: 39. Ran here: 6 (category-1, layout-4, layout-5, svg-1, template-1, typography-1). Skipped: 33 — their data lives on the Hugging Face Hub, which the egress proxy denies (dependency missing). Skipped tasks are NOT scored as zero and supported tasks are not passes: only the numbers below were measured.
+
+The offline verification bundle ships **2 samples per task**, so every score below is an n=2 smoke measurement — enough to prove the pipeline runs a real model end-to-end, far too small to rank models.
+
+| run | task | n | ok | failed | scores | runtime |
+|---|---|---|---|---|---|---|
+| gemma3-4b-q4km | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 | — s total |
+| gemma3-4b-q4km | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | — s total |
+| gemma3-4b-q4km | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 | — s total |
+| gemma3-4b-q4km | svg-1 | 2 | 2 | 0 | accuracy=0.50 | — s total |
+| gemma3-4b-q4km | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | — s total |
+| gemma3-4b-q4km | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 | — s total |
+| qwen3-vl-4b-q4kxl-full | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.50, macro_f1=0.00 | 491 s total |
+| qwen3-vl-4b-q4kxl-full | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | 491 s total |
+| qwen3-vl-4b-q4kxl-full | layout-5 | 2 | 2 | 0 | mae=24.50, mse=690.50 | 491 s total |
+| qwen3-vl-4b-q4kxl-full | svg-1 | 2 | 2 | 0 | accuracy=1.00 | 491 s total |
+| qwen3-vl-4b-q4kxl-full | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | 491 s total |
+| qwen3-vl-4b-q4kxl-full | typography-1 | 2 | 2 | 0 | accuracy_top1=0.00, f1_montserrat=0.00, f1_macro=0.00 | 491 s total |
 

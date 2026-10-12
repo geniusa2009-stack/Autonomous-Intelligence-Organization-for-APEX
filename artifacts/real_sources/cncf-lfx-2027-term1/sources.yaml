@@ -1,0 +1,22 @@
+sources:
+- url: https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/2027/01-Mar-May/README.md
+  file: term-2027-01.html
+  title: CNCF LFX Mentorship 2027 Term 1 (Mar-May)
+  kind: official
+  cycle_year: 2027
+  raw_sha256: 852e45e97ccd26a1beb1e4861af13adeec8834dd8e592417e2ed2fdc5ed95eca
+- url: https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/README.md
+  file: program.html
+  title: CNCF LFX Mentorship program guidelines
+  kind: official
+  cycle_year: 2027
+  raw_sha256: 2ce20c073c77d692c11a4f78e769d89295101b1f005bc957556f36f7c538fa89
+provenance:
+  repository: https://github.com/cncf/mentoring (CNCF's own repository; the programme
+    operator)
+  commit: 97525d8f004aa477c24f6ce2f34ce4d9b51bf75c
+  retrieved_via: git clone (anonymous public read through the session proxy)
+  not_reachable:
+  - docs.linuxfoundation.org (eligibility, stipend policy)
+  - mentorship.lfx.linuxfoundation.org
+  note: Markdown rendered to plain HTML verbatim; raw .md kept alongside with sha256

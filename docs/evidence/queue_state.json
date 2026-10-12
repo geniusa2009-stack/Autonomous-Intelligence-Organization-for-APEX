@@ -1,5 +1,12 @@
 {
-  "done": {},
+  "done": {
+    "qwen3-vl-4b-q4kxl:gdb": {
+      "at": "2026-10-12T12:20:00",
+      "info": {
+        "exit": 0
+      }
+    }
+  },
   "failed": {
     "qwen3-vl-4b-q4kxl:server": {
       "at": "2026-10-12T12:09:25",
