@@ -62,6 +62,48 @@ licenses:
   verified_by: null
   source_reference: Hugging Face model card (not reachable from the build container; verify manually)
   notes: ''
+- id: lic-qwen3-vl-apache
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 (Qwen3-VL Instruct GGUF artifacts; declared in the artifact)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: local artifact evidence (see config/license_verifications.yaml)
+  notes: Covers ONLY the locally acquired Qwen3-VL GGUF artifacts; other Qwen checkpoints keep lic-qwen-open.
+- id: lic-qwen3-vl-8b
+  license_name: UNKNOWN
+  reported_license: Apache-2.0 (reported for Qwen3-VL; this artifact not yet checked)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: local artifact evidence once acquired (apex-one license verify-local)
+  notes: One licence record per acquired artifact; never inherited from a sibling checkpoint.
+- id: lic-gemma3-12b
+  license_name: UNKNOWN
+  reported_license: Gemma Terms of Use (reported; this artifact not yet checked)
+  commercial_use: unknown
+  research_use: unknown
+  redistribution: unknown
+  derivative_use: unknown
+  dataset_constraints: unknown
+  provider_constraints: unknown
+  production_state: UNKNOWN
+  verified_at: null
+  verified_by: null
+  source_reference: local artifact evidence once acquired (apex-one license verify-local)
+  notes: One licence record per acquired artifact; never inherited from a sibling checkpoint.
 - id: lic-qwen-open
   license_name: UNKNOWN
   reported_license: Apache-2.0 for most open Qwen models; some sizes use the Qwen licence (reported)

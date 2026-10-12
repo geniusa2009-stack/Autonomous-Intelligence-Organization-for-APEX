@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-10 17:46 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-12 12:08 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -10,8 +10,10 @@ Real local inference: llama.cpp `llama-server` (built from source in this contai
 |---|---|---|---|---|---|---|
 | gpt-oss-20b-mxfp4 | gpt-oss-20b | `ai/gpt-oss:latest` | 12.11 GB | False | LIVE_TESTED (correct) | UNKNOWN (lic-gpt-oss) |
 | nemotron-3-nano-4b-q4km | nemotron-nano-omni | `ai/nemotron-3-nano:4b` | 2.90 GB | False | LIVE_TESTED (correct) | UNKNOWN (lic-nvidia-nemotron-nano) |
-| qwen3-vl-4b-q4kxl | qwen-vl-current | `ai/qwen3-vl:4B-UD-Q4_K_XL` | 3.38 GB | True | LIVE_TESTED (correct) | UNKNOWN (lic-qwen-open); artifact ships `LICENSE` |
+| qwen3-vl-4b-q4kxl | qwen-vl-current | `ai/qwen3-vl:4B-UD-Q4_K_XL` | 3.38 GB | True | LIVE_TESTED (correct) | PRODUCTION_ALLOWED (lic-qwen3-vl-apache); artifact ships `LICENSE` |
 | gemma3-4b-q4km | gemma-multimodal | `ai/gemma3:4b-q4_K_M` | 3.34 GB | True | LIVE_TESTED (correct) | UNKNOWN (lic-gemma) |
+| qwen3-vl-8b-q4kxl | qwen3-vl-8b | `ai/qwen3-vl:8B-UD-Q4_K_XL` | NOT ACQUIRED | True | PENDING | UNKNOWN (lic-qwen3-vl-8b) |
+| gemma3-12b-q4km | gemma3-12b | `ai/gemma3:12b-q4_K_M` | NOT ACQUIRED | True | PENDING | UNKNOWN (lic-gemma3-12b) |
 
 ## General council benchmark (Phase 15)
 

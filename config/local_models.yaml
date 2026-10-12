@@ -3,7 +3,9 @@
 # Each entry maps an APEX registry model id to a concrete, size-checked artifact. Runtime: llama.cpp `llama-server`.
 schema_version: 1
 runtime:
-  server_binary: var/build/llama_cpp_python-0.3.36/vendor/llama.cpp/build/bin/llama-server
+  # portable build: every x86 CPU variant, chosen at runtime. The -march=native build died with SIGILL after the
+  # container moved to a different host CPU on 2026-10-12.
+  server_binary: var/build/llama_cpp_python-0.3.36/vendor/llama.cpp/build-portable/bin/llama-server
   models_dir: var/models
   host: 127.0.0.1
 models:

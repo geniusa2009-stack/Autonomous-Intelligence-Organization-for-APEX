@@ -22,6 +22,38 @@ def _lv(v: Level | str) -> int:
     return Level(v).rank
 
 
+_ROUTING: dict | None = None
+
+
+def task_routing() -> dict:
+    global _ROUTING
+    if _ROUTING is None:
+        import yaml
+
+        from apex_one.settings import get_settings
+
+        p = get_settings().config_dir / "task_routing.yaml"
+        _ROUTING = (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("tasks", {}) if p.exists() else {}
+    return _ROUTING
+
+
+def routing_rule(task: str) -> dict:
+    """Longest matching task / task-prefix rule from config/task_routing.yaml."""
+    rules = task_routing()
+    hits = [k for k in rules if task == k or (k.endswith(".") and task.startswith(k))]
+    return rules[max(hits, key=len)] if hits else {}
+
+
+def task_evidence_score(m: ModelEntry, task: str) -> float | None:
+    """The model's MEASURED score on the evidence this task is routed by — never the cross-task "overall"."""
+    rule = routing_rule(task)
+    keys = rule.get("evidence") or [task]
+    vals = [m.benchmark_scores.get(k) for k in keys]
+    if any(v is None for v in vals):
+        return None
+    return min(vals) if rule.get("combine", "min") == "min" else sum(vals) / len(vals)
+
+
 class CapabilityRouter:
     def __init__(self, registry: ArsenalRegistry, *, allow_mock: bool = False):
         self.registry = registry
@@ -49,8 +81,8 @@ class CapabilityRouter:
                 continue
             if not self.satisfies(m, req):
                 continue
-            bench = m.benchmark_scores.get(req.task) or m.benchmark_scores.get("overall")
-            base = bench if bench is not None else (
+            measured = task_evidence_score(m, req.task)
+            base = measured if measured is not None else (
                 _lv(m.capabilities.reasoning) * 3 + _lv(m.capabilities.arabic) * 2
                 + _lv(m.capabilities.egyptian_arabic) * 2 + _lv(m.capabilities.coding))
             for r in m.routes:

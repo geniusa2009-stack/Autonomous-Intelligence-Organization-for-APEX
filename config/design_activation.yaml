@@ -17,6 +17,11 @@
 #   HARDWARE_BLOCKED        would not fit/run usefully on this machine even with weights
 #   ARCHITECTURE_REFERENCE  used as design inspiration only (method folded into native engines)
 #   NOT_RELEASED_OR_UNFOUND no public checkpoint/code could be confirmed
+#
+# final_state (ONE honest state per system; precedence DEPENDENCY_MISSING > LICENSE_BLOCKED > HARDWARE_BLOCKED >
+# NETWORK_BLOCKED; secondary blockers in final_note): LIVE_TESTED | ADAPTER_TESTED_ONLY | HARDWARE_BLOCKED |
+# NETWORK_BLOCKED | LICENSE_BLOCKED | RESEARCH_ONLY | DEPENDENCY_MISSING | NO_FREE_ROUTE | NOT_IMPLEMENTED.
+# "Registered" is never a state: a registry entry without a run is at best ADAPTER_TESTED_ONLY.
 schema_version: 1
 systems:
   OmniDocLayout-LLM:
@@ -25,6 +30,8 @@ systems:
     reported_license: {value: "not found", evidence: none}
     hardware: "0.5B — CPU-runnable here if weights were reachable"
     status: [WEIGHTS_UNREACHABLE]
+    final_state: NETWORK_BLOCKED
+    final_note: "weights host huggingface.co denied by the egress proxy (re-checked 2026-10-12)"
     apex_use: "page_architecture specialist; native apex-native-layout performs the role meanwhile"
   PosterCopilot-7B:
     source: {model_card: "huggingface.co/void-2024/PosterCopilot (qwen2_5_vl, eccv2026 tags)", evidence: secondary}
@@ -32,12 +39,16 @@ systems:
     reported_license: {value: "not found on card snippet", evidence: none}
     hardware: "7B VLM fp16 ~16 GB: HARDWARE_BLOCKED on CPU without a GGUF conversion"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   SEGA-7B:
     source: {paper: "arXiv 2510.15749 (SEGA: stepwise evolution, content-aware layout)", evidence: secondary}
     checkpoint: {params: "7B (per APEX spec; not confirmed)", host: unknown, reachable: false}
     reported_license: {value: "not found", evidence: none}
     hardware: "7B: HARDWARE_BLOCKED on CPU"
     status: [NOT_RELEASED_OR_UNFOUND, ARCHITECTURE_REFERENCE]
+    final_state: DEPENDENCY_MISSING
+    final_note: "no public checkpoint/code could be confirmed"
     apex_use: "stepwise coarse->fine refinement idea mirrored by the tournament's targeted mutation"
   SEGA-13B:
     source: {paper: "arXiv 2510.15749", evidence: secondary}
@@ -45,24 +56,32 @@ systems:
     reported_license: {value: "not found", evidence: none}
     hardware: "13B: HARDWARE_BLOCKED"
     status: [NOT_RELEASED_OR_UNFOUND, HARDWARE_BLOCKED]
+    final_state: DEPENDENCY_MISSING
+    final_note: "no public checkpoint/code could be confirmed"
   WebGenAgent-LM-7B:
     source: {paper: "arXiv 2509.22644 (WebGen-Agent)", model_card: "huggingface.co/luzimu/WebGenAgent-LM-7B-SFT", evidence: secondary}
     checkpoint: {params: "7B (Qwen2 base)", host: huggingface, reachable: false}
     reported_license: {value: "MIT (SFT card)", evidence: secondary}
     hardware: "7B fp16: HARDWARE_BLOCKED on CPU without GGUF"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   WebGenAgent-LM-8B:
     source: {paper: "arXiv 2509.22644", evidence: secondary}
     checkpoint: {params: "8B", host: huggingface, reachable: false}
     reported_license: {value: "MIT expected (family); not confirmed", evidence: secondary}
     hardware: "HARDWARE_BLOCKED on CPU without GGUF"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   WebGenAgent-Step-GRPO:
     source: {paper: "arXiv 2509.22644 (Step-GRPO with screenshot + GUI-agent feedback)", evidence: secondary}
     checkpoint: {params: "7B/8B", host: huggingface, reachable: false}
     reported_license: {value: "not confirmed for Step-GRPO checkpoint", evidence: none}
     hardware: "HARDWARE_BLOCKED"
     status: [WEIGHTS_UNREACHABLE, ARCHITECTURE_REFERENCE]
+    final_state: NETWORK_BLOCKED
+    final_note: "weights host huggingface.co denied by the egress proxy (re-checked 2026-10-12)"
     apex_use: "screenshot-feedback loop is exactly APEX's render->QA->mutate loop (implemented natively)"
   ScreenCoder:
     source: {repo_found: "unofficial mirror github.com/syntax-syndicate/ScreenCoder-agent", evidence: secondary}
@@ -70,6 +89,8 @@ systems:
     reported_license: {value: "not found", evidence: none}
     hardware: "depends on chosen VLM"
     status: [WEIGHTS_UNREACHABLE, ARCHITECTURE_REFERENCE]
+    final_state: NETWORK_BLOCKED
+    final_note: "weights host huggingface.co denied by the egress proxy (re-checked 2026-10-12)"
     apex_use: "screenshot->structure extraction is done by apex-native-decomposer on DOM; VLM path via local Qwen3-VL possible"
   DCGen:
     source: {paper: "arXiv 2406.16386 (FSE 2025)", evidence: secondary}
@@ -77,18 +98,24 @@ systems:
     reported_license: {value: "code licence not found", evidence: none}
     hardware: "runs on any VLM"
     status: [PROTOCOL_REIMPLEMENTABLE, ARCHITECTURE_REFERENCE]
+    final_state: NOT_IMPLEMENTED
+    final_note: "prompting method (screenshot->code) could run on local VLMs; not implemented — the APEX pipeline compiles HTML natively and never needs screenshot->code"
   MarkupDM:
     source: {model_card: "huggingface.co/cyberagent/markupdm", paper: "arXiv 2409.19051", evidence: secondary}
     checkpoint: {params: "7B (bigcode/starcoderbase-7b base)", host: huggingface, reachable: false}
     reported_license: {value: "Apache-2.0 (repo) — base model StarCoderBase carries BigCode OpenRAIL-M terms; training data crello", evidence: secondary}
     hardware: "7B fp16: HARDWARE_BLOCKED on CPU without GGUF"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   PosterReward:
     source: {paper: "arXiv 2603.29855 (CVPR 2026); variants pairwise / lite / full, all Qwen3-VL-8B based", evidence: secondary}
     checkpoint: {params: "8B (Qwen3-VL-8B)", host: "huggingface (assumed)", reachable: false}
     reported_license: {value: "not found", evidence: none}
     hardware: "8B VLM: CPU GGUF Q4 would be ~5 GB and slow (minutes per pair)"
     status: [WEIGHTS_UNREACHABLE, PROTOCOL_REIMPLEMENTED]
+    final_state: ADAPTER_TESTED_ONLY
+    final_note: "pairwise PROTOCOL runs with tests and real local judges; original Qwen3-VL-8B reward weights NETWORK_BLOCKED (huggingface.co denied)"
     apex_use: "PosterReward-style PAIRWISE protocol (order-swapped twice, consistency required) runs on local vision judges ONLY when calibration marks them reliable — clearly labelled as protocol, not PosterReward weights"
   LayerD:
     source: {paper: "ICCV 2025 (CyberAgent, Tohoku)", code: "github.com/CyberAgentAILab/LayerD", evidence: secondary}
@@ -97,85 +124,123 @@ systems:
     pypi_name_collision: "PyPI `layerd` is an unrelated AWS-Lambda tool — must NOT be installed as LayerD"
     hardware: "CPU feasible (slow)"
     status: [WEIGHTS_UNREACHABLE]
+    final_state: NETWORK_BLOCKED
+    final_note: "weights host huggingface.co denied by the egress proxy (re-checked 2026-10-12)"
   OmniSVG-4B:
     source: {model_card: "huggingface.co/OmniSVG/OmniSVG1.1_4B (7.6 GB)", evidence: secondary}
     checkpoint: {params: "4B", host: huggingface, reachable: false}
     reported_license: {value: "Apache-2.0 (code/model); MMSVG dataset CC non-commercial", evidence: secondary}
     hardware: "4B fp16 7.6 GB: CPU-feasible but slow"
     status: [WEIGHTS_UNREACHABLE]
+    final_state: NETWORK_BLOCKED
+    final_note: "weights host huggingface.co denied by the egress proxy (re-checked 2026-10-12)"
   OmniSVG-8B:
     source: {model_card: "OmniSVG org on huggingface", evidence: secondary}
     checkpoint: {params: "8B", host: huggingface, reachable: false}
     reported_license: {value: "Apache-2.0 (code/model); dataset non-commercial", evidence: secondary}
     hardware: "HARDWARE_BLOCKED (fp16 ~16 GB)"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   StarVector-1B:
     source: {model_card: "starvector/starvector-1b-im2svg", evidence: secondary}
     checkpoint: {params: "1B", host: huggingface, reachable: false}
     reported_license: {value: "Apache-2.0 (secondary source only)", evidence: secondary}
     hardware: "CPU-feasible"
     status: [WEIGHTS_UNREACHABLE]
+    final_state: NETWORK_BLOCKED
+    final_note: "weights host huggingface.co denied by the egress proxy (re-checked 2026-10-12)"
   StarVector-8B:
     source: {model_card: "starvector/starvector-8b-im2svg", evidence: secondary}
     checkpoint: {params: "8B", host: huggingface, reachable: false}
     reported_license: {value: "Apache-2.0 (secondary source only)", evidence: secondary}
     hardware: "HARDWARE_BLOCKED"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   PosterOmni:
     source: {evidence: none}
     checkpoint: {host: unknown, reachable: false}
     reported_license: {value: "not found", evidence: none}
     status: [NOT_RELEASED_OR_UNFOUND]
+    final_state: DEPENDENCY_MISSING
+    final_note: "no public checkpoint/code could be confirmed"
   PosterCraft:
     source: {model_card: "huggingface.co/PosterCraft/PosterCraft-v1_RL", evidence: secondary}
     checkpoint: {params: "diffusion (FLUX-class)", host: huggingface, reachable: false}
     reported_license: {value: "not found", evidence: none}
     hardware: "HARDWARE_BLOCKED (diffusion without GPU)"
     status: [WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED]
+    final_state: HARDWARE_BLOCKED
+    final_note: "7B+ model needs a GPU or a GGUF build; weights also NETWORK_BLOCKED (huggingface.co denied)"
   PosterMaker:
     source: {evidence: none}
     checkpoint: {host: unknown, reachable: false}
     reported_license: {value: "not found", evidence: none}
     hardware: "diffusion: HARDWARE_BLOCKED"
     status: [NOT_RELEASED_OR_UNFOUND, HARDWARE_BLOCKED]
+    final_state: DEPENDENCY_MISSING
+    final_note: "no public checkpoint/code could be confirmed"
   PosterVerse:
     source: {paper: "arXiv 2601.03993 (blueprint LLM -> diffusion background -> MLLM HTML text rendering)", evidence: secondary}
     checkpoint: {host: unknown, reachable: false}
     reported_license: {value: "not found", evidence: none}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
     apex_use: "HTML-rendered text over generated background == APEX policy: facts are never rasterised"
   PosterGen:
     source: {evidence: none (agent framework per spec)}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   BannerAgency:
     source: {evidence: none (multi-agent banner framework per spec)}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   PosterO:
     source: {evidence: none}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   Scan-and-Print:
     source: {evidence: none}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   Uni-Layout:
     source: {evidence: none}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   SlidePoise:
     source: {evidence: none}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   SlideGen:
     source: {evidence: none}
     status: [ARCHITECTURE_REFERENCE]
+    final_state: RESEARCH_ONLY
+    final_note: "method folded into native engines; no model is run"
   Qwen-Image-2.1:
     source: {evidence: none found for 2.1}
     reported_license: {value: "not found", evidence: none}
     hardware: "20B+ diffusion: HARDWARE_BLOCKED"
     status: [NOT_RELEASED_OR_UNFOUND, HARDWARE_BLOCKED]
+    final_state: DEPENDENCY_MISSING
+    final_note: "no public checkpoint/code could be confirmed"
   UI-TARS-2:
     source: {evidence: "only UI-TARS-1.5 / 7B-DPO found"}
     reported_license: {value: "not found for UI-TARS-2", evidence: none}
     status: [NOT_RELEASED_OR_UNFOUND]
+    final_state: DEPENDENCY_MISSING
+    final_note: "no public checkpoint/code could be confirmed"
   GraphicDesignBench:
     source: {paper: "arXiv 2604.04192 (LICA; 50 tasks, 5 axes)", package: "PyPI lica-gdb 0.2.1 (Apache-2.0)", code: "github.com/lica-world/GDB", evidence: primary-pypi}
     checkpoint: {host: "dataset: LICA layered-composition data (host to be determined by the package)", reachable: unknown}
     reported_license: {value: "package Apache-2.0 (PyPI metadata); paper CC BY 4.0; dataset terms unconfirmed", evidence: primary-pypi}
     status: [PACKAGE_INSTALLABLE]
+    final_state: LIVE_TESTED
+    final_note: "lica-gdb 0.2.1 ran the verification bundle against a real local model through the $0 broker; full dataset NETWORK_BLOCKED (Hugging Face)"

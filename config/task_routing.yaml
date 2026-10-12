@@ -1,0 +1,25 @@
+# Task-specific, EMPIRICAL routing. Each pipeline task is ranked ONLY on the measured council evidence named here
+# (artifacts/bench/council_scores.json via the registry overlay). There is no "overall" fallback: a model is never
+# the brain because an average looks high. Unmeasured models fall back to their prior capability estimate and rank
+# below any model MEASURED >= the prior on this task's evidence.
+#   combine: min  -> every listed skill must hold (e.g. writing must be Egyptian AND fact-preserving)
+#   deterministic -> no model may compute this task (enforced by the $0 firewall); code does it
+#   calibrated_only -> only calibration-reliable vision judges (Vision Council / pairwise)
+schema_version: 1
+tasks:
+  evidence.extract:   {evidence: [structured_json]}
+  live.structured:    {evidence: [structured_json]}
+  editorial.write:    {evidence: [egyptian_arabic, fact_preservation], combine: min}
+  editorial.critique: {evidence: [egyptian_arabic]}
+  mission.analyze:    {evidence: [reasoning]}
+  opportunity.model:  {evidence: [reasoning]}
+  design.html:        {evidence: [html_css]}
+  design.reward:      {evidence: [design_criticism]}
+  design.critique:    {evidence: [design_criticism]}
+  retrieval.long:     {evidence: [long_context]}
+  date.:              {deterministic: apex_one.core.dates}
+  vision.council:     {calibrated_only: absolute}
+  vision.pairwise:    {calibrated_only: pairwise}
+  layout.:            {native: apex-native-layout}
+  svg.:               {specialist: vector (StarVector / OmniSVG when reachable), else native SVG assets}
+  repair.:            {native: apex-native repair_genes (failure-specific)}

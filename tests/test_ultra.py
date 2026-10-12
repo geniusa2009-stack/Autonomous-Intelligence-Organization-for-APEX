@@ -608,3 +608,107 @@ def test_absolute_and_pairwise_reliability_are_separate(tmp_path):
     p = tmp_path / "cal.json"
     p.write_text(json.dumps({"models": {}, "pairwise_models": {"m": rec}}))
     assert reliable_judges(p)[0] == [] and reliable_judges(p, mode="pairwise")[0] == ["m"]
+
+
+def _brand_pkg(d: Path, *, placeholder_logo: bool = False, missing_robot: bool = False) -> Path:
+    d.mkdir(parents=True, exist_ok=True)
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40"><rect fill="#0A1A33" width="120" height="40"/></svg>'
+    (d / "logo.svg").write_text(svg)
+    (d / "logo-on-dark.svg").write_text(svg.replace("#0A1A33", "#FFFFFF"))
+    if not missing_robot:
+        (d / "robot.svg").write_text(svg.replace('viewBox="0 0 120 40"', 'viewBox="0 0 40 40"'))
+    if placeholder_logo:
+        from apex_one.settings import REPO_ROOT
+
+        (d / "logo.svg").write_bytes((REPO_ROOT / "apex_one/assets/brand/apex_wordmark_placeholder.svg").read_bytes())
+    (d / "fonts").mkdir(exist_ok=True)
+    (d / "fonts" / "readex.woff2").write_bytes(b"wOF2fake")
+    (d / "brand.yaml").write_text(
+        "approved_by: Director\napproved_at: '2026-10-12'\npalette: {navy_900: '#0A1A33', white: '#FFFFFF'}\n"
+        "fonts: {display: Readex Pro}\nfont_files: {Readex Pro: fonts/readex.woff2}\n")
+    return d
+
+
+def test_brand_import_validates_before_installing(tmp_path, monkeypatch):
+    import shutil
+
+    from apex_one.release import assets as A
+    from apex_one.settings import REPO_ROOT, reset_settings_cache
+
+    home = tmp_path / "home"
+    shutil.copytree(REPO_ROOT / "config", home / "config")
+    shutil.copytree(REPO_ROOT / "apex_one" / "assets", home / "apex_one" / "assets")
+    monkeypatch.setenv("APEX_HOME", str(home))
+    reset_settings_cache()
+    A._CACHE.clear()
+    bad = A.import_brand(_brand_pkg(tmp_path / "p1", placeholder_logo=True, missing_robot=True))
+    assert not bad["installed"] and any("PLACEHOLDER" in p for p in bad["problems"])
+    assert any("robot" in p and "missing" in p for p in bad["problems"])
+    assert not (home / "assets" / "apex" / "logo.svg").exists()          # nothing installed on failure
+    good = A.import_brand(_brand_pkg(tmp_path / "p2"))
+    assert good["installed"] and good["fingerprint"] and good["checks"]["robot"]["viewBox"] == (40.0, 40.0)
+    assert A.validate_assets()["production_ready"] is True
+    (home / "assets" / "apex" / "robot.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect fill="#FFFFFF"/></svg>')
+    A._CACHE.clear()
+    rep = A.validate_assets()                                          # edited after import -> gate fails
+    assert rep["production_ready"] is False and "brand_fingerprint" in rep["failures"]
+
+
+def test_critical_date_arithmetic_is_deterministic(registry):
+    from datetime import date
+
+    from apex_one.compute.firewall.zero_cost import ZeroCostFirewall
+    from apex_one.core.dates import latest_test_date, plan_backwards, reconcile
+    from apex_one.core.schemas.compute import CapabilityRequest
+
+    # permanent regression case: verified answer 2026-10-17 (Gemma said 2026-10-26, Qwen3-VL 2026-10-02)
+    assert latest_test_date(date(2026, 11, 1), 10, today=date(2026, 10, 10)) == date(2026, 10, 17)
+    assert latest_test_date(date(2026, 11, 1), 10, today=date(2026, 10, 18)) is None      # already too late
+    assert latest_test_date(date(2026, 10, 27), 10) == date(2026, 10, 17)                  # exact boundary
+    r = reconcile(date(2026, 10, 17), "2026-10-26")
+    assert r.value == date(2026, 10, 17) and not r.agreed and "engine wins" in r.note
+    assert plan_backwards(date(2027, 1, 15), [("essay", 30), ("test", 14)]) == [
+        ("essay", date(2026, 12, 2)), ("test", date(2027, 1, 1))]
+    model = next(m for m in registry.models.values() if any(x.provider == "mock" for x in m.routes))
+    route = next(x for x in model.routes if x.provider == "mock")
+    fw = ZeroCostFirewall(registry).evaluate(model, route, CapabilityRequest(task="date.latest_test", purpose="research"))
+    assert any("deterministic-only" in x for x in fw.reasons)
+
+
+def test_router_ranks_by_task_evidence_never_overall(registry):
+    from apex_one.compute.router.capability import routing_rule, task_evidence_score
+    from apex_one.core.schemas.compute import ModelEntry
+
+    base = next(iter(registry.models.values()))
+    a = base.model_copy(update={"benchmark_scores": {"structured_json": 100.0, "egyptian_arabic": 0.0,
+                                                     "fact_preservation": 100.0, "overall": 95.0}})
+    b = base.model_copy(update={"benchmark_scores": {"structured_json": 60.0, "egyptian_arabic": 75.0,
+                                                     "fact_preservation": 100.0, "overall": 70.0}})
+    assert task_evidence_score(a, "evidence.extract") > task_evidence_score(b, "evidence.extract")
+    assert task_evidence_score(b, "editorial.write") > task_evidence_score(a, "editorial.write")   # min(Egyptian, facts)
+    c = base.model_copy(update={"benchmark_scores": {"overall": 99.0}})
+    assert task_evidence_score(c, "editorial.write") is None                                       # no overall fallback
+    assert routing_rule("date.latest_test") == {"deterministic": "apex_one.core.dates"}
+    assert isinstance(a, ModelEntry)
+
+
+def test_license_evidence_rule():
+    from apex_one.compute.license_evidence import decide
+
+    two_apache = {"declarations": [{"source": "gguf_metadata", "value": "apache-2.0", "spdx": "Apache-2.0"},
+                                   {"source": "licence_layer", "value": "LICENSE", "spdx": "Apache-2.0"}],
+                  "gguf_fields": {}, "artifact": "x"}
+    d = decide(two_apache)
+    assert d["production_allowed"] and d["commercial_use"] == "yes" and d["verified_at"]
+    one = {**two_apache, "declarations": two_apache["declarations"][:1]}
+    assert not decide(one)["production_allowed"]                                        # one source is not enough
+    assert not decide(two_apache, "Apache-2.0 + gpt-oss usage policy (reported)")["production_allowed"]
+    custom = {"declarations": [{"source": "gguf_metadata", "value": "other", "spdx": "other:nvidia-x"},
+                               {"source": "oci_descriptor", "value": "x", "spdx": "other:nvidia-x"}],
+              "gguf_fields": {"general.license.name": "nvidia-x"}, "artifact": "x"}
+    assert not decide(custom)["production_allowed"]
+    clash = {"declarations": [{"source": "gguf_metadata", "value": "mit", "spdx": "MIT"},
+                              {"source": "oci_descriptor", "value": "Apache-2.0", "spdx": "Apache-2.0"}],
+             "gguf_fields": {}, "artifact": "x"}
+    assert not decide(clash)["production_allowed"]

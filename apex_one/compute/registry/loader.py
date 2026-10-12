@@ -100,6 +100,19 @@ class ArsenalRegistry:
         return [m.id for m in self.models.values() if not m.id.startswith(("apex-native", "mock"))]
 
 
+def _overlay_artifact_license_verifications(licenses: dict[str, LicenseRecord], cfg: Path) -> None:
+    """Committed, reviewable verifications from local artifact evidence (config/license_verifications.yaml).
+    Applied before human DB verifications, which always win."""
+    path = cfg / "license_verifications.yaml"
+    if not path.exists():
+        return
+    fields = set(LicenseRecord.model_fields)
+    for lid, rec in (_read_yaml(path).get("verifications") or {}).items():
+        base = licenses.get(lid) or LicenseRecord(id=lid)
+        licenses[lid] = LicenseRecord.model_validate(           # validate: enums/datetimes, not raw strings
+            {**base.model_dump(), **{k: v for k, v in rec.items() if k in fields and k != "id"}})
+
+
 def _overlay_license_verifications(licenses: dict[str, LicenseRecord], db_url: str | None) -> None:
     try:
         from sqlalchemy import select
@@ -113,7 +126,7 @@ def _overlay_license_verifications(licenses: dict[str, LicenseRecord], db_url: s
             rows = s.execute(select(LicenseVerificationRow).order_by(LicenseVerificationRow.at)).scalars().all()
             for row in rows:
                 base = licenses.get(row.license_id) or LicenseRecord(id=row.license_id)
-                licenses[row.license_id] = base.model_copy(update=dict(row.payload))
+                licenses[row.license_id] = LicenseRecord.model_validate({**base.model_dump(), **dict(row.payload)})
     except Exception:  # registry must load even if DB is unavailable
         return
 
@@ -208,6 +221,7 @@ def load_registry(config_dir: Path | None = None, *, db_url: str | None = None,
 
     _overlay_local_models(models, providers, cfg)
     _overlay_measured_scores(models)
+    _overlay_artifact_license_verifications(licenses, cfg)
     if with_db_overlay:
         _overlay_license_verifications(licenses, db_url)
     attestations = _load_attestations(db_url) if with_db_overlay else []

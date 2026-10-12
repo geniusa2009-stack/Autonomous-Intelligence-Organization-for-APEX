@@ -35,6 +35,8 @@ from apex_one.core.schemas.compute import (
 )
 
 ZERO_BY_CONSTRUCTION = {"local", "self_hosted", "mock"}
+# Critical arithmetic is computed by code, never by free-form model reasoning (models may only explain results).
+DETERMINISTIC_ONLY_TASKS = ("date.",)
 PRICE_CHECK_TTL = timedelta(hours=24)
 
 
@@ -125,6 +127,8 @@ class ZeroCostFirewall:
                 reasons.append("mock provider can never serve production output")
         elif not self.registry.research_allowed(model):
             reasons.append(f"licence BLOCKED even for {request.purpose}")
+        if request.task.startswith(DETERMINISTIC_ONLY_TASKS):
+            reasons.append(f"task {request.task!r} is deterministic-only (apex_one.core.dates); no model may compute it")
         if request.purpose == "evaluation" and not request.task.startswith(EVALUATION_TASKS):
             reasons.append(f"purpose=evaluation is only for judging/benchmark tasks {EVALUATION_TASKS}, "
                            f"not task {request.task!r}")

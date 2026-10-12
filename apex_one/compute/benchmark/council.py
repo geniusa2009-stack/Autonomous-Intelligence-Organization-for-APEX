@@ -11,7 +11,7 @@ import json
 import re
 import time
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 from typing import Any, Callable
 
@@ -27,10 +27,9 @@ RESULT_DAYS = 10
 
 
 def _latest_saturday() -> str:
-    d = DEADLINE - timedelta(days=RESULT_DAYS)
-    while d.weekday() != 5:
-        d -= timedelta(days=1)
-    return d.isoformat()
+    from apex_one.core.dates import latest_test_date
+
+    return latest_test_date(DEADLINE, RESULT_DAYS, today=TODAY).isoformat()   # single source of truth
 
 
 LATEST_SAT = _latest_saturday()
@@ -246,6 +245,7 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
                 else:
                     score, detail = t.score(text)
             rec = {"model": mid, "task": t.name, "score": score, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
+                   "max_tokens": None if t.vision else (max_tokens or t.max_tokens), "checker_version": CHECKER_VERSION,
                    "output": text[:STORED_OUTPUT_CHARS]}
             log.write(json.dumps(rec, ensure_ascii=False) + "\n")
             log.flush()

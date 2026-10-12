@@ -416,7 +416,32 @@ models:
   family: qwen
   version: current VL
   category: general
-  description: Qwen multimodal / vision-language models.
+  description: Qwen3-VL 4B Instruct served locally (GGUF via llama.cpp); cloud Qwen2.5-VL routes live in qwen2.5-vl.
+  capabilities:
+    reasoning: high
+    coding: medium
+    arabic: high
+    egyptian_arabic: medium
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 131072
+  latency: medium
+  routes: []
+  license_ref: lic-qwen3-vl-apache
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 6
+  min_ram_gb: 16
+  local_hint: ollama pull qwen2.5vl:7b for a local vision judge
+  notes: ''
+- id: qwen2.5-vl
+  family: qwen
+  version: current VL
+  category: general
+  description: Qwen2.5-VL checkpoints on remote/other runtimes (72B uses the Qwen licence; per-checkpoint verification needed).
   capabilities:
     reasoning: high
     coding: medium
@@ -1995,8 +2020,8 @@ models:
   context: 32768
   latency: slow
   routes: []
-  license_ref: lic-qwen-open
-  integration_status: IMPLEMENTED
+  license_ref: lic-qwen3-vl-8b
+  integration_status: CONFIGURED_BUT_UNTESTED
   adapter: openai_compatible
   weights_size_gb: 6.6
   min_ram_gb: 9
@@ -2020,8 +2045,8 @@ models:
   context: 32768
   latency: slow
   routes: []
-  license_ref: lic-gemma
-  integration_status: IMPLEMENTED
+  license_ref: lic-gemma3-12b
+  integration_status: CONFIGURED_BUT_UNTESTED
   adapter: openai_compatible
   weights_size_gb: 8.1
   min_ram_gb: 11

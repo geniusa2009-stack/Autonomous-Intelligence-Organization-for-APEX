@@ -147,8 +147,8 @@ def design_activation_md(systems: dict[str, Any], gdb_runs: dict[str, Any], reli
            "ACTIVATED without a stored smoke-test artifact.", "",
            "Environment facts behind most rows: huggingface.co / GitHub releases / arXiv are denied by the egress "
            "policy (weights unreachable); 4 vCPU + 15.7 GB RAM + no GPU (7B+ VLMs blocked without GGUF builds).", "",
-           "| system | source (evidence) | reported licence | checkpoint host | hardware | local | $0 remote | "
-           "adapter | smoke test / artifacts | status |", "|---|---|---|---|---|---|---|---|---|---|"]
+           "| system | **final state** | source (evidence) | reported licence | checkpoint host | hardware | local | "
+           "$0 remote | adapter | smoke test / artifacts | detail statuses |", "|---|---|---|---|---|---|---|---|---|---|---|"]
     for name, s in systems.items():
         src = s.get("source", {})
         src_s = "; ".join(f"{k}: {v}" for k, v in src.items() if k != "evidence")[:90] + f" ({src.get('evidence', '?')})"
@@ -171,10 +171,18 @@ def design_activation_md(systems: dict[str, Any], gdb_runs: dict[str, Any], reli
                 status = ["ACTIVATED (smoke bundle)" if x == "PACKAGE_INSTALLABLE" else x for x in status]
             else:
                 smoke = "`gdb verify` (stub) passed; local-model run pending"
-        out.append(f"| {name} | {src_s} | {lic.get('value', '—')} | {host} | {s.get('hardware', '—')[:60]} | {local} | "
-                   f"no | {adapter} | {smoke} | **{', '.join(status)}** |")
-        if s.get("apex_use"):
-            out.append(f"| ↳ APEX use | {s['apex_use']} | | | | | | | | |")
+        fs = s.get("final_state", "NOT_IMPLEMENTED")
+        if name == "GraphicDesignBench" and not any(v.get("valid") for v in gdb_runs.values()):
+            fs = "ADAPTER_TESTED_ONLY"   # LIVE_TESTED only while a real run's scores are on disk
+        out.append(f"| {name} | **{fs}** | {src_s} | {lic.get('value', '—')} | {host} | {s.get('hardware', '—')[:60]} | "
+                   f"{local} | no | {adapter} | {smoke} | {', '.join(status)} |")
+        notes = "; ".join(x for x in (s.get("final_note"), s.get("apex_use")) if x)
+        if notes:
+            out.append(f"| ↳ | {notes} | | | | | | | | | |")
+    counts: dict[str, int] = {}
+    for s_ in systems.values():
+        counts[s_.get("final_state", "NOT_IMPLEMENTED")] = counts.get(s_.get("final_state", "NOT_IMPLEMENTED"), 0) + 1
+    out += ["", "**Final states:** " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())), ""]
     out += ["", "## What actually runs", "",
             "* **Design generation:** the native APEX engines (layout genome, compiler, tournament) — licence-clean.",
             ("* **Design judging:** calibrated-reliable local vision judges: " + (", ".join(reliable) if reliable else
@@ -298,6 +306,176 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
         "APEX_DESIGN_BENCH.md": design_bench_md(_load(bench / "apex_design" / "apex_design_bench.json"), rows,
                                                 _load(bench / "design" / "design_bench.json")),
     }
+    runs_path = bench / "council_runs.jsonl"
+    runs = [json.loads(x) for x in runs_path.read_text(encoding="utf-8").splitlines() if x.strip()] if runs_path.exists() else []
+    files["MODEL_COMPARISON_MATRIX.md"] = model_comparison_md(
+        runs, _load(bench / "council_scores.json"), _load(bench / "vision_calibration" / "calibration_results.json"))
+    inv_dir = bench / "vision_investigation"
+    inv = {p.stem: _load(p) for p in sorted(inv_dir.glob("*.json"))} if inv_dir.exists() else {}
+    files["VISION_CALIBRATION_ANALYSIS.md"] = vision_analysis_md(
+        inv, _load(bench / "vision_calibration" / "calibration_results.json"), runs)
     for name, text in files.items():
         (repo / name).write_text(text, encoding="utf-8")
     return {k: str(repo / k) for k in files}
+
+
+# ---------------------------------------------------------------- MODEL_COMPARISON_MATRIX
+
+WINNER_TASKS = [("structured_json", "best structured output"), ("fact_preservation", "best fact preservation"),
+                ("egyptian_arabic", "best Egyptian Arabic"), ("html_css", "best HTML/CSS"),
+                ("long_context", "best long-context retrieval"), ("design_criticism", "best design criticism"),
+                ("visual_hierarchy", "best vision hierarchy (pairwise, single pair)"),
+                ("reasoning", "best date reasoning")]
+
+
+def _hardware() -> str:
+    import os
+
+    try:
+        mem = int(open("/proc/meminfo").read().split()[1]) / 1e6
+    except OSError:
+        mem = 0
+    return f"{os.cpu_count()} vCPU x86-64, {mem:.1f} GB RAM, no GPU, llama.cpp CPU"
+
+
+def model_comparison_md(runs: list[dict[str, Any]], scores: dict[str, Any] | None,
+                        calibration: dict[str, Any] | None) -> str:
+    from apex_one.compute.benchmark.council import STORED_OUTPUT_CHARS, tasks
+
+    defaults = {t.name: (None if t.vision else t.max_tokens) for t in tasks(Path("."))}
+    latest: dict[tuple[str, str], dict[str, Any]] = {}
+    for r in runs:
+        latest[(r["model"], r["task"])] = r
+    final = (scores or {}).get("models", {})
+    models = sorted({m for m, _ in latest})
+    task_names = [t for t, _ in WINNER_TASKS]
+    hw = _hardware()
+    out = ["# Model Comparison Matrix", "", _stamp(),
+           "One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only "
+           "models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden "
+           "reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models "
+           "measured on that same task.", "",
+           f"Hardware for every row: {hw}. Checker version: {(scores or {}).get('checker_version', 1)}.", "",
+           "| model | task | measured? | score | latency | output complete? | checker | token budget | notes |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    for m in models:
+        for t in task_names:
+            r = latest.get((m, t))
+            if r is None:
+                why = "text-only model: vision task not applicable" if t == "visual_hierarchy" else "not run"
+                out.append(f"| {m} | {t} | no | — | — | — | — | — | {why} |")
+                continue
+            score = final.get(m, {}).get(t, r.get("score"))
+            text = r.get("output") or ""
+            complete = ("n/a (vision A/B)" if t == "visual_hierarchy" else "EMPTY" if not text.strip() else
+                        "truncated in log" if len(text) >= STORED_OUTPUT_CHARS else "yes")
+            budget = r.get("max_tokens") or (f"{defaults.get(t)} (task default)" if defaults.get(t) else "60 (A/B)")
+            out.append(f"| {m} | {t} | {'yes' if score is not None else 'no'} | {_fmt(score, 0)} | "
+                       f"{_fmt(r.get('latency_s'))} s | {complete} | v{r.get('checker_version', 1)} | {budget} | "
+                       f"{str(r.get('detail', '')).replace('|', '/')[:90]} |")
+    out += ["", "## Task-specific winners (same task, measured models only)", "",
+            "| task | winner(s) | score | measured models | not measured |", "|---|---|---|---|---|"]
+    for t, label in WINNER_TASKS:
+        measured = {m: final.get(m, {}).get(t) for m in models if final.get(m, {}).get(t) is not None}
+        missing = [m for m in models if m not in measured]
+        if not measured:
+            out.append(f"| {label} | none measured | — | — | {', '.join(missing)} |")
+            continue
+        best = max(measured.values())
+        wins = sorted(m for m, v in measured.items() if v == best)
+        verdict = ", ".join(wins) if best > 0 else "NO WINNER (every measured model failed)"
+        if t == "reasoning":
+            verdict += " — production date arithmetic is deterministic (apex_one/core/dates.py) regardless"
+        if t == "visual_hierarchy":
+            verdict += " — NOT a judge qualification; see calibration below"
+        out.append(f"| {label} | {verdict} | {_fmt(best, 0)} | {len(measured)} | {', '.join(missing) or '—'} |")
+    out += ["", "## Vision judge qualification (calibration, not benchmark)", ""]
+    for section, title in (("models", "absolute six-role council"), ("pairwise_models", "pairwise A/B (both orders)")):
+        rows = (calibration or {}).get(section, {})
+        if not rows:
+            out.append(f"* {title}: not run yet")
+            continue
+        for mid, r in rows.items():
+            n_ok = sum(1 for v in r.get("checks", {}).values() if v)
+            out.append(f"* {title} — **{mid}**: {n_ok}/{len(r.get('checks', {}))} cases passed "
+                       f"(valid {r.get('valid_checks')}); qualified: **{bool(r.get('reliable'))}**")
+    out += ["", "A model enters a quality gate only by passing calibration (≥ 4/5, all cases valid). Benchmark wins "
+            "never qualify a judge."]
+    return "\n".join(out) + "\n"
+
+
+# ---------------------------------------------------------------- VISION_CALIBRATION_ANALYSIS
+
+HYPOTHESES = [
+    ("different prompting / role-rubric overload", "E0 (six roles, one call) vs E3 (only the targeted role)"),
+    ("pair order sensitivity / position bias", "E1 good-as-A vs good-as-B answers"),
+    ("scoring schema (absolute scores tie)", "E0 ties_on_target, distinct_scores"),
+    ("image scaling", "E1 (640 px) vs E2 (1024 px)"),
+    ("model instability", "E3 vs E4 (identical prompts, temperature 0)"),
+    ("output parser", "E0 reviews: parse errors / dropped roles vs raw text"),
+    ("context truncation", "E0 raw text ends mid-JSON / missing roles"),
+    ("single easy pair vs five cases", "benchmark pair = good vs no_hierarchy only"),
+]
+
+
+def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, Any] | None,
+                       runs: list[dict[str, Any]]) -> str:
+    out = ["# Vision Calibration Analysis", "", _stamp(),
+           "**Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 "
+           "absolute calibration cases. Which is right, and why do they disagree?", "",
+           "**Rule kept throughout:** a vision model enters a quality gate only if it passes calibration (≥ 4/5, every "
+           "case valid). No bar was lowered; absolute (six-role scoring) and pairwise (A/B) are separate "
+           "qualifications measured on the same five cases.", ""]
+    bench = [r for r in runs if r["task"] == "visual_hierarchy"]
+    if bench:
+        out += ["## The benchmark result being questioned", ""]
+        for r in bench:
+            out.append(f"* {r['model']}: score {r['score']} — {r.get('detail')} (one pair: good vs no_hierarchy)")
+        out.append("")
+    if not inv:
+        return "\n".join(out + ["PENDING: investigation experiments have not run yet "
+                                "(scripts/validation_queue.py steps calib/pcalib/invest)."]) + "\n"
+    for mid, rep in inv.items():
+        out += [f"## {mid}", ""]
+        e0 = rep.get("E0")
+        if e0:
+            res = e0["result"]
+            out += [f"**E0 absolute (production protocol):** {sum(1 for v in res['checks'].values() if v)}/5 passed; "
+                    f"ties on targeted role: {e0['ties_on_target']}; inversions: {e0['inversions_on_target']}; "
+                    f"distinct scores used across all pages/roles: {e0['distinct_scores']}", "",
+                    "| case | role | good | broken | pass |", "|---|---|---|---|---|"]
+            for k, v in res.get("scores", {}).items():
+                out.append(f"| {k} | {v['role']} | {_fmt(v['good'], 0)} | {_fmt(v['broken'], 0)} | {res['checks'][k]} |")
+            parse_errors = {p: r.get("errors") for p, r in e0.get("reviews", {}).items() if r.get("errors")}
+            out += ["", f"Parser/execution errors: {parse_errors or 'none'}", ""]
+        for key, label in (("E1", "pairwise 640 px"), ("E2", "pairwise 1024 px")):
+            e = rep.get(key)
+            if e:
+                bias = sum(1 for d in e["detail"].values() if d["position_bias"])
+                out += [f"**{key} {label}:** {e['correct']}/5 order-consistent wins; position-biased cases: {bias}",
+                        "", "| case | good shown as A → pick | good shown as B → pick | pass |", "|---|---|---|---|"]
+                for k, d in e["detail"].items():
+                    out.append(f"| {k} | {d['good_as_A']} | {d['good_as_B']} | {e['checks'][k]} |")
+                out.append("")
+        for key, label in (("E3", "single-role absolute"), ("E4", "single-role repeat")):
+            e = rep.get(key)
+            if e:
+                out += [f"**{key} {label}:** {e['correct']}/{e['valid']} passed", "",
+                        "| case | role | good | broken | pass |", "|---|---|---|---|---|"]
+                for k, c in e["cases"].items():
+                    out.append(f"| {k} | {c['role']} | {_fmt(c['good']['score'], 0)} | {_fmt(c['broken']['score'], 0)} "
+                               f"| {c['pass']} |")
+                out.append("")
+        if rep.get("E3") and rep.get("E4"):
+            same = sum(1 for k in rep["E3"]["cases"] if rep["E3"]["cases"][k]["good"]["score"] ==
+                       rep["E4"]["cases"][k]["good"]["score"] and rep["E3"]["cases"][k]["broken"]["score"] ==
+                       rep["E4"]["cases"][k]["broken"]["score"])
+            out += [f"Stability: {same}/5 cases gave identical scores on repeat.", ""]
+    out += ["## Hypotheses checked", "", "| hypothesis | evidence used |", "|---|---|"]
+    out += [f"| {h} | {e} |" for h, e in HYPOTHESES]
+    out += ["", "## Qualification status", ""]
+    for section, title in (("models", "absolute"), ("pairwise_models", "pairwise")):
+        for mid, r in ((calibration or {}).get(section) or {}).items():
+            out.append(f"* {title} — {mid}: {sum(1 for v in r.get('checks', {}).values() if v)}/5 → "
+                       f"**{'QUALIFIED' if r.get('reliable') else 'NOT QUALIFIED'}**")
+    return "\n".join(out) + "\n"

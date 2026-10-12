@@ -44,7 +44,12 @@ def test_unknown_licences_are_not_production(registry):
 
 def test_no_external_model_is_production_allowed_without_verification(registry):
     for mid in SPEC_GENERAL + SPEC_DESIGN:
-        assert not registry.production_allowed(mid), mid
+        if registry.production_allowed(mid):
+            lic = registry.license_for(mid)
+            # only via a recorded verification: artifact evidence (license_verifications.yaml) or a human
+            assert lic.verified_at is not None and lic.verified_by, mid
+            assert lic.license_name in ("Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause") or "human" in str(
+                lic.verified_by), (mid, lic.license_name)
 
 
 def test_aya_is_research_only(registry):

@@ -101,3 +101,20 @@ def test_fact_conflict_requires_human_then_resumes(tmp_path):
     assert job.state != "FACT_RESOLUTION"
     lk = next(x for x in JobRunner.load(job.job_id).rd.state.locks if x.slot == "deadline.application")
     assert lk.value.canonical == "2027-01-05" and lk.verified_by == "human:Registrar Check"
+
+
+@requires_browser
+def test_golden_ultra_quality_never_regresses():
+    """Hard regression guard: comprehension >= 95, rhythm >= 93, Arabic typography >= 98 (never lowered) AND the
+    achieved values are protected (tests/baselines/golden_ultra.json)."""
+    from pathlib import Path
+
+    from apex_one.lab.benchmarks.golden import run_golden
+
+    base = json.loads((Path(__file__).parent / "baselines" / "golden_ultra.json").read_text())
+    res = run_golden(quality="ultra")
+    assert res["all_passed"], res["checks"]
+    for name, floor in base["thresholds"].items():
+        status, value = res["targets"][name]
+        assert status == "PASS" and value >= floor, (name, value)
+        assert value >= base["baseline"][name] - base["tolerance"], (name, value, "regressed below baseline")

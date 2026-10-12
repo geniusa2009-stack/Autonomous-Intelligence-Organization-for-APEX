@@ -1,0 +1,6 @@
+{
+  "_note": "Measured on golden ULTRA (synthetic fixture, seed 20271) J-9aee654ead70. Thresholds may never be lowered; the baseline protects the achieved values (tolerance 0.5). Update only with a reviewed reason.",
+  "thresholds": {"reader_comprehension": 95, "cross_page_rhythm": 93, "arabic_typography": 98},
+  "baseline": {"reader_comprehension": 98.889, "cross_page_rhythm": 94.0, "arabic_typography": 100.0},
+  "tolerance": 0.5
+}
