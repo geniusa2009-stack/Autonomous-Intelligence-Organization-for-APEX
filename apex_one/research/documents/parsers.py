@@ -21,6 +21,7 @@ class ParsedBlock:
     text: str
     locator: str           # heading path or "page N"
     tag: str = "p"
+    year_context: int | None = None   # a year declared by the enclosing table header, e.g. "Dates (2027)"
 
 
 @dataclass
@@ -39,6 +40,16 @@ def _clean(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def _table_year(tr) -> int | None:
+    """Year stated in the table's header row (e.g. "Dates (2027)"); only an explicit 20xx in the header counts."""
+    table = tr.find_parent("table")
+    first = table.find("tr") if table else None
+    if first is None or first is tr:
+        return None
+    m = re.findall(r"\b(20\d\d)\b", first.get_text(" "))
+    return int(m[0]) if len(set(m)) == 1 else None
+
+
 def parse_html(html: str) -> ParsedDocument:
     soup = BeautifulSoup(html, "lxml")
     for t in soup(["script", "style", "noscript", "nav", "footer", "svg", "form"]):
@@ -52,7 +63,16 @@ def parse_html(html: str) -> ParsedDocument:
     path: list[str] = []
     blocks: list[ParsedBlock] = []
     body = soup.body or soup
-    for el in body.find_all(list(HEADINGS) + list(BLOCK_TAGS)):
+    for el in body.find_all(list(HEADINGS) + list(BLOCK_TAGS) + ["tr"]):
+        if el.name == "tr":
+            # a table row is ONE statement ("Mentee Applications Open | Feb 3 - Feb 16"): keep label and value together
+            cells = [_clean(c.get_text(" ")) for c in el.find_all(["td", "th"], recursive=False)]
+            txt = " | ".join(c for c in cells if c)
+            if txt:
+                blocks.append(ParsedBlock(txt, " > ".join(path) or "body", "tr", _table_year(el)))
+            continue
+        if el.name in ("td", "th") and el.find_parent("tr"):
+            continue                                    # already part of its row block
         txt = _clean(el.get_text(" "))
         if not txt:
             continue

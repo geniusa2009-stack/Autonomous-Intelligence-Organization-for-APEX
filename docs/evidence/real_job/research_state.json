@@ -1,0 +1,157 @@
+{
+  "backend": "local:/home/user/Autonomous-Intelligence-Organization-for-APEX/artifacts/real_sources/cncf-lfx-2027-term1",
+  "roles": [
+    "ResearchDirector",
+    "OfficialSourceHunter",
+    "DiscoveryWorker",
+    "WebReader",
+    "DocumentReader",
+    "DeadlineSpecialist",
+    "EligibilitySpecialist",
+    "FundingSpecialist",
+    "AdmissionsSpecialist",
+    "VisaLogisticsSpecialist",
+    "HistoricalEvidenceWorker",
+    "FreshnessAuditor",
+    "SourceAuthorityJudge",
+    "ContradictionHunter",
+    "ResearchRedTeam"
+  ],
+  "workers": 12,
+  "official_domains": [
+    "github.com"
+  ],
+  "queries": [
+    "CNCF LFX Mentorship Term 1 international admissions 2027",
+    "CNCF LFX Mentorship Term 1 application deadline 2027",
+    "CNCF LFX Mentorship Term 1 financial aid international students",
+    "CNCF LFX Mentorship Term 1 tuition fees cost of attendance",
+    "CNCF LFX Mentorship Term 1 TOEFL IELTS minimum",
+    "CNCF LFX Mentorship Term 1 SAT requirement test optional",
+    "CNCF LFX Mentorship Term 1 application requirements recommendation essay",
+    "CNCF LFX Mentorship Term 1 international students I-20 F-1 visa",
+    "CNCF LFX Mentorship Term 1 international admissions previous year deadline",
+    "CNCF LFX Mentorship Term 1 scholarship deadline changed"
+  ],
+  "candidate_urls": [
+    "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/2027/01-Mar-May/README.md",
+    "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/README.md"
+  ],
+  "url_hints": {
+    "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/2027/01-Mar-May/README.md": {
+      "url": "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/2027/01-Mar-May/README.md",
+      "file": "term-2027-01.html",
+      "title": "CNCF LFX Mentorship 2027 Term 1 (Mar-May)",
+      "kind": "official",
+      "cycle_year": 2027,
+      "raw_sha256": "852e45e97ccd26a1beb1e4861af13adeec8834dd8e592417e2ed2fdc5ed95eca"
+    },
+    "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/README.md": {
+      "url": "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/README.md",
+      "file": "program.html",
+      "title": "CNCF LFX Mentorship program guidelines",
+      "kind": "official",
+      "cycle_year": 2027,
+      "raw_sha256": "2ce20c073c77d692c11a4f78e769d89295101b1f005bc957556f36f7c538fa89"
+    }
+  },
+  "sources": [
+    {
+      "source_id": "S-0f95dd6868ce",
+      "url": "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/2027/01-Mar-May/README.md",
+      "title": "CNCF LFX Mentorship 2027 Term 1 (Mar-May)",
+      "domain": "github.com",
+      "kind": "official",
+      "content_type": "text/html",
+      "content_hash": "e61faee9c4c0810fab51b7c5fa11b5cc2a53dfe70cf34d64e400676f8b55a2c7",
+      "fetched_at": "2026-10-12T12:26:18.216732Z",
+      "published_or_updated": null,
+      "cycle_year": 2027,
+      "authority": 0.95,
+      "synthetic": false,
+      "fetch_method": "local-file",
+      "text_path": "sources/S-0f95dd6868ce.json"
+    },
+    {
+      "source_id": "S-39c4d3a52c40",
+      "url": "https://github.com/cncf/mentoring/blob/97525d8f004aa477c24f6ce2f34ce4d9b51bf75c/programs/lfx-mentorship/README.md",
+      "title": "CNCF LFX Mentorship program guidelines",
+      "domain": "github.com",
+      "kind": "official",
+      "content_type": "text/html",
+      "content_hash": "f38d229000a477422478902a4df1ea4f1dd7e42f6bd4ee69f7008438d98b388f",
+      "fetched_at": "2026-10-12T12:26:18.229737Z",
+      "published_or_updated": null,
+      "cycle_year": 2027,
+      "authority": 0.95,
+      "synthetic": false,
+      "fetch_method": "local-file",
+      "text_path": "sources/S-39c4d3a52c40.json"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C-21b0df063128",
+      "subject": "CNCF LFX Mentorship Term 1",
+      "predicate": "deadline",
+      "qualifier": "application",
+      "value": {
+        "type": "date",
+        "raw": "Feb 16",
+        "canonical": "2027-02-16",
+        "currency": null,
+        "amount": null,
+        "qualifier": null
+      },
+      "criticality": "critical",
+      "evidence_ids": [
+        "E-2c8c4129a2af"
+      ],
+      "source_ids": [
+        "S-0f95dd6868ce"
+      ],
+      "contradiction_ids": [],
+      "confidence": 0.75,
+      "freshness": "current-cycle",
+      "status": "NEEDS_HUMAN",
+      "notes": [
+        "year 2027 taken from the table header (the row itself states no year)"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E-2c8c4129a2af",
+      "source_id": "S-0f95dd6868ce",
+      "quote": "Mentee Applications Open | Wed, Feb 3, 00:00 UTC - Tue, Feb 16, 23:59 UTC",
+      "locator": "Term 01 - 2027 March - May > Timeline",
+      "extractor": "rule-v1",
+      "extracted_at": "2026-10-12T12:26:18.299810Z"
+    }
+  ],
+  "contradictions": [],
+  "verifications": [
+    {
+      "claim_id": "C-21b0df063128",
+      "primary_source_found": true,
+      "independent_sources": 1,
+      "official_sources": 1,
+      "contradiction_search_done": true,
+      "freshness_ok": true,
+      "semantic_resolution": "single value",
+      "verdict": "NEEDS_HUMAN",
+      "reasons": [
+        "only 1 independent source(s); critical claims need 2"
+      ],
+      "checked_at": "2026-10-12T12:28:18.745400Z"
+    }
+  ],
+  "locks": [],
+  "coverage": {},
+  "red_team": [],
+  "blockers": [],
+  "extractors_used": [
+    "rule-v1"
+  ],
+  "expansion_rounds": 1
+}

@@ -200,3 +200,26 @@ def test_local_sources_manifest(tmp_path):
     assert rd.state.sources[0].kind == SourceKind.OFFICIAL
     assert rd.extract() >= 1
     _ = Path
+
+
+def test_table_rows_and_header_year_from_real_source_shape():
+    """Real programme pages state dates in tables whose header carries the year ("Dates (2027)")."""
+    from apex_one.core.schemas.evidence import Source
+    from apex_one.research.documents.parsers import parse_any
+    from apex_one.research.evidence.extractor import RuleEvidenceExtractor
+    from apex_one.research.evidence.normalize import find_dates
+
+    html = ("<html><body><h3>Timeline</h3><table><tr><th>Activity</th><th>Dates (2027)</th></tr>"
+            "<tr><td>Project Proposals Open</td><td>Wed, Jan 6 - Wed, Jan 27</td></tr>"
+            "<tr><td>Mentee Applications Open</td><td>Wed, Feb 3, 00:00 UTC - Tue, Feb 16, 23:59 UTC</td></tr>"
+            "</table></body></html>").encode()
+    doc = parse_any(html, "text/html")
+    rows = [b for b in doc.blocks if b.tag == "tr"]
+    assert rows[2].text.startswith("Mentee Applications Open |") and rows[2].year_context == 2027
+    assert find_dates("Tue, Feb 16") == []                                # no year, no context -> nothing invented
+    assert find_dates("Feb 16, 2028", context_year=2027)[0][0].year == 2028   # an explicit year always wins
+    src = Source(url="https://x.org/t", title="t", domain="x.org", kind="official", content_type="text/html",
+                 content_hash="h", authority=0.9)
+    claims = RuleEvidenceExtractor("X").extract(src, doc).claims
+    assert [(c.predicate, c.value.canonical) for c in claims] == [("deadline", "2027-02-16")]   # window END
+    assert "table header" in claims[0].notes[0]

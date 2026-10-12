@@ -35,6 +35,7 @@ from apex_one.research.evidence.normalize import (
 SENT_SPLIT = re.compile(r"(?<=[.!?؟])\s+(?=[A-Z؀-ۿ0-9\"'(])")
 DEADLINE_KW = re.compile(r"\b(deadline|due|apply by|submit(?:ted)? by|must be (?:received|submitted)|postmarked|"
                          r"closes?|no later than)\b|آخر موعد|موعد التقديم", re.I)
+WINDOW_KW = re.compile(r"\b(applications? (?:open|window|period)|application window|apply between)\b", re.I)
 NOTIFY_KW = re.compile(r"\b(notif(?:y|ied|ication)|decisions? (?:are |will be )?released)\b", re.I)
 DOMESTIC_KW = re.compile(r"\b(domestic|u\.s\. citizens|us citizens|permanent residents)\b", re.I)
 HEDGE_KW = re.compile(r"\b(subject to change|tentative|tba|to be announced|estimated|approximately|may change)\b", re.I)
@@ -94,8 +95,9 @@ class RuleEvidenceExtractor:
         for block in doc.blocks:
             if block.tag in ("h1", "h2", "h3", "h4"):
                 continue
+            yc = getattr(block, "year_context", None)
             for sent in sentences(block.text):
-                for predicate, qualifier, value in self._rules(sent, block.locator):
+                for predicate, qualifier, value in self._rules(sent, block.locator, yc):
                     ev = Evidence(source_id=source.source_id, quote=sent[:600], locator=block.locator,
                                   extractor=self.name)
                     claim = Claim(subject=self.subject, predicate=predicate, qualifier=qualifier, value=value,
@@ -103,12 +105,14 @@ class RuleEvidenceExtractor:
                                   source_ids=[source.source_id], confidence=0.6)
                     if HEDGE_KW.search(sent):
                         claim.notes.append("hedged language in source (subject to change/tentative/estimated)")
+                    if yc and value.type.value == "date" and not re.search(r"\b20\d\d\b", sent):
+                        claim.notes.append(f"year {yc} taken from the table header (the row itself states no year)")
                     out.claims.append(claim)
                     out.evidence.append(ev)
         return out
 
     # -------------------------------------------------------------------------------------------
-    def _rules(self, s: str, locator: str) -> list[tuple[str, str, NormalizedValue]]:
+    def _rules(self, s: str, locator: str, year_context: int | None = None) -> list[tuple[str, str, NormalizedValue]]:
         found: list[tuple[str, str, NormalizedValue]] = []
         low = to_ascii_digits(s).lower()
         scope = "domestic" if DOMESTIC_KW.search(s) else ""
@@ -117,8 +121,12 @@ class RuleEvidenceExtractor:
             return " ".join(p for p in (*parts, scope) if p)
 
         # ---- dates: deadlines & notifications
-        dates = find_dates(s)
-        if dates and (DEADLINE_KW.search(s) or NOTIFY_KW.search(s)):
+        dates = find_dates(s, year_context)
+        if len(dates) >= 2 and WINDOW_KW.search(s) and not DEADLINE_KW.search(s):
+            # "Applications Open | Feb 3 - Feb 16": the deadline is the END of the application window
+            d, raw, _ = dates[-1]
+            found.append(("deadline", q("application"), date_value(d, raw)))
+        elif dates and (DEADLINE_KW.search(s) or NOTIFY_KW.search(s)):
             if NOTIFY_KW.search(s) and not DEADLINE_KW.search(s):
                 kind, pred = "decision", "decision_date"
             elif re.search(r"deposit", low):

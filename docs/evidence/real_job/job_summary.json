@@ -1,0 +1,9 @@
+{
+  "job_id": "J-2fe410878683",
+  "state": "FACT_RESOLUTION",
+  "status": "AWAITING_HUMAN",
+  "blockers": [
+    "must-lock facts missing [('deadline.application',), ('scholarship_coverage.tuition', 'funding.student_contribution_per_year', 'fee.application'), ('country_eligibility.international', 'eligibility.academic', 'eligibility.financial_need')]: add official sources or confirm facts manually, then resume"
+  ],
+  "mission": "Create an APEX guide for CNCF LFX Mentorship Term 1 2027"
+}

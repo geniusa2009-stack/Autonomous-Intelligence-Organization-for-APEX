@@ -41,12 +41,33 @@ def to_ascii_digits(s: str) -> str:
     return s.translate(ARABIC_DIGITS)
 
 
-def find_dates(text: str) -> list[tuple[date, str, int]]:
-    """Return (date, raw, position) for each full date (day+month+year) found."""
+YEARLESS_PATTERNS = [
+    re.compile(rf"\b(?P<mon>{_MON})\.?\s+(?P<day>\d{{1,2}})(?:st|nd|rd|th)?\b(?!,?\s+20\d\d)", re.I),
+]
+
+
+def find_dates(text: str, context_year: int | None = None) -> list[tuple[date, str, int]]:
+    """Return (date, raw, position) for each full date (day+month+year) found. Dates WITHOUT a year are returned
+    only when the caller supplies an explicit `context_year` (e.g. a table header "Dates (2027)"); the raw text
+    is kept verbatim so the inference stays visible."""
     t = to_ascii_digits(text)
     out: list[tuple[date, str, int]] = []
     seen: set[int] = set()
-    for p in DATE_PATTERNS:
+    patterns = DATE_PATTERNS + ([(p, context_year) for p in YEARLESS_PATTERNS] if context_year else [])
+    for p in patterns:
+        if isinstance(p, tuple):
+            p, year = p
+            for m in p.finditer(t):
+                if any(abs(m.start() - s0) < 3 for s0 in seen):
+                    continue
+                key = m.group("mon").lower().rstrip(".")
+                try:
+                    month = MONTHS_EN[key] if key in MONTHS_EN else MONTHS_EN[key[:3]]
+                    out.append((date(year, month, int(m.group("day"))), m.group(0), m.start()))
+                    seen.add(m.start())
+                except (KeyError, ValueError):
+                    continue
+            continue
         for m in p.finditer(t):
             if m.start() in seen:
                 continue
