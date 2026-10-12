@@ -54,8 +54,8 @@ class PairwiseResult:
 
 
 class PairwiseJudge:
-    def __init__(self, broker, model_ids: list[str], workspace=None, max_w: int = 640):
-        self.broker, self.models, self.ws, self.max_w = broker, model_ids, workspace, max_w
+    def __init__(self, broker, model_ids: list[str], workspace=None, max_w: int = 640, timeout: float = 900.0):
+        self.broker, self.models, self.ws, self.max_w, self.timeout = broker, model_ids, workspace, max_w, timeout
 
     def compare(self, first: Path, second: Path, intent: str) -> PairwiseResult:
         a, b = encode_png(first, self.max_w), encode_png(second, self.max_w)
@@ -67,7 +67,7 @@ class PairwiseJudge:
                 out = self.broker.complete(req, [ChatMessage("user", QUESTION.format(intent=intent),
                                                              images_b64_png=[img1, img2])],
                                            json_mode=True, max_tokens=120, temperature=0.0, workspace=self.ws,
-                                           timeout=900.0)
+                                           timeout=self.timeout)
                 w, why = _winner(out.text or "") if out.executed else (None, out.decision.outcome.value)
                 picks.append((map_.get(w) if w else None, why))
             res.raw[mid] = picks
@@ -89,3 +89,26 @@ class PairwiseJudge:
             if consistent.count(side) * 2 > len(self.models):
                 res.winner = side
         return res
+
+
+def calibrate_pairwise(judge: PairwiseJudge, good: Path, broken: dict[str, Path], intent: str) -> dict[str, Any]:
+    """Pairwise calibration on the SAME five cases as absolute calibration (good vs each broken variant).
+    `compare` asks every pair in BOTH orders (good shown as image A, then as image B). A case passes only if the judge
+    picks the good page in both orders. Reliable for pairwise use: all five cases valid and >= 4/5 passed.
+    Order inversion is reported per case: picking the same POSITION both times is position bias."""
+    out: dict[str, Any] = {"models": {}}
+    results = {k: judge.compare(good, p, intent) for k, p in broken.items()}
+    for mid in judge.models:
+        checks, detail = {}, {}
+        for k, res in results.items():
+            (p1, w1), (p2, w2) = res.raw[mid]          # p = which ARGUMENT won: "first" == the good page
+            checks[k] = None if p1 is None or p2 is None else (p1 == "first" and p2 == "first")
+            detail[k] = {"good_as_A": p1, "good_as_B": p2,
+                         "position_bias": None if p1 is None or p2 is None else p1 != p2,
+                         "reasons": [w1, w2]}
+        valid = [v for v in checks.values() if v is not None]
+        correct = sum(valid)
+        out["models"][mid] = {"checks": checks, "detail": detail, "valid_checks": len(valid), "correct": correct,
+                              "discrimination_rate": correct / len(valid) if valid else None,
+                              "reliable": len(valid) == len(checks) and correct >= 4}
+    return out

@@ -26,7 +26,7 @@ button{background:var(--navy7);color:var(--white);border:0;cursor:pointer}
        <a id="qr" target="_blank">quality_report.json</a></p>
     <img id="sheet" alt="contact sheet">
     <h3>اعتماد الإصدار</h3>
-    <form id="approve"><input name="approver" placeholder="الاسم" required><input name="notes" placeholder="ملاحظات">
+    <form id="approve"><input name="token" type="password" placeholder="approver token" required autocomplete="off"><input name="notes" placeholder="ملاحظات">
       <button>اعتماد (RELEASE_CANDIDATE → FINAL)</button></form>
     <h3>تفضيل تصميم (B &gt; A &gt; C)</h3>
     <form id="pref"><input name="page_id" placeholder="page id" required>
@@ -56,8 +56,9 @@ async function open(id) {
 }
 $('#approve').onsubmit = async (e) => {
   e.preventDefault(); const f = new FormData(e.target);
-  const r = await fetch(`/jobs/${current}/approve`, {method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({approver: f.get('approver'), notes: f.get('notes')})});
+  const r = await fetch(`/jobs/${current}/approve`, {method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${f.get('token')}`},
+    body: JSON.stringify({notes: f.get('notes')})});
   alert(r.ok ? 'approved' : await r.text()); load();
 };
 $('#pref').onsubmit = async (e) => {

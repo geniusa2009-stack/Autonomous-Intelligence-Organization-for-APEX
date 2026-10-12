@@ -38,14 +38,19 @@ def build_calibration_pages(final_html: Path, page_index: int, out_dir: Path) ->
 
 
 def run_calibration(model_ids: list[str], out_dir: Path, intent: str = "one-page snapshot of decision-critical facts; "
-                    "deadline must dominate") -> dict:
+                    "deadline must dominate", mode: str = "absolute", max_w: int = 768) -> dict:
+    """mode="absolute": six-role council scoring; mode="pairwise": order-swapped A/B on the same five cases."""
     from apex_one.compute.broker import ComputeBroker
     from apex_one.vision.council import VisionCouncil, calibrate
+    from apex_one.vision.pairwise import PairwiseJudge, calibrate_pairwise
 
     pages = json.loads((out_dir / "calibration_pages.json").read_text(encoding="utf-8"))
     good = Path(pages.pop("good"))
-    council = VisionCouncil(ComputeBroker(), model_ids)
-    res = calibrate(council, good, {k: Path(v) for k, v in pages.items()}, intent)
+    broken = {k: Path(v) for k, v in pages.items()}
+    if mode == "pairwise":
+        res = calibrate_pairwise(PairwiseJudge(ComputeBroker(), model_ids, max_w=max_w), good, broken, intent)
+    else:
+        res = calibrate(VisionCouncil(ComputeBroker(), model_ids), good, broken, intent)
     from datetime import UTC, datetime
 
     from apex_one.core.schemas.common import stable_hash
@@ -55,6 +60,6 @@ def run_calibration(model_ids: list[str], out_dir: Path, intent: str = "one-page
     for mid, r in res["models"].items():   # identity stamp: a result only counts for this model build + page set
         r.update({"at": datetime.now(UTC).isoformat(), "model_digest": model_digest(mid), "pages_hash": pages_hash})
     prev = json.loads((out_dir / "calibration_results.json").read_text()) if (out_dir / "calibration_results.json").exists() else {"models": {}}
-    prev["models"].update(res["models"])
+    prev.setdefault("models" if mode == "absolute" else "pairwise_models", {}).update(res["models"])
     (out_dir / "calibration_results.json").write_text(json.dumps(prev, indent=2), encoding="utf-8")
     return res

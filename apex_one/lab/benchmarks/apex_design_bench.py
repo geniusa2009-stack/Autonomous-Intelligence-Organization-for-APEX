@@ -171,6 +171,8 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
     broker = ComputeBroker() if llm_models else None
     rows: list[dict[str, Any]] = []
     rows_path = out_dir / "apex_design_bench_rows.jsonl"
+    done = {(r["system"], r["page_type"]) for r in (json.loads(x) for x in rows_path.read_text(encoding="utf-8")
+                                                    .splitlines() if x.strip())} if rows_path.exists() else set()
 
     def measure(r: Renderer, html: str, name: str, node: DocNode) -> tuple[dict[str, float | None], bool, Path | None]:
         path = out_dir / f"{name}.html"
@@ -219,6 +221,8 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
                         "detail": f"{best.genes.archetype}/{best.genes.tone}; evaluated {out.evaluated}"})
             # local LLM page generators
             for mid in llm_models or []:
+                if (f"llm:{mid}", ptype) in done:     # resumable: a measured (system, page) is never re-run
+                    continue
                 t0 = time.perf_counter()
                 req = CapabilityRequest(task="bench.design_html", purpose="evaluation", model_id=mid)
                 res = broker.complete(req, [ChatMessage("user", llm_prompt(node, lock_map, palette, fonts))],  # type: ignore[union-attr]

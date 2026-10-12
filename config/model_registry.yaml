@@ -1977,3 +1977,53 @@ models:
   min_ram_gb: null
   local_hint: ''
   notes: Native fallback; always available.
+- id: qwen3-vl-8b
+  family: qwen
+  version: Qwen3-VL 8B Instruct (GGUF UD-Q4_K_XL)
+  category: general
+  description: Larger local Qwen3-VL candidate for the Vision Council (added after the 4B failed calibration).
+  capabilities:
+    reasoning: medium
+    coding: medium
+    arabic: medium
+    egyptian_arabic: low
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 32768
+  latency: slow
+  routes: []
+  license_ref: lic-qwen-open
+  integration_status: IMPLEMENTED
+  adapter: openai_compatible
+  weights_size_gb: 6.6
+  min_ram_gb: 9
+  local_hint: 'apex-one local acquire qwen3-vl-8b-q4kxl'
+  notes: Local route only (config/local_models.yaml); evaluation-only until its licence is verified.
+- id: gemma3-12b
+  family: gemma
+  version: Gemma 3 12B it (GGUF Q4_K_M)
+  category: general
+  description: Larger local Gemma 3 candidate for the Vision Council (added after the 4B failed calibration).
+  capabilities:
+    reasoning: medium
+    coding: medium
+    arabic: medium
+    egyptian_arabic: low
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 32768
+  latency: slow
+  routes: []
+  license_ref: lic-gemma
+  integration_status: IMPLEMENTED
+  adapter: openai_compatible
+  weights_size_gb: 8.1
+  min_ram_gb: 11
+  local_hint: 'apex-one local acquire gemma3-12b-q4km'
+  notes: Local route only (config/local_models.yaml); evaluation-only until its licence is verified.

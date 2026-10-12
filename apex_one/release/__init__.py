@@ -80,7 +80,8 @@ def export_bundle(job_dir: Path, out: Path) -> Path:
     return out
 
 
-def write_approval(job_dir: Path, approver: str, decision: str, notes: str) -> dict:
-    rec = {"approver": approver, "decision": decision, "notes": notes, "at": datetime.now(UTC).isoformat()}
+def write_approval(job_dir: Path, approver: str, decision: str, notes: str, ledger: dict | None = None) -> dict:
+    rec = {"approver": approver, "decision": decision, "notes": notes, "at": datetime.now(UTC).isoformat(),
+           "authenticated": True, "ledger_seq": (ledger or {}).get("seq"), "ledger_hash": (ledger or {}).get("hash")}
     (job_dir / "human_approval.json").write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
     return rec

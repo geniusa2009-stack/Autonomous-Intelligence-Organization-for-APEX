@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -28,8 +28,9 @@ class CreateJob(BaseModel):
 
 
 class Approval(BaseModel):
-    approver: str
     notes: str = ""
+    approver: str | None = None      # optional restatement; must match the authenticated token (no impersonation)
+    target: str = "CREATIVE_DIRECTIONS"
 
 
 class Preference(BaseModel):
@@ -115,12 +116,38 @@ def resume_job(job_id: str, background: BackgroundTasks) -> JobSummary:
     return _summary(r.job)
 
 
-@app.post("/jobs/{job_id}/approve", response_model=JobSummary)
-def approve_job(job_id: str, body: Approval) -> JobSummary:
+def _bearer(authorization: str | None) -> str | None:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
+    return None
+
+
+def _decide(job_id: str, body: Approval, authorization: str | None, approve: bool) -> JobSummary:
+    from apex_one.core.auth import AuthError, authenticate, check_claimed_name
+
+    token = _bearer(authorization)
+    try:   # authenticate BEFORE touching the job: anonymous callers learn nothing
+        check_claimed_name(authenticate(token), body.approver)
+    except AuthError as e:
+        raise HTTPException(401 if token is None or "invalid" in str(e) else 403, str(e)) from e
+    r = _load(job_id)
     try:
-        return _summary(_load(job_id).approve(body.approver, body.notes))
+        job = r.approve(token, body.notes, claimed_name=body.approver) if approve else \
+            r.reject(token, body.notes, body.target, claimed_name=body.approver)
+        return _summary(job)
     except RuntimeError as e:
         raise HTTPException(409, str(e)) from e
+
+
+@app.post("/jobs/{job_id}/approve", response_model=JobSummary)
+def approve_job(job_id: str, body: Approval, authorization: str | None = Header(None)) -> JobSummary:
+    """Release approval. Requires `Authorization: Bearer <approver token>`; the approver is the token's owner."""
+    return _decide(job_id, body, authorization, approve=True)
+
+
+@app.post("/jobs/{job_id}/reject", response_model=JobSummary)
+def reject_job(job_id: str, body: Approval, authorization: str | None = Header(None)) -> JobSummary:
+    return _decide(job_id, body, authorization, approve=False)
 
 
 @app.post("/jobs/{job_id}/preferences")

@@ -64,7 +64,12 @@ def test_golden_pipeline_reaches_release_candidate_and_needs_human():
     job = JobRunner.load(res["job_id"]).run()
     assert job.status == JobStatus.RELEASE_CANDIDATE and job.state == "HUMAN_APPROVAL"
     # only a human moves it to FINAL
-    job = JobRunner.load(res["job_id"]).approve("Test Approver", "golden benchmark approval")
+    from apex_one.core.auth import create_approver, verify_ledger
+
+    token = create_approver("Test Approver")
+    job = JobRunner.load(res["job_id"]).approve(token, "golden benchmark approval")
+    assert json.loads((ws.root / "human_approval.json").read_text())["approver"] == "Test Approver"
+    assert verify_ledger()[0]
     assert job.status == JobStatus.FINAL
     assert (ws.root / "human_approval.json").exists()
     from apex_one.memory import ApprovalMemory, DesignMemory

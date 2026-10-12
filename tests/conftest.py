@@ -14,6 +14,7 @@ def isolated_env(tmp_path, monkeypatch):
     monkeypatch.setenv("APEX_DATABASE_URL", f"sqlite:///{tmp_path / 'apex.db'}")
     monkeypatch.setenv("APEX_ARTIFACTS_DIR", str(tmp_path / "artifacts"))
     monkeypatch.setenv("APEX_DISABLE_LOCAL_MODELS", "1")   # hermetic: no real local models unless a test opts in
+    monkeypatch.setenv("APEX_AUTH_DIR", str(tmp_path / "auth"))   # approvers + ledger never touch the real store
     for k in ("NVIDIA_API_KEY", "GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY", "CLOUDFLARE_API_TOKEN",
               "HF_TOKEN", "SEARXNG_URL", "VLLM_BASE_URL", "SGLANG_BASE_URL"):
         monkeypatch.delenv(k, raising=False)

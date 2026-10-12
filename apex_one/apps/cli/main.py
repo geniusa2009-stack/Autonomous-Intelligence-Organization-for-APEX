@@ -410,17 +410,71 @@ def reproduce(job_id: str):
     console.print_json(json.dumps(report))
 
 
-@app.command()
-def approve(job_id: str, by: str = typer.Option(..., help="Approver name"), notes: str = typer.Option("")):
-    """Human release approval: RELEASE_CANDIDATE -> FINAL."""
-    _summary(_runner(job_id).approve(by, notes))
+TOKEN_OPT = typer.Option(None, "--token", envvar="APEX_APPROVER_TOKEN",
+                         help="Approver token (or env APEX_APPROVER_TOKEN). The approver identity comes from it.")
+
+
+def _auth_guard(fn):
+    from apex_one.core.auth import AuthError
+
+    try:
+        return fn()
+    except AuthError as e:
+        console.print(f"[red]Not authorised[/]: {e}")
+        raise typer.Exit(3) from e
 
 
 @app.command()
-def reject(job_id: str, by: str = typer.Option(...), notes: str = typer.Option(...),
-           target: str = typer.Option("CREATIVE_DIRECTIONS", help="CREATIVE_DIRECTIONS | CONTENT_ARCHITECTURE")):
-    """Reject a release candidate and send it back to a targeted loop."""
-    _summary(_runner(job_id).reject(by, notes, target))
+def approve(job_id: str, token: str = TOKEN_OPT, notes: str = typer.Option(""),
+            by: str = typer.Option(None, help="Optional: must match the token's approver (no impersonation)")):
+    """Human release approval: RELEASE_CANDIDATE -> FINAL (authenticated; recorded in the approval ledger)."""
+    _summary(_auth_guard(lambda: _runner(job_id).approve(token, notes, claimed_name=by)))
+
+
+@app.command()
+def reject(job_id: str, notes: str = typer.Option(...), token: str = TOKEN_OPT,
+           target: str = typer.Option("CREATIVE_DIRECTIONS", help="CREATIVE_DIRECTIONS | CONTENT_ARCHITECTURE"),
+           by: str = typer.Option(None, help="Optional: must match the token's approver")):
+    """Reject a release candidate and send it back to a targeted loop (authenticated)."""
+    _summary(_auth_guard(lambda: _runner(job_id).reject(token, notes, target, claimed_name=by)))
+
+
+auth_app = typer.Typer(help="Release-control authentication: approvers (token hashes only) and the approval ledger.")
+app.add_typer(auth_app, name="auth")
+
+
+@auth_app.command("add-approver")
+def auth_add(name: str):
+    """Register a named release approver. The token is printed ONCE; store it securely."""
+    from apex_one.core.auth import create_approver
+
+    token = create_approver(name)
+    console.print(f"approver {name!r} created. Token (shown once, not stored): [bold]{token}[/]")
+
+
+@auth_app.command("list")
+def auth_list():
+    from apex_one.core.auth import list_approvers
+
+    console.print_json(json.dumps(list_approvers()))
+
+
+@auth_app.command("revoke")
+def auth_revoke(name: str):
+    from apex_one.core.auth import revoke_approver
+
+    revoke_approver(name)
+    console.print(f"revoked {name}")
+
+
+@auth_app.command("verify-ledger")
+def auth_verify():
+    """Verify the hash chain of the approval ledger (exit 1 if any entry was altered, removed or reordered)."""
+    from apex_one.core.auth import verify_ledger
+
+    ok, problems = verify_ledger()
+    console.print("ledger OK" if ok else "\n".join(problems))
+    raise typer.Exit(0 if ok else 1)
 
 
 @app.command()

@@ -26,7 +26,12 @@ def test_api_job_lifecycle_without_running():
     assert c.get(f"/jobs/{jid}").json()["state"] == "NEW"
     assert "job.json" in c.get(f"/jobs/{jid}/artifacts").json()["artifacts"]
     assert c.get(f"/jobs/{jid}/artifacts/../../etc/passwd").status_code == 404
-    assert c.post(f"/jobs/{jid}/approve", json={"approver": "x"}).status_code == 409
+    assert c.post(f"/jobs/{jid}/approve", json={"approver": "x"}).status_code == 401      # anonymous
+    from apex_one.core.auth import create_approver
+
+    tok = create_approver("Dir")
+    h = {"Authorization": f"Bearer {tok}"}
+    assert c.post(f"/jobs/{jid}/approve", json={}, headers=h).status_code == 409           # authenticated, not a candidate
     assert c.post("/jobs", json={"opportunity": "x", "budget": 5}).status_code == 422
     assert "APEX ONE" in c.get("/studio").text
 

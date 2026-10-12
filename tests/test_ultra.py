@@ -581,3 +581,30 @@ def test_council_empty_output_is_not_measured(tmp_path):
     assert "reasoning" not in data["models"]["m"] and data["models"]["m"]["overall"] is None
     row = json.loads((tmp_path / "council_runs.jsonl").read_text().splitlines()[0])
     assert row["score"] is None and "NOT_MEASURED" in row["detail"]
+
+
+def test_pairwise_calibration_needs_order_consistent_wins(tmp_path):
+    from apex_one.vision.council import encode_png
+    from apex_one.vision.pairwise import PairwiseJudge, calibrate_pairwise
+
+    good = _page_png(tmp_path / "good.png", dark=False, hero=True)
+    broken = {k: _page_png(tmp_path / f"{k}.png", dark=True, hero=i % 2 == 0)
+              for i, k in enumerate(("low_contrast", "card_overuse", "gradient", "cramped", "no_hierarchy"))}
+    broker = _FakeBroker(encode_png(good, 640))
+    res = calibrate_pairwise(PairwiseJudge(broker, ["fair", "biased"]), good, broken, "i")
+    fair, biased = res["models"]["fair"], res["models"]["biased"]
+    assert fair["correct"] == 5 and fair["reliable"]
+    assert biased["correct"] == 0 and not biased["reliable"]
+    assert all(d["position_bias"] for d in biased["detail"].values())
+
+
+def test_absolute_and_pairwise_reliability_are_separate(tmp_path):
+    from datetime import UTC, datetime
+
+    from apex_one.vision.council import reliable_judges
+
+    rec = {"reliable": True, "checks": {"a": True}, "valid_checks": 1, "at": datetime.now(UTC).isoformat(),
+           "model_digest": None}
+    p = tmp_path / "cal.json"
+    p.write_text(json.dumps({"models": {}, "pairwise_models": {"m": rec}}))
+    assert reliable_judges(p)[0] == [] and reliable_judges(p, mode="pairwise")[0] == ["m"]

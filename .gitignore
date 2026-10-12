@@ -15,3 +15,4 @@ artifacts/lab/
 build/
 dist/
 .DS_Store
+outputs/

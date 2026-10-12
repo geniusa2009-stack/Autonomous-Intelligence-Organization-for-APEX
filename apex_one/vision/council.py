@@ -104,6 +104,7 @@ class PageReview:
     page_id: str
     reviews: dict[str, dict[str, dict[str, Any]]] = field(default_factory=dict)   # model -> role -> review
     errors: dict[str, str] = field(default_factory=dict)
+    raw: dict[str, str] = field(default_factory=dict)       # model -> raw text (for parser / schema diagnosis)
 
     def role_metric(self, role: str) -> Metric:
         scores = [rv[role]["score"] for rv in self.reviews.values() if role in rv]
@@ -123,8 +124,8 @@ class PageReview:
 
 
 class VisionCouncil:
-    def __init__(self, broker, model_ids: list[str], workspace=None, max_tokens: int = 1800):
-        self.broker, self.models, self.ws, self.max_tokens = broker, model_ids, workspace, max_tokens
+    def __init__(self, broker, model_ids: list[str], workspace=None, max_tokens: int = 1800, timeout: float = 900.0):
+        self.broker, self.models, self.ws, self.max_tokens, self.timeout = broker, model_ids, workspace, max_tokens, timeout
 
     def review(self, page_id: str, png: Path, intent: str) -> PageReview:
         pr = PageReview(page_id)
@@ -133,11 +134,12 @@ class VisionCouncil:
             req = CapabilityRequest(task="vision.council", vision=True, purpose="evaluation", model_id=mid)
             res = self.broker.complete(req, [ChatMessage("user", _prompt(intent), images_b64_png=[b64])],
                                        json_mode=True, max_tokens=self.max_tokens, temperature=0.0, workspace=self.ws,
-                                       timeout=900.0)
+                                       timeout=self.timeout)
             if not res.executed or not res.text:
                 errs = [c.error for c in res.calls if c.error]
                 pr.errors[mid] = f"{res.decision.outcome.value}: {errs[-1:] or res.decision.reasons[-1:]}"
                 continue
+            pr.raw[mid] = res.text[:6000]
             parsed = parse_review(res.text)
             if not parsed:
                 pr.errors[mid] = "unparseable review"
@@ -209,15 +211,17 @@ def calibration_path() -> Path:
     return get_settings().artifacts_dir / "bench" / "vision_calibration" / "calibration_results.json"
 
 
-def reliable_judges(path: Path | None = None) -> tuple[list[str], dict[str, Any]]:
-    """Only judges that passed calibration may influence gates. No calibration => no council (NOT_MEASURED)."""
+def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[list[str], dict[str, Any]]:
+    """Only judges that passed calibration may influence gates. No calibration => no council (NOT_MEASURED).
+    mode="absolute": the six-role scoring council; mode="pairwise": finalist A/B judging. They are calibrated
+    separately on the same five cases and a pass in one never qualifies the other."""
     path = path or calibration_path()
     if not path.exists():
         return [], {"reason": f"no calibration results at {path}"}
     from datetime import UTC, datetime, timedelta
 
     data = json.loads(path.read_text(encoding="utf-8"))
-    models = data.get("models", {})
+    models = data.get("models" if mode == "absolute" else "pairwise_models", {})
     ok = []
     for m, r in models.items():
         if not r.get("reliable"):

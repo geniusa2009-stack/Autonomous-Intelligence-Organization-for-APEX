@@ -539,7 +539,7 @@ class JobRunner:
     def _pairwise_judges(self) -> list[str]:
         from apex_one.vision.council import reliable_judges
 
-        return reliable_judges()[0]
+        return reliable_judges(mode="pairwise")[0]
 
     def _pairwise_finalists(self, t, node, out) -> dict:
         """Phase 23: the two best locally-filtered finalists go to the calibrated pairwise council. A consistent
@@ -1060,32 +1060,46 @@ class JobRunner:
         self.save()
 
     # ================================================================== human actions
-    def approve(self, approver: str, notes: str = "") -> Job:
+    def approve(self, token: str | None, notes: str = "", claimed_name: str | None = None) -> Job:
+        """Human release approval. The approver is whoever the TOKEN authenticates; a claimed name that differs
+        is rejected as forged. The decision is appended to the hash-chained approval ledger."""
+        from apex_one.core.auth import append_ledger, authenticate, check_claimed_name, file_sha256
         from apex_one.release import write_approval
 
-        if not approver or not approver.strip():
-            raise RuntimeError("release approval needs a named human approver")
-
+        ident = authenticate(token)
+        check_claimed_name(ident, claimed_name)
         if self.sm.state != S.HUMAN_APPROVAL or self.job.status not in (JobStatus.RELEASE_CANDIDATE,
                                                                          JobStatus.AWAITING_HUMAN):
             raise RuntimeError(f"job is in {self.sm.state.value}/{self.job.status.value}; nothing to approve")
+        entry = append_ledger({"event": "release_decision", "decision": "APPROVED", "job_id": self.job.job_id,
+                               "approver": ident.name, "approver_id": ident.approver_id, "notes": notes,
+                               "final_html_sha256": file_sha256(self.ws.root / "final.html"),
+                               "final_pdf_sha256": file_sha256(self.ws.root / "final.pdf")})
         gate = next(g for g in self.job.gates if g.name == "release-approval")
-        gate.status, gate.approver, gate.decided_at, gate.notes = "APPROVED", approver, datetime.now(UTC), notes
-        write_approval(self.ws.root, approver, "APPROVED", notes)
-        self.sm.advance(S.FINAL, reason=f"approved by {approver}", human=True)
+        gate.status, gate.approver, gate.decided_at, gate.notes = "APPROVED", ident.name, datetime.now(UTC), notes
+        write_approval(self.ws.root, ident.name, "APPROVED", notes, ledger=entry)
+        self.sm.advance(S.FINAL, reason=f"approved by {ident.name} (ledger #{entry['seq']})", human=True)
         self.job.state = S.FINAL.value
         self.job.status = JobStatus.FINAL
         self.save()
         return self.run()
 
-    def reject(self, approver: str, notes: str, target: str = "CREATIVE_DIRECTIONS") -> Job:
+    def reject(self, token: str | None, notes: str, target: str = "CREATIVE_DIRECTIONS",
+               claimed_name: str | None = None) -> Job:
+        from apex_one.core.auth import append_ledger, authenticate, check_claimed_name
         from apex_one.release import write_approval
 
+        ident = authenticate(token)
+        check_claimed_name(ident, claimed_name)
         gate = next(g for g in self.job.gates if g.name == "release-approval")
         if self.sm.state != S.HUMAN_APPROVAL:
             raise RuntimeError("job is not awaiting approval")
+        entry = append_ledger({"event": "release_decision", "decision": "REJECTED", "job_id": self.job.job_id,
+                               "approver": ident.name, "approver_id": ident.approver_id, "notes": notes,
+                               "return_to": target})
+        approver = ident.name
         gate.status, gate.approver, gate.decided_at, gate.notes = "PENDING", approver, datetime.now(UTC), notes
-        write_approval(self.ws.root, approver, "REJECTED", notes)
+        write_approval(self.ws.root, approver, "REJECTED", notes, ledger=entry)
         tgt = S(target)
         self.sm.advance(tgt, reason=f"rejected by {approver}: {notes}")
         self.job.state = tgt.value

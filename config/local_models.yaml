@@ -40,3 +40,19 @@ models:
     vision: true
     approx_gb: 3.3
     min_ram_gb: 6
+  - key: qwen3-vl-8b-q4kxl
+    registry_model: qwen3-vl-8b
+    source: {kind: oci, registry: registry-1.docker.io, repository: ai/qwen3-vl, tag: 8B-UD-Q4_K_XL}
+    port: 8095
+    ctx: 8192
+    vision: true
+    approx_gb: 6.6
+    min_ram_gb: 9
+  - key: gemma3-12b-q4km
+    registry_model: gemma3-12b
+    source: {kind: oci, registry: registry-1.docker.io, repository: ai/gemma3, tag: 12b-q4_K_M}
+    port: 8096
+    ctx: 8192
+    vision: true
+    approx_gb: 8.1
+    min_ram_gb: 11
