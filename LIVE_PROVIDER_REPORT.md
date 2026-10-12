@@ -1,6 +1,6 @@
 # Live Provider Report (Phase 14)
 
-_Generated 2026-10-12 12:08 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-12 12:19 UTC by `apex-one reports build` from measured artifacts._
 
 Statuses: LIVE_TESTED (a real structured task ran through the $0 firewall and returned output), LIVE_FAILED, CREDENTIALS_REQUIRED, NO_FREE_ROUTE, NETWORK_BLOCKED (egress proxy denied CONNECT), LICENSE_BLOCKED, UNKNOWN. A status is never inferred: rows without an executed call are not LIVE_TESTED.
 

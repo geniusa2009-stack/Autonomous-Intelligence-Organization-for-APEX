@@ -712,3 +712,20 @@ def test_license_evidence_rule():
                               {"source": "oci_descriptor", "value": "Apache-2.0", "spdx": "Apache-2.0"}],
              "gguf_fields": {}, "artifact": "x"}
     assert not decide(clash)["production_allowed"]
+
+
+def test_page_compare_measures():
+    from apex_one.lab.benchmarks.page_compare import css_errors, html_errors, verdicts, word_recall
+
+    assert word_recall("[آخر ميعاد] 1 نوفمبر 2026", "1 نوفمبر 2026آخر ميعاد") == 1.0    # order/glue independent
+    assert word_recall("a b c d", "a b") == 0.5
+    assert css_errors('<section style="color:#fff"><style>.page{color:red}</style></section>') == (0, 1)
+    assert css_errors('<section><style>.page{color:red;;: ;}}</style></section>')[0] >= 1
+    assert html_errors('<section class="page"><div>ok</div></section>') == 0
+    cmp = {"rows": [
+        {"system": "native-tournament", "page_type": "Cover", "produced": True, "text_fidelity": 100,
+         "fact_preservation": 100, "rtl": 100, "overflow_issues": 0, "visual_hierarchy": 99},
+        {"system": "llm:m", "page_type": "Cover", "produced": True, "text_fidelity": 70, "fact_preservation": 100,
+         "rtl": 100, "overflow_issues": 2, "visual_hierarchy": 100}], "layout_repetition": {}}
+    d = verdicts(cmp)["llm:m"]
+    assert d["wins"] and d["safety_losses"] and d["decision"].startswith("KEEP NATIVE")

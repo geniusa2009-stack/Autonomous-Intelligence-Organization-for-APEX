@@ -51,7 +51,10 @@ def _extra_node(ntype: NodeType, locks: dict) -> DocNode:
                                     "عن مشروع صغير عمله في الحي بتاعه."),
                    blk("paragraph", "السر مكانش في الدرجات بس، كان في إنه فهم الكلية عايزة إيه وكتب بصدق.")]
         reading = ReadingMode.READ
-    n = DocNode(semantic_type=ntype, content=content, reading_mode=reading, importance=3)
+    for i, b in enumerate(content):        # deterministic ids: re-measurement must find the same blocks
+        b.block_id = f"B-bench-{ntype.value}-{i}"
+    n = DocNode(node_id=f"N-bench-{ntype.value}", semantic_type=ntype, content=content, reading_mode=reading,
+                importance=3)
     n.first_fixation = next(b.block_id for b in content if b.role == "heading")
     return n
 
@@ -242,7 +245,9 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
                 record({"system": f"llm:{mid}", "page_type": ptype, "produced": True, "metrics": mets,
                         "critical": crit, "contract": probs, "latency_s": lat,
                         "screenshot": str(shot) if shot else None, "detail": f"{len(section)} chars"})
-    all_rows = [json.loads(x) for x in rows_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+    latest_rows = {(r["system"], r["page_type"]): r for r in
+                   (json.loads(x) for x in rows_path.read_text(encoding="utf-8").splitlines() if x.strip())}
+    all_rows = list(latest_rows.values())          # a re-measured (system, page) replaces its older row
     summary = {"job_id": job_id, "page_types": sorted({r["page_type"] for r in all_rows}),
                "systems": _summarise(all_rows), "rows": len(all_rows),
                "note": "separate metrics per system; no single aggregate score by design"}

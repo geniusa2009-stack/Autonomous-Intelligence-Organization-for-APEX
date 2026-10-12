@@ -198,7 +198,42 @@ def design_activation_md(systems: dict[str, Any], gdb_runs: dict[str, Any], reli
 # ---------------------------------------------------------------- APEX_DESIGN_BENCH
 
 
-def design_bench_md(bench: dict[str, Any] | None, rows: list[dict[str, Any]], unit_bench: dict[str, Any] | None) -> str:
+def page_compare_md(cmp: dict[str, Any] | None) -> list[str]:
+    from apex_one.lab.benchmarks.page_compare import METRICS, verdicts
+
+    if not cmp:
+        return ["## Model-written pages vs native", "", "NOT_MEASURED: run the page comparison "
+                "(apex_one.lab.benchmarks.page_compare.remeasure).", ""]
+    systems = sorted({r["system"] for r in cmp["rows"]})
+    out = ["## Model-written pages vs native (separate metrics)", "",
+           "Same content, same renderer, same checks. Means over the page types each system produced; "
+           "`overflow` = issue count (lower is better); `repetition` = mean pairwise layout similarity between a "
+           "system's own pages (lower = less repetitive).", "",
+           "| system | pages produced | " + " | ".join(METRICS) + " | repetition |",
+           "|---|---|" + "---|" * (len(METRICS) + 1)]
+    for sysn in systems:
+        rows = [r for r in cmp["rows"] if r["system"] == sysn]
+        cells = []
+        for m in METRICS:
+            vals = [r[m] for r in rows if r.get(m) is not None]
+            cells.append(_fmt(sum(vals) / len(vals)) if vals else "—")
+        produced = sum(1 for r in rows if r.get("produced") and "text_fidelity" in r)
+        out.append(f"| {sysn} | {produced}/{len(rows)} | " + " | ".join(cells)
+                   + f" | {_fmt(cmp['layout_repetition'].get(sysn))} |")
+    v = verdicts(cmp)
+    if v:
+        out += ["", "### Decision per model system (vs native-tournament, same page types)", ""]
+        for sysn, d in v.items():
+            out.append(f"* **{sysn}** — {d['decision']}. Wins: {len(d['wins'])}; safety losses "
+                       f"(facts/RTL/text/overflow): {len(d['safety_losses'])}; other losses: {len(d['losses'])}."
+                       + (f" Examples of safety losses: {d['safety_losses'][:3]}" if d['safety_losses'] else ""))
+    else:
+        out += ["", "No model-written pages measured yet: native stays the page designer by default."]
+    return out + [""]
+
+
+def design_bench_md(bench: dict[str, Any] | None, rows: list[dict[str, Any]], unit_bench: dict[str, Any] | None,
+                    cmp: dict[str, Any] | None = None) -> str:
     out = ["# APEX Design Bench (Phase 17)", "", _stamp(),
            "Fifteen page types (every semantic page type of the Document AST), content from a real pipeline run "
            "(golden job AST + fact locks). Each system produces one page per type; all pages are rendered by the same "
@@ -237,6 +272,7 @@ def design_bench_md(bench: dict[str, Any] | None, rows: list[dict[str, Any]], un
             "fills pages closer to each page's density target.",
             "* LLM page writers are measured under the same contract; content they produce never ships (licence "
             "UNKNOWN → evaluation only).", ""]
+    out += page_compare_md(cmp)
     if unit_bench:
         out += ["## Targeted design risk cases", "",
                 f"{unit_bench['passed']}/{unit_bench['measured']} measured cases pass; {unit_bench['not_measured']} "
@@ -281,6 +317,7 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
     evidence = repo / "docs" / "evidence"
     evidence.mkdir(parents=True, exist_ok=True)
     for src in (bench / "council_scores.json", bench / "vision_calibration" / "calibration_results.json",
+                bench / "apex_design" / "page_compare.json", bench / "queue_state.json",
                 bench / "apex_design" / "apex_design_bench.json", bench / "apex_design" / "apex_design_bench_rows.jsonl",
                 bench / "design" / "design_bench.json", art / "live" / "provider_live_report.json",
                 art / "live" / "local_live_results.json"):
@@ -303,8 +340,10 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
         "DESIGN_MODEL_ACTIVATION.md": design_activation_md(
             yaml.safe_load((s.config_dir / "design_activation.yaml").read_text(encoding="utf-8"))["systems"], gdb_runs,
             reliable_judges()[0]),
-        "APEX_DESIGN_BENCH.md": design_bench_md(_load(bench / "apex_design" / "apex_design_bench.json"), rows,
-                                                _load(bench / "design" / "design_bench.json")),
+        "APEX_DESIGN_BENCH.md": design_bench_md(_load(bench / "apex_design" / "apex_design_bench.json"),
+                                                list({(r["system"], r["page_type"]): r for r in rows}.values()),
+                                                _load(bench / "design" / "design_bench.json"),
+                                                _load(bench / "apex_design" / "page_compare.json")),
     }
     runs_path = bench / "council_runs.jsonl"
     runs = [json.loads(x) for x in runs_path.read_text(encoding="utf-8").splitlines() if x.strip()] if runs_path.exists() else []

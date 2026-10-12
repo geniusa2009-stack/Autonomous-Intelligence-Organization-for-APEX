@@ -1,21 +1,21 @@
 {
   "job_id": "J-2da4830a2781",
   "page_types": [
+    "ApexTake",
+    "ApplicationJourney",
+    "Breath",
+    "Checklist",
+    "Closing",
+    "Comparison",
     "Cover",
+    "EligibilityChapter",
+    "FundingChapter",
+    "HeroFact",
     "Opening",
     "OpportunitySnapshot",
-    "FundingChapter",
-    "EligibilityChapter",
-    "ApplicationJourney",
-    "Timeline",
-    "Comparison",
-    "HeroFact",
-    "Warning",
-    "ApexTake",
     "ProfileStory",
-    "Checklist",
-    "Breath",
-    "Closing"
+    "Timeline",
+    "Warning"
   ],
   "systems": {
     "native-baseline": {
@@ -80,7 +80,7 @@
       "produced": 15,
       "critical_pages": 0,
       "contract_violations": 0,
-      "median_latency_s": 1.7,
+      "median_latency_s": 1.8,
       "metrics": {
         "design.hierarchy": {
           "mean": 99.3,
@@ -125,7 +125,7 @@
           "below_90": 2
         },
         "geometry.whitespace_ratio": {
-          "mean": 74.7,
+          "mean": 74.9,
           "min": 62.9,
           "measured_pages": 15,
           "below_90": 15

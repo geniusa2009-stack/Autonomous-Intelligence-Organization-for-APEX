@@ -1,6 +1,6 @@
 # APEX Design Bench (Phase 17)
 
-_Generated 2026-10-12 12:08 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-12 12:19 UTC by `apex-one reports build` from measured artifacts._
 
 Fifteen page types (every semantic page type of the Document AST), content from a real pipeline run (golden job AST + fact locks). Each system produces one page per type; all pages are rendered by the same Chromium and measured by the same deterministic page QA. **No single score is reported by design.**
 
@@ -11,7 +11,7 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 | system | pages | produced | critical pages | contract violations | median latency | hierarchy | typography | brand_fit | quality | contrast | critical_accuracy | alignment |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | native-baseline | 15 | 15 | 0 | 0 | 0.3 s | 100.0 / 100.0 | 98.3 / 85.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 92.7 / 50.0 |
-| native-tournament | 15 | 15 | 0 | 0 | 1.7 s | 99.3 / 90.0 | 99.0 / 85.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 97.8 / 80.0 |
+| native-tournament | 15 | 15 | 0 | 0 | 1.8 s | 99.3 / 90.0 | 99.0 / 85.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 97.8 / 80.0 |
 
 ## Per page type
 
@@ -28,7 +28,7 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 | Closing | native-baseline | False | 100 | 100 | 100 | 100 | 85 | editorial-column defaults |
 | Closing | native-tournament | False | 100 | 100 | 100 | 100 | 73 | manifesto/silver; evaluated 42 |
 | Comparison | native-baseline | False | 100 | 100 | 100 | 100 | 90 | editorial-column defaults |
-| Comparison | native-tournament | False | 100 | 100 | 100 | 100 | 81 | checklist-sheet/dark; evaluated 42 |
+| Comparison | native-tournament | False | 100 | 100 | 100 | 100 | 83 | editorial-column/dark; evaluated 42 |
 | Cover | native-baseline | False | 100 | 100 | 100 | 80 | 76 | editorial-column defaults |
 | Cover | native-tournament | False | 100 | 100 | 100 | 80 | 81 | cover-monument/dark; evaluated 42 |
 | EligibilityChapter | native-baseline | False | 100 | 100 | 100 | 88 | 82 | editorial-column defaults |
@@ -42,7 +42,7 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 | OpportunitySnapshot | native-baseline | False | 100 | 85 | 100 | 100 | 74 | editorial-column defaults |
 | OpportunitySnapshot | native-tournament | False | 100 | 85 | 100 | 100 | 63 | ledger/light; evaluated 42 |
 | ProfileStory | native-baseline | False | 100 | 100 | 100 | 100 | 92 | editorial-column defaults |
-| ProfileStory | native-tournament | False | 100 | 100 | 100 | 100 | 85 | editorial-column/light; evaluated 52 |
+| ProfileStory | native-tournament | False | 100 | 100 | 100 | 100 | 85 | editorial-column/dark; evaluated 42 |
 | Timeline | native-baseline | False | 100 | 100 | 100 | 100 | 75 | editorial-column defaults |
 | Timeline | native-tournament | False | 90 | 100 | 100 | 100 | 67 | timeline-rail/light; evaluated 42 |
 | Warning | native-baseline | False | 100 | 100 | 100 | 100 | 85 | editorial-column defaults |
@@ -53,6 +53,17 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 * The deterministic metrics are a **correctness floor**, not a beauty ranking: both native systems saturate most of them, so they cannot tell a good page from a great one. Ranking among valid pages needs the calibrated Vision Council and human A/B/C preferences.
 * `whitespace` is 100×(1 − ink coverage): descriptive, not a quality score. The tournament deliberately fills pages closer to each page's density target.
 * LLM page writers are measured under the same contract; content they produce never ships (licence UNKNOWN → evaluation only).
+
+## Model-written pages vs native (separate metrics)
+
+Same content, same renderer, same checks. Means over the page types each system produced; `overflow` = issue count (lower is better); `repetition` = mean pairwise layout similarity between a system's own pages (lower = less repetitive).
+
+| system | pages produced | text_fidelity | fact_preservation | html_validity | css_validity | rtl | overflow_issues | visual_hierarchy | editability | novelty_vs_native | apex_similarity | reader_comprehension | repetition |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| native-baseline | 15/15 | 97.9 | 98.6 | 100.0 | 100.0 | 100.0 | 0.0 | 100.0 | 100.0 | — | 100.0 | 97.9 | 51.5 |
+| native-tournament | 15/15 | 97.9 | 98.6 | 100.0 | 100.0 | 100.0 | 0.0 | 99.3 | 100.0 | 53.8 | 100.0 | 99.2 | 39.6 |
+
+No model-written pages measured yet: native stays the page designer by default.
 
 ## Targeted design risk cases
 

@@ -1,0 +1,17 @@
+{
+  "done": {},
+  "failed": {
+    "qwen3-vl-4b-q4kxl:server": {
+      "at": "2026-10-12T12:09:25",
+      "info": "llama-server exited (-4); see /home/user/Autonomous-Intelligence-Organization-for-APEX/var/models/qwen3-vl-4b-q4kxl/server.log"
+    },
+    "gemma3-4b-q4km:server": {
+      "at": "2026-10-12T12:09:30",
+      "info": "llama-server exited (-4); see /home/user/Autonomous-Intelligence-Organization-for-APEX/var/models/gemma3-4b-q4km/server.log"
+    },
+    "nemotron-3-nano-4b-q4km:server": {
+      "at": "2026-10-12T12:09:33",
+      "info": "llama-server exited (-4); see /home/user/Autonomous-Intelligence-Organization-for-APEX/var/models/nemotron-3-nano-4b-q4km/server.log"
+    }
+  }
+}
