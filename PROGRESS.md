@@ -1,6 +1,6 @@
 # APEX ONE ULTRA — Progress log
 
-Last updated: 2026-10-10 (session 2: Phase 14+ activation and hardening)
+Last updated: 2026-10-12 (session 3: real intelligence validation)
 
 **Overall maturity: FOUNDATION COMPLETE + PARTIAL ACTIVATION. Not finished.** Real local model inference runs
 ($0, llama.cpp), but every cloud free tier is network-blocked here, no local model licence is verified for
@@ -34,3 +34,24 @@ opportunity job can reach its primary sources from this container. See ULTRA_QUA
 
 Test status: `.venv/bin/python -m pytest` → 146 passed.
 Push status: pushed to origin/claude/charming-archimedes-2guzc9.
+
+
+## Session 3 — real intelligence validation (2026-10-12)
+
+| Item | Status | Evidence |
+|---|---|---|
+| 1 Background evaluations | RUNNING (resumable queue) | scripts/validation_queue.py, artifacts/bench/queue_state.json; restarted after a container move (native llama.cpp build died with SIGILL → portable rebuild) |
+| 2 No blind overall ranking | DONE | MODEL_COMPARISON_MATRIX.md (per task, same-task winners only); router has no "overall" fallback |
+| 3 Qwen3-VL contradiction | INVESTIGATING | VISION_CALIBRATION_ANALYSIS.md; experiments E0–E4 in the queue |
+| 4 Stronger vision judge | RUNNING | remote vision routes all blocked/keyless; Qwen3-VL 8B and Gemma 3 12B queued with the same 5-case calibration + pairwise order inversion |
+| 5 Design activation states | DONE | DESIGN_MODEL_ACTIVATION.md: one final_state per system (LIVE_TESTED 1, ADAPTER_TESTED_ONLY 1, NETWORK_BLOCKED 6, HARDWARE_BLOCKED 7, DEPENDENCY_MISSING 6, RESEARCH_ONLY 8, NOT_IMPLEMENTED 1) |
+| 6 Licence verification | DONE | config/license_verifications.yaml (`apex-one license verify-local`): Qwen3-VL 4B Apache-2.0 allowed; others blocked with reasons |
+| 7 Authentication | DONE | apex_one/core/auth.py, tests/test_auth.py; token identity, forged-name rejection, hash-chained ledger |
+| 8 Brand asset gate | DONE (assets still missing → FAIL) | `apex-one brand import`, brand fingerprint |
+| 9 Model writing vs native | NATIVE MEASURED, MODELS RUNNING | apex_one/lab/benchmarks/page_compare.py, APEX_DESIGN_BENCH.md |
+| 10 Date reasoning | DONE | apex_one/core/dates.py; firewall blocks date.* for models; regression test |
+| 11 Task-specific routing | DONE | config/task_routing.yaml |
+| 12 GraphicDesignBench | DONE (n=2 smoke) | 6/39 tasks runnable offline; 33 skipped (HF dataset) — not scored as zero |
+| 13 Real opportunity job | PARTIAL (research stage) | CNCF LFX Mentorship 2027 Term 1 from CNCF's repository: deadline 2027-02-16 extracted; AWAITING_HUMAN |
+| 14 Maturity | DONE | ULTRA_QUALITY_REPORT.md |
+| 15 Regression guard | DONE | tests/test_pipeline.py::test_golden_ultra_quality_never_regresses |

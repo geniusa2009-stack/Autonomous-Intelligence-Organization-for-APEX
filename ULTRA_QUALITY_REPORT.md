@@ -1,80 +1,51 @@
-# APEX ONE ULTRA — Quality Report (Phases 14–30)
+# APEX ONE ULTRA — Quality Report (Real Intelligence Validation Phase)
 
-_Session 2, 2026-10-10. Every number below comes from an artifact produced in this container; sources in
-`docs/evidence/` and the per-topic reports (LIVE_PROVIDER_REPORT.md, MODEL_ACTIVATION_REPORT.md,
-DESIGN_MODEL_ACTIVATION.md, APEX_DESIGN_BENCH.md)._
+_Updated 2026-10-12. Every number comes from an artifact produced in this container (see `docs/evidence/` and the
+generated reports: LIVE_PROVIDER_REPORT, MODEL_ACTIVATION_REPORT, MODEL_COMPARISON_MATRIX,
+VISION_CALIBRATION_ANALYSIS, DESIGN_MODEL_ACTIVATION, APEX_DESIGN_BENCH). Regenerate with `apex-one reports`._
 
-## Verdict
+## Maturity (explicit — not "finished")
 
-**NOT FINISHED.** Maturity: *foundation complete + partial real activation*. Checked against the completion rule:
-
-| Completion condition | State |
-|---|---|
-| Models mock-only? | **No** — 4 open-weight models run for real on local llama.cpp ($0); LIVE_TESTED per model as measured |
-| Design systems registry-only? | **Partly** — native engines run; every specialist checkpoint is unreachable (HF denied) → recorded per system |
-| Vision NOT_MEASURED? | **Until a judge calibrates reliably, yes** — the council is wired and refuses to score with uncalibrated judges |
-| Targets missed? | **No** on the golden benchmark — all 10 targets PASS (ULTRA) |
-| Assets placeholders? | **Yes** — original APEX logo/robot/brand manifest missing → Brand Production Gate blocks every real job |
-| Licence blockers? | **Yes** — all local model licences UNKNOWN in the registry → evaluation-only until a human verifies |
-| Live routing never run? | **No** — live routing runs on local routes; all cloud free tiers NETWORK_BLOCKED from here |
-| Real job reached human approval? | **No** — official sources unreachable (egress 403); the job blocks at SOURCE_DISCOVERY |
-
-## Golden benchmark (synthetic, ULTRA) — J-9aee654ead70
-
-State HUMAN_APPROVAL / RELEASE_CANDIDATE (never FINAL without a human). 844 layout candidates evaluated
-(64 seeded per important page). Critical gates PASS; `brand_production_assets` NOT_APPLICABLE_SYNTHETIC (would block
-a real job).
-
-| Target | Threshold | Measured |
+| Level | Status | Why |
 |---|---|---|
-| reader_comprehension | 95 | **98.9** (was 93.3 at end of session 1) |
-| cross_page_rhythm | 93 | **94.0** (was 92.0) |
-| arabic_typography (new) | 98 | **100.0** |
-| typography | 95 | 98.8 |
-| visual_hierarchy | 95 | 99.2 |
-| apex_brand_fit | 95 | 100 |
-| editorial_quality | 95 | 100 |
-| rtl_visual_quality | 98 | 100 |
-| print_fidelity | 98 | 100 |
-| novelty | 90 | 98.5 |
+| ARCHITECTURE_COMPLETE | **YES** | every planned stage exists, is wired and tested (state machine, $0 compute, research, editorial, design, QA, release, learning) |
+| OFFLINE_PIPELINE_VALIDATED | **YES** | golden ULTRA benchmark reaches the authenticated human gate with all 10 targets PASS (comprehension 98.9, rhythm 94.0, Arabic typography 100) — regression-protected by a hard test |
+| LOCAL_MODELS_VALIDATED | **YES (evaluation scope)** | 4 open-weight models run on local llama.cpp; each LIVE_TESTED with a correct structured answer; council benchmark measured per task |
+| DESIGN_MODELS_PARTIALLY_VALIDATED | **PARTIAL** | native design engines validated on 15 page types; GraphicDesignBench ran for real (6/39 tasks, n=2 smoke); every specialist design checkpoint is NETWORK/HARDWARE-blocked or unreleased |
+| VISION_GATE_VALIDATED | **NOT_VALIDATED** | no vision model has passed calibration (Gemma 3 4B 0/5, Qwen3-VL 4B 1/5 absolute); larger candidates and pairwise calibration are being measured; until one passes, Vision Quality stays NOT_MEASURED |
+| LIVE_REMOTE_ROUTING_VALIDATED | **NOT_VALIDATED** | NVIDIA NIM, Groq, OpenRouter, Cloudflare and Hugging Face are denied by the egress proxy; Gemini is reachable but no key was provided |
+| REAL_OPPORTUNITY_VALIDATED | **NOT_VALIDATED (research stage only)** | real job on CNCF LFX Mentorship 2027 Term 1 (primary source: CNCF's own repository) extracted the real deadline 2027-02-16 and stopped AWAITING_HUMAN: single-source critical claim + funding/eligibility pages unreachable |
+| PRODUCTION_READY | **NOT_PRODUCTION_READY** | original APEX brand assets missing (Brand Production Gate FAIL), no real opportunity has reached release candidate, vision gate not validated |
 
-How comprehension and rhythm were fixed without lowering thresholds (Phase 20): snapshot money/eligibility facts
-became scannable `stat` blocks; opening/APEX Take no longer reuse the loud manifesto archetype (hero fatigue);
-the document-level tournament penalises flat visual weight measured from real screenshots (ink density).
+## What changed in this phase
 
-## What is real now
+* **Release control is authenticated.** Approver identity comes only from a token (hashes stored, never the
+  token); forged names are rejected; every decision lands in a hash-chained, tamper-evident ledger.
+* **Licences verified from artifact evidence, not memory.** Qwen3-VL 4B: Apache-2.0 declared by two independent
+  local sources → PRODUCTION_ALLOWED. gpt-oss 20B (usage-policy text unavailable), Gemma 3 (Gemma terms), Nemotron
+  (NVIDIA licence) stay production-blocked. Licences are per artifact (no sibling inheritance).
+* **Empirical, task-specific routing.** Each task is ranked only on its measured evidence (`config/task_routing.yaml`);
+  there is no "overall" fallback; date arithmetic is deterministic and models are blocked from it.
+* **Brand import + fingerprint.** `apex-one brand import <folder>` validates and installs only a complete, valid
+  package; edits after import fail the gate. Until real assets exist: BRAND_PRODUCTION_GATE = FAIL.
+* **Model writing vs native.** Separate metrics (text fidelity, facts, HTML/CSS validity, RTL, overflow, hierarchy,
+  editability, novelty, APEX similarity, layout repetition, page comprehension). Native stays the designer unless a
+  model wins without a safety loss.
+* **Real sources exposed real gaps** (table rows, yearless dates, application windows) — fixed and tested.
+* **Infrastructure:** llama.cpp rebuilt portably after the native build died with SIGILL on a new host; the
+  evaluation queue is resumable across container restarts.
 
-* **$0 local inference**: llama.cpp built from source; Gemma 3 4B, Qwen3-VL 4B, Nemotron 3 Nano 4B, gpt-oss 20B
-  pulled as OCI artifacts with sha256 verification; one model in RAM at a time.
-* **Live provider test**: real structured-output task per route; LIVE_TESTED only when the answer is correct.
-* **Council benchmark** with deterministic checkers (no model grades another); scores overwrite registry priors.
-* **Vision Council**: six roles, structured problems with severity/region/repair/confidence, median across models,
-  disagreements stored; **only calibration-reliable judges count** (good vs 5 broken pages, all checks valid,
-  stamped by model digest).
-* **Pairwise (PosterReward protocol)**: order-swapped, consistency-required, strict majority; failures ≠ bias.
-* **Design**: 15-page-type APEX Design Bench; ultra evolution (64–256 candidates); mixture of design experts with
-  semantic routing + margin rule; anti-copy with brand vs layout similarity reported separately per job.
-* **Learning inputs**: genome extraction from approved/rejected documents (principles, never copies); A/B/C
-  preference sheets and records (winner, ranking, reason, tags); nothing trains automatically.
-* **Arabic typography**: letter-spacing (critical: breaks joining), synthetic italics, Arabic leading, Latin
-  punctuation, tatweel stretching (the «الـ + English term» convention is correctly allowed).
+## Quality rule (never lowered)
 
-## Adversarial audit (Phase 30)
+reader comprehension ≥ 95 · rhythm ≥ 93 · Arabic typography ≥ 98 — enforced by `tests/test_pipeline.py::
+test_golden_ultra_quality_never_regresses` against `tests/baselines/golden_ultra.json`.
 
-An independent read-only audit found 13 issues (5 major); 12 are fixed, 1 partial — see the commit
-"Phase 30 adversarial audit fixes". The majors were: the brand gate validated files the compiler did not embed;
-a judge could be "reliable" on one data point and calibration results were unstamped; pairwise said MEASURED when
-nothing ran; a stale vision report could survive a mutation; report prose was not derived from data. Sound by
-audit: the $0 path (every adapter asserts the firewall decision before any network call), production licence
-enforcement, fact locking, and the human gate.
+## Remaining blockers
 
-## Blockers that need a human or another network
-
-1. Original APEX brand assets → `assets/apex/` (contract in `config/asset_contract.yaml`).
-2. Network access to official sources (or saved official sources) for a real opportunity.
-3. Licence verification for any model you want to write content (`apex-one license verify`).
-4. Cloud free-tier keys on a network that allows those providers.
-5. A GPU + HF access for specialist design checkpoints.
-6. Authentication on the local API before exposing it.
-
-See NEXT_ACTIONS.md for the exact commands.
+1. Original APEX brand package (logo, logo-on-dark, robot, brand.yaml, fonts) → `apex-one brand import <folder>`.
+2. Network: huggingface.co (model weights, GDB dataset), provider APIs, and official opportunity sites
+   (e.g. docs.linuxfoundation.org, www.berea.edu) are denied by the environment's egress policy.
+3. A human confirmation for single-source critical facts (`apex-one facts confirm`), and the funding/eligibility
+   sources for the real job.
+4. A calibrated vision judge (≥ 4/5) — none yet.
+5. Gemini key (optional free multimodal route) if you want a remote judge candidate.
