@@ -25,6 +25,13 @@
           100.0
         ]
       }
+    },
+    "qwen3-vl-4b-q4kxl:pcalib": {
+      "at": "2026-10-13T05:02:38",
+      "info": {
+        "correct": 0,
+        "valid": 5
+      }
     }
   },
   "failed": {

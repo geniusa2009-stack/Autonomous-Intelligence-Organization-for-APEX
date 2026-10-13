@@ -58,5 +58,70 @@
       "model_digest": "sha256:a5563711a524defc06d67438a497ce4ba9a0fb126f28456a9f207e2ad104eb75",
       "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
     }
+  },
+  "pairwise_models": {
+    "qwen-vl-current": {
+      "checks": {
+        "low_contrast": false,
+        "card_overuse": false,
+        "gradient": false,
+        "cramped": false,
+        "no_hierarchy": false
+      },
+      "detail": {
+        "low_contrast": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A's bold, centered deadline and stark typography create a more intentional, premium hierarchy than Page B's softer, less dominant layout.",
+            "Page A's tighter vertical rhythm and minimalistic layout create a more intentional, premium feel with clearer hierarchy and fewer visual distractions."
+          ]
+        },
+        "card_overuse": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A's clean, uncluttered layout with bold typography and minimalistic design better communicates the critical deadline and facts without visual noise.",
+            "Page A's vertical alignment and consistent spacing create a more intentional, restrained hierarchy that prioritizes the deadline, while Page B's horizontal layout introduces visual clutter and less cl"
+          ]
+        },
+        "gradient": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A's deep navy and white palette offers a more restrained, premium feel than Page B's aggressive red gradient, better supporting the brand's intent for clarity and calm.",
+            "Page A's bold gradient and centered hierarchy create a more intentional, premium feel than Page B's flat white background."
+          ]
+        },
+        "cramped": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A's layout prioritizes visual hierarchy and clarity through strategic spacing, bold typography, and intentional alignment, while Page B's denser, less structured arrangement reduces readability a",
+            "Page A's tighter vertical rhythm and restrained typography create a more intentional, premium feel than Page B's cluttered layout."
+          ]
+        },
+        "no_hierarchy": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A's layout prioritizes visual hierarchy and deadline emphasis through bold, spaced-out typography and a clean, uncluttered composition.",
+            "Page A's tighter vertical rhythm and minimalistic layout create a more intentional, premium feel with clearer hierarchy and fewer visual distractions."
+          ]
+        }
+      },
+      "valid_checks": 5,
+      "correct": 0,
+      "discrimination_rate": 0.0,
+      "reliable": false,
+      "at": "2026-10-13T05:02:38.677969+00:00",
+      "model_digest": "sha256:a5563711a524defc06d67438a497ce4ba9a0fb126f28456a9f207e2ad104eb75",
+      "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
+    }
   }
 }

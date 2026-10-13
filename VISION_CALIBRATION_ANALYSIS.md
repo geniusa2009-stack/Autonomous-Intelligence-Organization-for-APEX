@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-13 04:51 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -25,6 +25,16 @@ _Generated 2026-10-13 04:51 UTC by `apex-one reports build` from measured artifa
 
 Parser/execution errors: none
 
+**E1 pairwise 640 px:** 0/5 order-consistent wins; position-biased cases: 5
+
+| case | good shown as A → pick | good shown as B → pick | pass |
+|---|---|---|---|
+| low_contrast | first | second | False |
+| card_overuse | first | second | False |
+| gradient | first | second | False |
+| cramped | first | second | False |
+| no_hierarchy | first | second | False |
+
 ## Hypotheses checked
 
 | hypothesis | evidence used |
@@ -42,3 +52,4 @@ Parser/execution errors: none
 
 * absolute — gemma-multimodal: 0/5 → **NOT QUALIFIED**
 * absolute — qwen-vl-current: 1/5 → **NOT QUALIFIED**
+* pairwise — qwen-vl-current: 0/5 → **NOT QUALIFIED**
