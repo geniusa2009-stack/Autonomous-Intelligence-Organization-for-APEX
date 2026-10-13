@@ -23,12 +23,40 @@
         "cramped": false,
         "no_hierarchy": false
       },
+      "scores": {
+        "low_contrast": {
+          "role": "TypographyJudge",
+          "good": 95.0,
+          "broken": 95.0
+        },
+        "card_overuse": {
+          "role": "AIClicheJudge",
+          "good": 100.0,
+          "broken": 100.0
+        },
+        "gradient": {
+          "role": "APEXBrandJudge",
+          "good": 90.0,
+          "broken": 55.0
+        },
+        "cramped": {
+          "role": "EditorialDesignJudge",
+          "good": 80.0,
+          "broken": 80.0
+        },
+        "no_hierarchy": {
+          "role": "VisualHierarchyJudge",
+          "good": 85.0,
+          "broken": 85.0
+        }
+      },
       "discrimination_rate": 0.2,
-      "reliable": false,
       "valid_checks": 5,
-      "at": "2026-10-10T17:28:26+00:00",
+      "reliable": false,
+      "errors": {},
+      "at": "2026-10-12T12:48:23.472996+00:00",
       "model_digest": "sha256:a5563711a524defc06d67438a497ce4ba9a0fb126f28456a9f207e2ad104eb75",
-      "stamp_note": "stamped after the run from the council log: the run started before stamping existed; the served model was qwen3-vl-4b-q4kxl"
+      "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
     }
   }
 }
