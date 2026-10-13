@@ -1,6 +1,96 @@
 {
   "rows": [
     {
+      "system": "llm:qwen-vl-current",
+      "page_type": "ApexTake",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": null,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 100.0,
+      "overflow_issues": 1,
+      "visual_hierarchy": 30.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": null,
+      "critical_issues": 11,
+      "novelty_vs_native": 61.1
+    },
+    {
+      "system": "llm:qwen-vl-current",
+      "page_type": "Checklist",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 100.0,
+      "overflow_issues": 1,
+      "visual_hierarchy": 30.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 14,
+      "novelty_vs_native": 70.6
+    },
+    {
+      "system": "llm:qwen-vl-current",
+      "page_type": "Cover",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 100.0,
+      "overflow_issues": 1,
+      "visual_hierarchy": 30.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 7,
+      "novelty_vs_native": 86.5
+    },
+    {
+      "system": "llm:qwen-vl-current",
+      "page_type": "OpportunitySnapshot",
+      "produced": true,
+      "text_fidelity": 69.0,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 94.0,
+      "overflow_issues": 1,
+      "visual_hierarchy": 30.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 21,
+      "novelty_vs_native": 63.9
+    },
+    {
+      "system": "llm:qwen-vl-current",
+      "page_type": "Timeline",
+      "produced": true,
+      "text_fidelity": 96.1,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 95.0,
+      "overflow_issues": 1,
+      "visual_hierarchy": 30.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 12,
+      "novelty_vs_native": 74.0
+    },
+    {
       "system": "native-baseline",
       "page_type": "ApexTake",
       "produced": true,
@@ -527,7 +617,8 @@
     }
   ],
   "layout_repetition": {
-    "native-baseline": 51.5,
-    "native-tournament": 39.6
+    "llm:qwen-vl-current": 73.3,
+    "native-tournament": 39.6,
+    "native-baseline": 51.5
   }
 }

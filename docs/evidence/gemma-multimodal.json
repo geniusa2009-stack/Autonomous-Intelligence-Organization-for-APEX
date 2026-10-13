@@ -1,0 +1,256 @@
+{
+  "model": "gemma-multimodal",
+  "E0": {
+    "result": {
+      "checks": {
+        "low_contrast": false,
+        "card_overuse": true,
+        "gradient": false,
+        "cramped": false,
+        "no_hierarchy": false
+      },
+      "scores": {
+        "low_contrast": {
+          "role": "TypographyJudge",
+          "good": 85.0,
+          "broken": 92.0
+        },
+        "card_overuse": {
+          "role": "AIClicheJudge",
+          "good": 95.0,
+          "broken": 70.0
+        },
+        "gradient": {
+          "role": "APEXBrandJudge",
+          "good": 90.0,
+          "broken": 95.0
+        },
+        "cramped": {
+          "role": "EditorialDesignJudge",
+          "good": 65.0,
+          "broken": 78.0
+        },
+        "no_hierarchy": {
+          "role": "VisualHierarchyJudge",
+          "good": 75.0,
+          "broken": 75.0
+        }
+      },
+      "discrimination_rate": 0.2,
+      "valid_checks": 5,
+      "reliable": false,
+      "errors": {}
+    },
+    "reviews": {
+      "calibration-good": {
+        "raw": "{\n  \"VisualHierarchyJudge\": {\n    \"score\": 75,\n    \"observations\": [\n      \"The title 'الفرصة في صفحة واحدة' (Opportunity in One Page) is prominent, establishing a clear focal point.\",\n      \"The numerical data (percentages, dollar amounts) is positioned to draw the eye, but could be more strategically aligned.\",\n      \"The small arrow at the bottom left feels disconnected from the main content.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Suboptimal alignment of numerical data\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"Disconnected arrow\", \"severity\": \"minor\", \"region\": \"bottom\"},\n      {\"issue\": \"Lack of visual connection between title and data\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Realign numerical data to create a stronger visual flow and consider a subtle visual link (e.g., a thin line) between the title and the key data points.\",\n    \"confidence\": 0.8\n  },\n  \"TypographyJudge\": {\n    \"score\": 85,\n    \"observations\": [\n      \"The Arabic typography appears generally well-shaped and legible.\",\n      \"The English text is cleanly isolated in a distinct font, providing clarity.\",\n      \"The leading is adequate, though slightly tight for the body text.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Slightly tight leading\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"Potential for improved kerning in Arabic text\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"No specific Arabic font style is apparent\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Increase leading by 2-3 points and review the kerning of the Arabic text for optimal readability.\",\n    \"confidence\": 0.9\n  },\n  \"EditorialDesignJudge\": {\n    \"score\": 65,\n    \"observations\": [\n      \"The page utilizes a grid system, but the spacing feels somewhat rigid and lacks visual breathing room.\",\n      \"The use of whitespace is present, but could be expanded to enhance the overall rhythm and visual hierarchy.\",\n      \"The layout feels like a functional template rather than a carefully considered editorial design.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Insufficient whitespace\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"Rigid grid structure\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Lack of visual flow\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce more generous whitespace around elements and consider a slightly looser grid structure to create a more dynamic and engaging layout.\",\n    \"confidence\": 0.7\n  },\n  \"APEXBrandJudge\": {\n    \"score\": 90,\n    \"observations\": [\n      \"The use of deep navy and metallic silver aligns with the APEX brand palette.\",\n      \"The typography and overall style are restrained and premium, reflecting the brand's identity.\",\n      \"The design avoids excessive embellishments, maintaining a clean and professional aesthetic.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Lack of subtle accent color\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Could benefit from a more futuristic-editorial feel\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Minimal use of metallic silver\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Introduce a subtle accent color (e.g., a muted teal) and consider incorporating slightly more futuristic elements to enhance the brand's visual identity.\",\n    \"confidence\": 0.9\n  },\n  \"AIClicheJudge\": {\n    \"score\": 95,\n    \"observations\": [\n      \"The design avoids common AI-generated design elements such as rounded cards and random icons.\",\n      \"The layout is straightforward and functional, prioritizing clarity over visual novelty.\",\n      \"The use of whitespace and typography is clean and avoids overly decorative elements.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Minimal visual interest\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Could benefit from a more distinctive visual element\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Reliance on text-based hierarchy\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce a subtle, strategically placed visual element (e.g., a refined line or geometric shape) to add visual interest and break up the text-heavy layout.\",\n    \"confidence\": 0.95\n  },\n  \"ReaderAttentionJudge\": {\n    \"score\": 70,\n    \"observations\": [\n      \"The deadline (November 1, 2026) is prominently displayed, which is crucial for immediate attention.\",\n      \"The numerical data is presented clearly, but the overall page density could be reduced for faster scanning.\",\n      \"The 'First Task: Write an essay of 50 words' is somewhat buried and could be more visually emphasized.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"High page density\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"Low visibility of 'First Task'\", \"severity\": \"major\", \"region\": \"bottom\"},\n      {\"issue\": \"Lack of clear scanning cues\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Reduce the overall page density by streamlining the layout and using visual cues (e.g., bullet points or bolding) to highlight key information, particularly the 'First Task'.\",\n    \"confidence\": 0.85\n  }\n}",
+        "errors": {},
+        "scores": {
+          "VisualHierarchyJudge": 75.0,
+          "TypographyJudge": 85.0,
+          "EditorialDesignJudge": 65.0,
+          "APEXBrandJudge": 90.0,
+          "AIClicheJudge": 95.0,
+          "ReaderAttentionJudge": 70.0
+        }
+      },
+      "calibration-low_contrast": {
+        "raw": "{\n  \"VisualHierarchyJudge\": {\n    \"score\": 85,\n    \"observations\": [\n      \"The large date '2026 نوفمبر 1' immediately draws the eye as the primary focal point.\",\n      \"The headings are clearly separated and sized appropriately, guiding the reader through the information.\",\n      \"The small arrow icon in the bottom left corner provides a subtle visual cue for navigation.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Slightly cluttered layout near the top with text overlapping the date.\", \"severity\": \"minor\", \"region\": \"upper-middle\"},\n      {\"issue\": \"The 'أول خطوة' heading could be slightly larger to emphasize its importance.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The placement of the 'SYNTHETIC - fictional data' text is a bit low and distracting.\", \"severity\": \"minor\", \"region\": \"bottom\"}\n    ],\n    \"suggested_repair\": \"Adjust the layout to eliminate text overlap and increase the size of the 'أول خطوة' heading, repositioning the footer text.\",\n    \"confidence\": 0.9\n  },\n  \"TypographyJudge\": {\n    \"score\": 92,\n    \"observations\": [\n      \"The Arabic typography appears natural and well-shaped, reflecting a good understanding of the script.\",\n      \"The font size and leading are generally comfortable for readability.\",\n      \"The rag is clean and consistent throughout the page.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The English text is isolated in a box, which feels slightly out of place.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The font choice for the English text could be slightly more refined to align with the overall premium aesthetic.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Leading could be slightly increased for the English text to improve visual breathing room.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Consider integrating the English text more seamlessly into the design and refine the font choice, while also increasing the leading.\",\n    \"confidence\": 0.85\n  },\n  \"EditorialDesignJudge\": {\n    \"score\": 78,\n    \"observations\": [\n      \"The page utilizes a grid system, creating a sense of order and structure.\",\n      \"Whitespace is used effectively to separate elements and improve readability.\",\n      \"The layout has a clear rhythm, guiding the eye through the information.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The overall design feels somewhat template-like, lacking a distinct editorial voice.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The use of a single, large block of text for the requirements could be broken up with visual elements.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The alignment of the percentage values could be more consistent across the page.\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce more visual hierarchy and strategic use of imagery to elevate the design beyond a simple template, and refine the alignment of the percentage values.\",\n    \"confidence\": 0.8\n  },\n  \"APEXBrandJudge\": {\n    \"score\": 95,\n    \"observations\": [\n      \"The use of deep navy, metallic silver, and white aligns perfectly with the APEX brand guidelines.\",\n      \"The precise and restrained aesthetic is well-executed throughout the page.\",\n      \"The futuristic-editorial style is appropriate for a student guide.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The accent colors could be used more strategically to highlight key information.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The typography could be slightly more stylized to further enhance the futuristic-editorial feel.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The overall design leans slightly towards formality, which might benefit from a touch of warmth.\"}\n    ],\n    \"suggested_repair\": \"Introduce more deliberate use of accent colors and refine the typography to further embody the APEX brand, while also considering a subtle injection of warmth.\",\n    \"confidence\": 0.95\n  },\n  \"AIClicheJudge\": {\n    \"score\": 70,\n    \"observations\": [\n      \"The layout utilizes a standard block-style presentation, which is common in many digital designs.\",\n      \"The use of a simple arrow icon is functional but leans towards a generic design element.\",\n      \"The overall design lacks a truly unique or memorable visual element.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The page relies heavily on text-based information, which could be enhanced with visual cues.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The use of a simple box for the English text feels somewhat cliché.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The design could benefit from a more distinctive visual element to differentiate it from standard layouts.\"}\n    ],\n    \"suggested_repair\": \"Introduce more original visual elements and explore alternative ways to present information beyond a purely text-based approach.\",\n    \"confidence\": 0.8\n  },\n  \"ReaderAttentionJudge\": {\n    \"score\": 88,\n    \"observations\": [\n      \"The prominent date '2026 نوفمبر 1' immediately grabs attention.\",\n      \"The key information (deadline, money, eligibility) is presented clearly and concisely.\",\n      \"The layout is easy to scan and understand.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The amount of text in the requirements section could be overwhelming for a 16-year-old student.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The placement of the 'أول خطوة' heading could be improved to draw more immediate attention.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"Consider adding a small visual element (e.g., a relevant icon) to the deadline section to enhance memorability.\"}\n    ],\n    \"suggested_repair\": \"Break down the requirements section into smaller, more digestible chunks and consider adding a visual element to the deadline section.\",\n    \"confidence\": 0.9\n  }\n}",
+        "errors": {},
+        "scores": {
+          "VisualHierarchyJudge": 85.0,
+          "TypographyJudge": 92.0,
+          "EditorialDesignJudge": 78.0,
+          "APEXBrandJudge": 95.0,
+          "AIClicheJudge": 70.0,
+          "ReaderAttentionJudge": 88.0
+        }
+      },
+      "calibration-card_overuse": {
+        "raw": "{\n  \"VisualHierarchyJudge\": {\n    \"score\": 85,\n    \"observations\": [\n      \"The large ‘2026’ date immediately draws the eye as the primary focal point.\",\n      \"The title ‘الفرضية في صفحة واحدة’ (One Page Assumption) is clearly positioned at the top, establishing the page's purpose.\",\n      \"The list of requirements is presented in a structured manner, guiding the reader's eye sequentially.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Slightly cramped layout of the requirements list.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The small arrow pointing to the bottom right feels a bit visually disconnected.\", \"severity\": \"minor\", \"region\": \"bottom\"},\n      {\"issue\": \"The placement of the ‘أول خطوة’ (First Step) text feels slightly off-center.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Adjust the spacing between the requirements list items and consider a more prominent visual cue for the arrow.\",\n    \"confidence\": 0.8\n  },\n  \"TypographyJudge\": {\n    \"score\": 92,\n    \"observations\": [\n      \"The Arabic typography appears natural and well-shaped, reflecting a good understanding of the script.\",\n      \"The font size is appropriate for readability, and the leading is sufficient for comfortable reading.\",\n      \"The rag is clean, with no noticeable breaks or inconsistencies in the Arabic text.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The English text is isolated in a box, which feels slightly jarring.\", \"severity\": \"minor\", \"region\": \"upper-middle\"},\n      {\"issue\": \"The font used for the English text is slightly different from the Arabic, creating a visual disconnect.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The font size for the English text is slightly smaller than the Arabic.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Use a consistent font family for all text, and consider a subtle background or border for the English text to integrate it more seamlessly.\",\n    \"confidence\": 0.9\n  },\n  \"EditorialDesignJudge\": {\n    \"score\": 78,\n    \"observations\": [\n      \"The page utilizes a grid system, creating a sense of order and structure.\",\n      \"Whitespace is used effectively to separate elements and improve readability.\",\n      \"The layout has a clear rhythm, guiding the eye through the information.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The overall design feels somewhat template-like, lacking a distinct editorial voice.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The use of a simple box for the English text feels visually flat.\", \"severity\": \"minor\", \"region\": \"upper-middle\"},\n      {\"issue\": \"The placement of the APEX logo feels a bit heavy and could be more integrated into the design.\", \"severity\": \"minor\", \"region\": \"bottom\"}\n    ],\n    \"suggested_repair\": \"Introduce subtle visual elements, such as a refined border or a slightly more complex layout, to elevate the design beyond a simple template.\",\n    \"confidence\": 0.7\n  },\n  \"APEXBrandJudge\": {\n    \"score\": 95,\n    \"observations\": [\n      \"The use of deep navy and metallic silver aligns with the APEX brand palette.\",\n      \"The typography and layout convey a sense of precision and professionalism.\",\n      \"The overall aesthetic is restrained and premium, reflecting the APEX brand identity.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The use of white as the primary background color could be perceived as slightly sterile.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The APEX logo could be positioned more prominently to reinforce brand recognition.\", \"severity\": \"minor\", \"region\": \"bottom\"},\n      {\"issue\": \"The design could benefit from a subtle accent color to add visual interest.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Introduce a subtle accent color, such as a muted gold or teal, to add warmth and visual interest, and consider repositioning the APEX logo for greater prominence.\",\n    \"confidence\": 0.9\n  },\n  \"AIClicheJudge\": {\n    \"score\": 70,\n    \"observations\": [\n      \"The use of boxes to contain information is a common design pattern.\",\n      \"The layout resembles many educational materials, lacking a unique visual identity.\",\n      \"The overall design leans towards a functional, rather than a creatively expressive, aesthetic.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The use of boxes feels generic and lacks visual hierarchy.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The design relies heavily on text-based content, which can feel dense and overwhelming.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The lack of visual elements beyond text and boxes contributes to a feeling of cliché.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Introduce more visual elements, such as subtle icons or illustrations, to break up the text and create a more engaging experience.\",\n    \"confidence\": 0.8\n  },\n  \"ReaderAttentionJudge\": {\n    \"score\": 88,\n    \"observations\": [\n      \"The large ‘2026’ date immediately grabs attention and establishes the time frame.\",\n      \"The clear headings and bullet points make the information easy to scan.\",\n      \"The concise presentation of key facts (deadline, money, eligibility) is well-suited for a quick assessment.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The English text box could be slightly larger to improve readability for a quick glance.\", \"severity\": \"minor\", \"region\": \"upper-middle\"},\n      {\"issue\": \"The arrow pointing to the bottom right might be missed by a distracted reader.\", \"severity\": \"minor\", \"region\": \"bottom\"},\n      {\"issue\": \"The overall density of information could be slightly reduced to improve scannability.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Increase the size of the English text box and consider a more prominent visual cue for the arrow, and streamline the information to prioritize the most critical details.\",\n    \"confidence\": 0.9\n  }\n}",
+        "errors": {},
+        "scores": {
+          "VisualHierarchyJudge": 85.0,
+          "TypographyJudge": 92.0,
+          "EditorialDesignJudge": 78.0,
+          "APEXBrandJudge": 95.0,
+          "AIClicheJudge": 70.0,
+          "ReaderAttentionJudge": 88.0
+        }
+      },
+      "calibration-gradient": {
+        "raw": "{\n  \"VisualHierarchyJudge\": {\n    \"score\": 85,\n    \"observations\": [\n      \"The large date '2026' immediately draws the eye as the primary focal point.\",\n      \"The 'Deadline' text is positioned prominently above the key numerical data, establishing a clear hierarchy.\",\n      \"The arrow icon subtly guides the eye to the lower-left corner, indicating further information.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Slightly cluttered layout with too much information competing for attention.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The small text size of the financial details could be improved for readability.\", \"severity\": \"minor\", \"region\": \"lower-middle\"},\n      {\"issue\": \"The placement of the APEX logo feels slightly disconnected from the main content.\", \"severity\": \"minor\", \"region\": \"bottom\"}\n    ],\n    \"suggested_repair\": \"Re-evaluate the layout to reduce visual clutter and increase whitespace, and adjust the font size for the financial details.\",\n    \"confidence\": 0.9\n  },\n  \"TypographyJudge\": {\n    \"score\": 92,\n    \"observations\": [\n      \"The Arabic typography appears generally well-shaped and legible.\",\n      \"The leading is adequate, allowing for comfortable reading of the text.\",\n      \"The rag is clean, with no noticeable inconsistencies in the letterforms.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The English text is isolated in a box, which feels slightly jarring within the Arabic layout.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The font choice for the English text could be more integrated with the Arabic typography.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The size of the English text is slightly smaller than the Arabic, creating a visual imbalance.\", \"severity\": \"minor\", \"region\": \"upper-middle\"}\n    ],\n    \"suggested_repair\": \"Consider a more seamless integration of the English text, perhaps using a similar font or a subtle background treatment, and adjust the font sizes for visual harmony.\",\n    \"confidence\": 0.85\n  },\n  \"EditorialDesignJudge\": {\n    \"score\": 75,\n    \"observations\": [\n      \"The page utilizes a grid system, providing a sense of structure and organization.\",\n      \"There is sufficient whitespace, preventing the page from feeling cramped.\",\n      \"The use of a horizontal line reinforces the division between sections.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The overall design feels somewhat template-driven, lacking a strong editorial voice.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The rhythm of the information could be improved through more strategic use of whitespace and visual breaks.\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The placement of the 'Deadline' text feels somewhat static and could benefit from a more dynamic visual treatment.\", \"severity\": \"minor\", \"region\": \"upper-middle\"}\n    ],\n    \"suggested_repair\": \"Introduce more visual elements and a stronger typographic hierarchy to elevate the design beyond a simple template, and refine the rhythm of the information.\",\n    \"confidence\": 0.75\n  },\n  \"APEXBrandJudge\": {\n    \"score\": 95,\n    \"observations\": [\n      \"The use of a deep navy background aligns with the APEX brand palette.\",\n      \"The metallic silver accents are subtly incorporated, adding a premium touch.\",\n      \"The overall aesthetic is restrained and sophisticated, reflecting the APEX brand identity.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The APEX logo could be positioned more prominently to reinforce brand recognition.\", \"severity\": \"minor\", \"region\": \"bottom\"},\n      {\"issue\": \"The use of white text on a dark background could be challenging for some readers.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The design could benefit from a more deliberate use of metallic silver to create a stronger visual impact.\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Increase the prominence of the APEX logo and consider a lighter background color to improve readability, and strategically utilize the metallic silver accents.\",\n    \"confidence\": 0.95\n  },\n  \"AIClicheJudge\": {\n    \"score\": 70,\n    \"observations\": [\n      \"The use of a single, large date element is a common design pattern.\",\n      \"The inclusion of a subtle arrow icon is a frequently used visual cue.\",\n      \"The overall layout resembles a standard information-dense infographic.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The design relies heavily on visual cues that are typical of AI-generated layouts.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The use of a single color block for the background feels somewhat generic.\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The layout could benefit from more creative and original visual elements.\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce more original visual elements and a more sophisticated typographic hierarchy to move beyond common design clichés.\",\n    \"confidence\": 0.7\n  },\n  \"ReaderAttentionJudge\": {\n    \"score\": 80,\n    \"observations\": [\n      \"The large '2026' date immediately grabs attention, but the surrounding information is dense.\",\n      \"The financial details are presented in a somewhat cluttered manner, making them difficult to scan quickly.\",\n      \"The 'Deadline' text is clear, but the overall page could be more streamlined for rapid comprehension.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The density of information on the page may overwhelm a 16-year-old student.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The visual hierarchy could be improved to guide the eye to the most important information.\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The page could benefit from a clearer visual separation between sections to improve scannability.\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Simplify the layout, reduce the density of information, and improve the visual hiera",
+        "errors": {},
+        "scores": {
+          "VisualHierarchyJudge": 85.0,
+          "TypographyJudge": 92.0,
+          "EditorialDesignJudge": 75.0,
+          "APEXBrandJudge": 95.0,
+          "AIClicheJudge": 70.0,
+          "ReaderAttentionJudge": 80.0
+        }
+      },
+      "calibration-cramped": {
+        "raw": "{\n  \"VisualHierarchyJudge\": {\n    \"score\": 85,\n    \"observations\": [\n      \"The large ‘2026 نوفمبر 1’ immediately draws the eye as the primary focal point.\",\n      \"The key numerical data (1,000) is positioned prominently below the date, establishing a clear hierarchy.\",\n      \"The text blocks are generally aligned, creating a readable flow, though the bottom section feels slightly less defined.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Slightly cluttered lower section\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Lack of visual separation between the 'deposit' section and the numerical data\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The small icon on the right is visually competing with the main text\", \"severity\": \"minor\", \"region\": \"bottom\"}\n    ],\n    \"suggested_repair\": \"Re-evaluate the layout of the bottom section to improve visual separation and reduce visual clutter.\",\n    \"confidence\": 0.9\n  },\n  \"TypographyJudge\": {\n    \"score\": 92,\n    \"observations\": [\n      \"The Arabic typography appears natural and well-shaped, demonstrating a good understanding of the script’s nuances.\",\n      \"The font size is appropriate for readability, and the leading is sufficient for comfortable reading.\",\n      \"The rag is clean, with no noticeable breaks or inconsistencies in the text rendering.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"English text is isolated but could benefit from a subtle visual distinction\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The font choice is functional but lacks a distinct personality\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Minor kerning issues are present in some Arabic words\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Consider a subtle background or color overlay for the English text to improve its visibility, and explore a font with a slightly more premium feel.\",\n    \"confidence\": 0.8\n  },\n  \"EditorialDesignJudge\": {\n    \"score\": 78,\n    \"observations\": [\n      \"The page utilizes a grid system, providing a structured layout for the information.\",\n      \"Whitespace is present, though could be increased to improve the overall visual breathing room.\",\n      \"The rhythm of the text blocks is generally good, but the bottom section feels somewhat disjointed.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Insufficient whitespace around the numerical data\", \"severity\": \"major\", \"region\": \"middle\"},\n      {\"issue\": \"The bottom section lacks a clear visual connection to the rest of the page\", \"severity\": \"major\", \"region\": \"bottom\"},\n      {\"issue\": \"The overall design feels somewhat template-driven rather than a bespoke editorial piece\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Increase whitespace around key data points and create a visual transition to the bottom section to improve the flow and cohesiveness.\",\n    \"confidence\": 0.85\n  },\n  \"APEXBrandJudge\": {\n    \"score\": 95,\n    \"observations\": [\n      \"The use of deep navy and metallic silver aligns with the APEX brand’s color palette.\",\n      \"The typography and layout evoke a premium, futuristic-editorial aesthetic.\",\n      \"The restrained accents and precise design elements are consistent with the APEX brand’s identity.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The use of white could be more strategic to enhance the metallic silver accents\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The overall design leans slightly towards functional rather than aspirational, potentially missing an opportunity to fully embody the 'premium' aspect\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The APEX logo placement is functional but could be more integrated into the design\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Explore ways to strategically use white to amplify the metallic silver accents and consider subtle design enhancements to elevate the aspirational quality of the piece.\",\n    \"confidence\": 0.9\n  },\n  \"AIClicheJudge\": {\n    \"score\": 88,\n    \"observations\": [\n      \"The layout avoids common AI-generated design elements such as rounded cards and random icons.\",\n      \"The use of a grid system and clear typography demonstrates a deliberate design approach.\",\n      \"The overall aesthetic is clean and professional, avoiding generic visual tropes.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The design could benefit from a more unique visual element to differentiate it further\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The use of a simple, functional layout risks appearing somewhat sterile\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"The lack of visual hierarchy could be improved with more deliberate use of size and weight\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce a subtle, unexpected visual element to add personality and consider using varying font weights to enhance the visual hierarchy.\",\n    \"confidence\": 0.85\n  },\n  \"ReaderAttentionJudge\": {\n    \"score\": 75,\n    \"observations\": [\n      \"The large date and numerical data are immediately visible, but the surrounding text can be overwhelming.\",\n      \"The information density is high, which could be challenging for a 16-year-old student to quickly process.\",\n      \"The bottom section, with its dense text, requires more time to scan and understand.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"The density of information makes it difficult to quickly grasp the key deadlines and financial implications\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"The visual hierarchy isn't strong enough to guide the eye to the most important information\", \"severity\": \"major\", \"region\": \"middle\"},\n      {\"issue\": \"The overall design could be more scannable with clearer visual cues\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Simplify the layout, prioritize key information, and incorporate visual cues (e.g., bull",
+        "errors": {},
+        "scores": {
+          "VisualHierarchyJudge": 85.0,
+          "TypographyJudge": 92.0,
+          "EditorialDesignJudge": 78.0,
+          "APEXBrandJudge": 95.0,
+          "AIClicheJudge": 88.0,
+          "ReaderAttentionJudge": 75.0
+        }
+      },
+      "calibration-no_hierarchy": {
+        "raw": "{\n  \"VisualHierarchyJudge\": {\n    \"score\": 75,\n    \"observations\": [\n      \"The ‘1 نوفمبر 2026’ deadline is prominently positioned at the top, establishing a clear focal point.\",\n      \"The text flows primarily from left to right, facilitating a natural reading order.\",\n      \"The overall layout feels somewhat dense, potentially obscuring the most important information.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Dense layout\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Lack of visual breathing room\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Subtle hierarchy between sections\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce more whitespace between sections to improve visual clarity and hierarchy.\",\n    \"confidence\": 0.8\n  },\n  \"TypographyJudge\": {\n    \"score\": 85,\n    \"observations\": [\n      \"The Arabic typography appears generally well-shaped and legible.\",\n      \"The font size is adequate for readability, though slightly small for extended reading.\",\n      \"The text is clean and free of noticeable breaks or distortions.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Small font size\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"No clear distinction between headings and body text\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"English isolated text is present, but not integrated seamlessly\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Increase font size slightly and consider a subtle typographic hierarchy (e.g., different font weights or sizes) to improve readability.\",\n    \"confidence\": 0.9\n  },\n  \"EditorialDesignJudge\": {\n    \"score\": 65,\n    \"observations\": [\n      \"The page utilizes a grid system, suggesting an attempt at editorial structure.\",\n      \"Whitespace is present, but could be more strategically employed to enhance visual flow.\",\n      \"The layout feels somewhat template-driven, lacking a distinctive editorial voice.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Lack of visual rhythm\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"Grid feels rigid and inflexible\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"Limited use of visual elements to guide the eye\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Introduce more visual elements (e.g., subtle lines, icons) to create a stronger visual rhythm and break up the dense text.\",\n    \"confidence\": 0.7\n  },\n  \"APEXBrandJudge\": {\n    \"score\": 90,\n    \"observations\": [\n      \"The use of deep navy and metallic silver aligns with the APEX brand palette.\",\n      \"The typography and layout are restrained and professional, reflecting the brand's premium aesthetic.\",\n      \"The overall design feels futuristic and editorial, consistent with APEX's brand identity.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Lack of metallic silver accents\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Could benefit from a more distinct visual treatment of the APEX logo\", \"severity\": \"minor\", \"region\": \"bottom\"},\n      {\"issue\": \"Whitespace could be increased to enhance the premium feel\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Incorporate more subtle metallic silver accents and consider a more prominent placement of the APEX logo.\",\n    \"confidence\": 0.95\n  },\n  \"AIClicheJudge\": {\n    \"score\": 70,\n    \"observations\": [\n      \"The layout avoids overly rounded elements and random icons.\",\n      \"The design leans towards a functional, information-dense style, which is acceptable.\",\n      \"The use of a grid is standard, but could be more creatively applied.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Reliance on a standard grid layout\", \"severity\": \"minor\", \"region\": \"full\"},\n      {\"issue\": \"Potential for a more unique visual approach\", \"severity\": \"minor\", \"region\": \"middle\"},\n      {\"issue\": \"The design feels somewhat sterile and lacks personality\", \"severity\": \"minor\", \"region\": \"full\"}\n    ],\n    \"suggested_repair\": \"Experiment with more creative grid layouts and visual elements to inject a greater sense of personality and visual interest.\",\n    \"confidence\": 0.8\n  },\n  \"ReaderAttentionJudge\": {\n    \"score\": 60,\n    \"observations\": [\n      \"The deadline is clearly visible, but the surrounding information can be overwhelming.\",\n      \"The dense text and lack of visual breaks may make it difficult for a student to quickly scan the page.\",\n      \"The information is relevant, but the presentation could be improved for rapid comprehension.\"\n    ],\n    \"problems\": [\n      {\"issue\": \"Information density\", \"severity\": \"critical\", \"region\": \"full\"},\n      {\"issue\": \"Lack of visual cues for scanning\", \"severity\": \"major\", \"region\": \"full\"},\n      {\"issue\": \"Potential for cognitive overload\", \"severity\": \"minor\", \"region\": \"middle\"}\n    ],\n    \"suggested_repair\": \"Prioritize the most critical information and use visual cues (e.g., bullet points, headings) to guide the reader's eye.\",\n    \"confidence\": 0.75\n  }\n}",
+        "errors": {},
+        "scores": {
+          "VisualHierarchyJudge": 75.0,
+          "TypographyJudge": 85.0,
+          "EditorialDesignJudge": 65.0,
+          "APEXBrandJudge": 90.0,
+          "AIClicheJudge": 70.0,
+          "ReaderAttentionJudge": 60.0
+        }
+      }
+    },
+    "distinct_scores": [
+      60.0,
+      65.0,
+      70.0,
+      75.0,
+      78.0,
+      80.0,
+      85.0,
+      88.0,
+      90.0,
+      92.0,
+      95.0
+    ],
+    "ties_on_target": 1,
+    "inversions_on_target": 3
+  },
+  "E1": {
+    "max_w": 640,
+    "checks": {
+      "low_contrast": false,
+      "card_overuse": false,
+      "gradient": false,
+      "cramped": false,
+      "no_hierarchy": false
+    },
+    "detail": {
+      "low_contrast": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A exhibits a clearer visual hierarchy and more intentional composition, prioritizing the deadline and key information with a cleaner layout and reduced visual clutter.",
+          "Page A presents a more focused and legible layout with a clearer hierarchy of information, particularly regarding the deadline, while Page B feels cluttered and lacks a strong visual anchor."
+        ]
+      },
+      "card_overuse": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy with a more restrained typographic treatment and avoids the unnecessary graphic element present in Page B, resulting in a more focused and professional prese",
+          "Page A exhibits a more refined layout with clearer visual hierarchy and a more restrained typographic approach, avoiding the cluttered feel of Page B."
+        ]
+      },
+      "gradient": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy with a prominent headline and more deliberate spacing, resulting in a more focused and professional presentation.",
+          "Page A’s layout is significantly more organized and prioritizes key information with a clearer visual hierarchy, avoiding the cluttered feel of Page B."
+        ]
+      },
+      "cramped": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy with distinct headings and a more restrained typographic treatment, presenting the key information in a more focused and intentional manner.",
+          "Page A utilizes a clearer visual hierarchy with the deadline prominently displayed and a more restrained layout, avoiding the cluttered feel of page B."
+        ]
+      },
+      "no_hierarchy": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy with a more restrained layout and avoids unnecessary decorative elements, presenting the key information more effectively.",
+          "Page A’s bolder typography and clearer visual separation of information create a more immediate and decisive entry point for the critical deadline details."
+        ]
+      }
+    },
+    "valid_checks": 5,
+    "correct": 0,
+    "discrimination_rate": 0.0,
+    "reliable": false
+  },
+  "E2": {
+    "max_w": 1024,
+    "checks": {
+      "low_contrast": false,
+      "card_overuse": false,
+      "gradient": false,
+      "cramped": false,
+      "no_hierarchy": false
+    },
+    "detail": {
+      "low_contrast": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy with the date and key figures prominently displayed, avoiding the cluttered feel of Page B.",
+          "Page A presents a more focused and legible layout with a clearer hierarchy of information, utilizing whitespace and a simpler typographic approach compared to the cluttered design of page B."
+        ]
+      },
+      "card_overuse": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a more deliberate layout with clearer headings and a logical flow of information, avoiding the cluttered feel of Page B.",
+          "Page A presents the information with a clearer visual hierarchy and more deliberate layout, avoiding the cluttered feel of page B."
+        ]
+      },
+      "gradient": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A’s clearer layout and strategic placement of key information—particularly the deadline—create a more immediate and effective entry point for the reader.",
+          "Page A’s layout is significantly more organized and prioritizes key information with a clearer visual hierarchy, avoiding the cluttered feel of Page B."
+        ]
+      },
+      "cramped": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy with the key deadline prominently displayed and a more restrained typographic approach, avoiding the cluttered feel of Page B.",
+          "Page A’s clear visual hierarchy, prominent deadline, and restrained layout create a more effective and immediately understandable snapshot of critical information compared to Page B’s cluttered and le"
+        ]
+      },
+      "no_hierarchy": {
+        "good_as_A": "first",
+        "good_as_B": "second",
+        "position_bias": true,
+        "reasons": [
+          "Page A utilizes a clearer visual hierarchy and more restrained typography, presenting the key information – particularly the deadline – with greater emphasis and a more intentional layout.",
+          "Page A presents a more focused and legible layout with a clear visual hierarchy, prioritizing the deadline and key information effectively."
+        ]
+      }
+    },
+    "valid_checks": 5,
+    "correct": 0,
+    "discrimination_rate": 0.0,
+    "reliable": false
+  }
+}

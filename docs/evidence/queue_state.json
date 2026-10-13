@@ -32,6 +32,116 @@
         "correct": 0,
         "valid": 5
       }
+    },
+    "qwen3-vl-4b-q4kxl:invest": {
+      "at": "2026-10-13T12:10:53",
+      "info": {
+        "E2": {
+          "correct": 2,
+          "valid": 5
+        },
+        "E3": {
+          "correct": 3,
+          "valid": 5
+        },
+        "E4": {
+          "correct": 3,
+          "valid": 5
+        }
+      }
+    },
+    "qwen3-vl-4b-q4kxl:pages": {
+      "at": "2026-10-13T12:19:14",
+      "info": {
+        "pages": 5,
+        "produced": 5,
+        "critical_pages": 5,
+        "contract_violations": 0,
+        "median_latency_s": 97.1,
+        "metrics": {
+          "design.hierarchy": {
+            "mean": 30.0,
+            "min": 30.0,
+            "measured_pages": 5,
+            "below_90": 5
+          },
+          "design.typography": {
+            "mean": 88.0,
+            "min": 85.0,
+            "measured_pages": 5,
+            "below_90": 4
+          },
+          "design.brand_fit": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 5,
+            "below_90": 0
+          },
+          "rtl.quality": {
+            "mean": 97.8,
+            "min": 94.0,
+            "measured_pages": 5,
+            "below_90": 0
+          },
+          "accessibility.contrast": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 5,
+            "below_90": 0
+          },
+          "fact.critical_accuracy": {
+            "mean": 0.0,
+            "min": 0.0,
+            "measured_pages": 4,
+            "below_90": 4
+          },
+          "geometry.alignment": {
+            "mean": 12.7,
+            "min": 8.3,
+            "measured_pages": 5,
+            "below_90": 5
+          },
+          "geometry.whitespace_ratio": {
+            "mean": 89.1,
+            "min": 83.8,
+            "measured_pages": 5,
+            "below_90": 2
+          }
+        }
+      }
+    },
+    "gemma3-4b-q4km:gdb": {
+      "at": "2026-10-13T12:37:51",
+      "info": {
+        "exit": 0
+      }
+    },
+    "gemma3-4b-q4km:calib": {
+      "at": "2026-10-13T13:03:08",
+      "info": {
+        "ties_on_target": 1,
+        "inversions_on_target": 3,
+        "distinct_scores": [
+          60.0,
+          65.0,
+          70.0,
+          75.0,
+          78.0,
+          80.0,
+          85.0,
+          88.0,
+          90.0,
+          92.0,
+          95.0
+        ]
+      }
+    },
+    "gemma3-4b-q4km:pcalib": {
+      "at": "2026-10-13T13:16:29",
+      "info": {
+        "correct": 0,
+        "valid": 5
+      }
     }
   },
   "failed": {

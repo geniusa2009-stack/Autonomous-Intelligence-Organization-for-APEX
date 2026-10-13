@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -10,6 +10,40 @@ _Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifa
 
 * gemma-multimodal: score 50.0 — order-swapped answers correct=[True, False] (one pair: good vs no_hierarchy)
 * qwen-vl-current: score 100.0 — order-swapped answers correct=[True, True] (one pair: good vs no_hierarchy)
+
+## gemma-multimodal
+
+**E0 absolute (production protocol):** 1/5 passed; ties on targeted role: 1; inversions: 3; distinct scores used across all pages/roles: [60.0, 65.0, 70.0, 75.0, 78.0, 80.0, 85.0, 88.0, 90.0, 92.0, 95.0]
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 85 | 92 | False |
+| card_overuse | AIClicheJudge | 95 | 70 | True |
+| gradient | APEXBrandJudge | 90 | 95 | False |
+| cramped | EditorialDesignJudge | 65 | 78 | False |
+| no_hierarchy | VisualHierarchyJudge | 75 | 75 | False |
+
+Parser/execution errors: none
+
+**E1 pairwise 640 px:** 0/5 order-consistent wins; position-biased cases: 5
+
+| case | good shown as A → pick | good shown as B → pick | pass |
+|---|---|---|---|
+| low_contrast | first | second | False |
+| card_overuse | first | second | False |
+| gradient | first | second | False |
+| cramped | first | second | False |
+| no_hierarchy | first | second | False |
+
+**E2 pairwise 1024 px:** 0/5 order-consistent wins; position-biased cases: 5
+
+| case | good shown as A → pick | good shown as B → pick | pass |
+|---|---|---|---|
+| low_contrast | first | second | False |
+| card_overuse | first | second | False |
+| gradient | first | second | False |
+| cramped | first | second | False |
+| no_hierarchy | first | second | False |
 
 ## qwen-vl-current
 
@@ -35,7 +69,58 @@ Parser/execution errors: none
 | cramped | first | second | False |
 | no_hierarchy | first | second | False |
 
-## Hypotheses checked
+**E2 pairwise 1024 px:** 2/5 order-consistent wins; position-biased cases: 3
+
+| case | good shown as A → pick | good shown as B → pick | pass |
+|---|---|---|---|
+| low_contrast | first | second | False |
+| card_overuse | first | second | False |
+| gradient | first | first | True |
+| cramped | first | second | False |
+| no_hierarchy | first | first | True |
+
+**E3 single-role absolute:** 3/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 95 | 95 | False |
+| card_overuse | AIClicheJudge | 95 | 85 | True |
+| gradient | APEXBrandJudge | 95 | 10 | True |
+| cramped | EditorialDesignJudge | 85 | 75 | True |
+| no_hierarchy | VisualHierarchyJudge | 95 | 95 | False |
+
+**E4 single-role repeat:** 3/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 95 | 95 | False |
+| card_overuse | AIClicheJudge | 95 | 85 | True |
+| gradient | APEXBrandJudge | 95 | 10 | True |
+| cramped | EditorialDesignJudge | 85 | 75 | True |
+| no_hierarchy | VisualHierarchyJudge | 95 | 95 | False |
+
+Stability: 5/5 cases gave identical scores on repeat.
+
+## Hypotheses — verdicts derived from the experiments
+
+| model | hypothesis | evidence | verdict |
+|---|---|---|---|
+| gemma-multimodal | scoring schema: absolute scores tie | ties on targeted role 1/5, inversions 3/5 | **not the main cause** |
+| gemma-multimodal | model ranks broken pages HIGHER | inversions 3/5 | **CONFIRMED** |
+| gemma-multimodal | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
+| gemma-multimodal | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
+| gemma-multimodal | image scaling | pairwise 640 px 0/5 vs 1024 px 0/5 | **RULED OUT** |
+| gemma-multimodal | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
+| gemma-multimodal | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 1/5 | **NO — stays out of every gate** |
+| qwen-vl-current | scoring schema: absolute scores tie | ties on targeted role 4/5, inversions 0/5 | **CONFIRMED** |
+| qwen-vl-current | model ranks broken pages HIGHER | inversions 0/5 | **no** |
+| qwen-vl-current | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
+| qwen-vl-current | rubric overload (six roles in one call) | six-role 1/5 vs single-role 3/5 | **CONFIRMED (partial)** |
+| qwen-vl-current | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
+| qwen-vl-current | image scaling | pairwise 640 px 0/5 vs 1024 px 2/5 | **CONFIRMED (helps)** |
+| qwen-vl-current | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
+| qwen-vl-current | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
+| qwen-vl-current | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 3/5 | **NO — stays out of every gate** |
 
 | hypothesis | evidence used |
 |---|---|
@@ -50,6 +135,7 @@ Parser/execution errors: none
 
 ## Qualification status
 
-* absolute — gemma-multimodal: 0/5 → **NOT QUALIFIED**
+* absolute — gemma-multimodal: 1/5 → **NOT QUALIFIED**
 * absolute — qwen-vl-current: 1/5 → **NOT QUALIFIED**
 * pairwise — qwen-vl-current: 0/5 → **NOT QUALIFIED**
+* pairwise — gemma-multimodal: 0/5 → **NOT QUALIFIED**

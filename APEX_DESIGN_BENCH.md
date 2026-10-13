@@ -1,6 +1,6 @@
 # APEX Design Bench (Phase 17)
 
-_Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
 
 Fifteen page types (every semantic page type of the Document AST), content from a real pipeline run (golden job AST + fact locks). Each system produces one page per type; all pages are rendered by the same Chromium and measured by the same deterministic page QA. **No single score is reported by design.**
 
@@ -10,6 +10,7 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 
 | system | pages | produced | critical pages | contract violations | median latency | hierarchy | typography | brand_fit | quality | contrast | critical_accuracy | alignment |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
+| llm:qwen-vl-current | 5 | 5 | 5 | 0 | 97.1 s | 30.0 / 30.0 | 88.0 / 85.0 | 100.0 / 100.0 | 97.8 / 94.0 | 100.0 / 100.0 | 0.0 / 0.0 | 12.7 / 8.3 |
 | native-baseline | 15 | 15 | 0 | 0 | 0.3 s | 100.0 / 100.0 | 98.3 / 85.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 92.7 / 50.0 |
 | native-tournament | 15 | 15 | 0 | 0 | 1.8 s | 99.3 / 90.0 | 99.0 / 85.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 100.0 / 100.0 | 97.8 / 80.0 |
 
@@ -17,18 +18,21 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 
 | page type | system | critical | hierarchy | typography | brand | alignment | whitespace (descriptive) | detail |
 |---|---|---|---|---|---|---|---|---|
+| ApexTake | llm:qwen-vl-current | True | 30 | 85 | 100 | 100 | 79 | 1173 chars; re-measured on neutral canvas |
 | ApexTake | native-baseline | False | 100 | 100 | 100 | 100 | 84 | editorial-column defaults |
 | ApexTake | native-tournament | False | 100 | 100 | 100 | 100 | 70 | checklist-sheet/light; evaluated 42 |
 | ApplicationJourney | native-baseline | False | 100 | 90 | 100 | 100 | 79 | editorial-column defaults |
 | ApplicationJourney | native-tournament | False | 100 | 100 | 100 | 100 | 64 | ledger/light; evaluated 42 |
 | Breath | native-baseline | False | 100 | 100 | 100 | 50 | 93 | editorial-column defaults |
 | Breath | native-tournament | False | 100 | 100 | 100 | 100 | 89 | quiet-breath/silver; evaluated 42 |
+| Checklist | llm:qwen-vl-current | True | 30 | 85 | 100 | 100 | 80 | 1195 chars; re-measured on neutral canvas |
 | Checklist | native-baseline | False | 100 | 100 | 100 | 100 | 84 | editorial-column defaults |
 | Checklist | native-tournament | False | 100 | 100 | 100 | 100 | 68 | checklist-sheet/light; evaluated 42 |
 | Closing | native-baseline | False | 100 | 100 | 100 | 100 | 85 | editorial-column defaults |
 | Closing | native-tournament | False | 100 | 100 | 100 | 100 | 73 | manifesto/silver; evaluated 42 |
 | Comparison | native-baseline | False | 100 | 100 | 100 | 100 | 90 | editorial-column defaults |
 | Comparison | native-tournament | False | 100 | 100 | 100 | 100 | 83 | editorial-column/dark; evaluated 42 |
+| Cover | llm:qwen-vl-current | True | 30 | 100 | 100 | 100 | 89 | 753 chars; re-measured on neutral canvas |
 | Cover | native-baseline | False | 100 | 100 | 100 | 80 | 76 | editorial-column defaults |
 | Cover | native-tournament | False | 100 | 100 | 100 | 80 | 81 | cover-monument/dark; evaluated 42 |
 | EligibilityChapter | native-baseline | False | 100 | 100 | 100 | 88 | 82 | editorial-column defaults |
@@ -39,10 +43,12 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 | HeroFact | native-tournament | False | 100 | 100 | 100 | 100 | 87 | manifesto/dark; evaluated 42 |
 | Opening | native-baseline | False | 100 | 100 | 100 | 83 | 86 | editorial-column defaults |
 | Opening | native-tournament | False | 100 | 100 | 100 | 100 | 79 | split-asymmetric/dark; evaluated 42 |
+| OpportunitySnapshot | llm:qwen-vl-current | True | 30 | 85 | 100 | 100 | 75 | 1621 chars; re-measured on neutral canvas |
 | OpportunitySnapshot | native-baseline | False | 100 | 85 | 100 | 100 | 74 | editorial-column defaults |
 | OpportunitySnapshot | native-tournament | False | 100 | 85 | 100 | 100 | 63 | ledger/light; evaluated 42 |
 | ProfileStory | native-baseline | False | 100 | 100 | 100 | 100 | 92 | editorial-column defaults |
 | ProfileStory | native-tournament | False | 100 | 100 | 100 | 100 | 85 | editorial-column/dark; evaluated 42 |
+| Timeline | llm:qwen-vl-current | True | 30 | 85 | 100 | 100 | 86 | 998 chars; re-measured on neutral canvas |
 | Timeline | native-baseline | False | 100 | 100 | 100 | 100 | 75 | editorial-column defaults |
 | Timeline | native-tournament | False | 90 | 100 | 100 | 100 | 67 | timeline-rail/light; evaluated 42 |
 | Warning | native-baseline | False | 100 | 100 | 100 | 100 | 85 | editorial-column defaults |
@@ -60,10 +66,13 @@ Same content, same renderer, same checks. Means over the page types each system 
 
 | system | pages produced | text_fidelity | fact_preservation | html_validity | css_validity | rtl | overflow_issues | visual_hierarchy | editability | novelty_vs_native | apex_similarity | reader_comprehension | repetition |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| llm:qwen-vl-current | 5/5 | 93.0 | 100.0 | 100.0 | 100.0 | 97.8 | 1.0 | 30.0 | 100.0 | 71.2 | 100.0 | 100.0 | 73.3 |
 | native-baseline | 15/15 | 97.9 | 98.6 | 100.0 | 100.0 | 100.0 | 0.0 | 100.0 | 100.0 | — | 100.0 | 97.9 | 51.5 |
 | native-tournament | 15/15 | 97.9 | 98.6 | 100.0 | 100.0 | 100.0 | 0.0 | 99.3 | 100.0 | 53.8 | 100.0 | 99.2 | 39.6 |
 
-No model-written pages measured yet: native stays the page designer by default.
+### Decision per model system (vs native-tournament, same page types)
+
+* **llm:qwen-vl-current** — KEEP NATIVE (model page lost on safety metrics or never won). Wins: 1; safety losses (facts/RTL/text/overflow): 9; other losses: 5. Examples of safety losses: ['ApexTake:overflow_issues 1 vs 0', 'Checklist:overflow_issues 1 vs 0', 'Cover:overflow_issues 1 vs 0']
 
 ## Targeted design risk cases
 

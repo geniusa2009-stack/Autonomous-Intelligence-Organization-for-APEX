@@ -729,3 +729,22 @@ def test_page_compare_measures():
          "rtl": 100, "overflow_issues": 2, "visual_hierarchy": 100}], "layout_repetition": {}}
     d = verdicts(cmp)["llm:m"]
     assert d["wins"] and d["safety_losses"] and d["decision"].startswith("KEEP NATIVE")
+
+
+def test_vision_hypothesis_verdicts():
+    from apex_one.lab.reports import hypothesis_verdicts
+
+    checks = {k: False for k in ("low_contrast", "card_overuse", "gradient", "cramped", "no_hierarchy")}
+    rep = {"E0": {"result": {"checks": {**checks, "gradient": True}}, "ties_on_target": 4, "inversions_on_target": 0,
+                  "reviews": {}},
+           "E1": {"correct": 0, "detail": {k: {"position_bias": True} for k in checks}},
+           "E2": {"correct": 2, "detail": {k: {"position_bias": False} for k in checks}},
+           "E3": {"correct": 3, "cases": {k: {"good": {"score": 90}, "broken": {"score": 80}} for k in checks}},
+           "E4": {"correct": 3, "cases": {k: {"good": {"score": 90}, "broken": {"score": 80}} for k in checks}}}
+    v = {h: verdict for h, _, verdict in hypothesis_verdicts(rep)}
+    assert v["scoring schema: absolute scores tie"] == "CONFIRMED"
+    assert v["rubric overload (six roles in one call)"].startswith("CONFIRMED")
+    assert v["pair-order sensitivity / position bias"] == "CONFIRMED"
+    assert v["image scaling"].startswith("CONFIRMED")
+    assert v["model instability (temperature 0)"] == "RULED OUT"
+    assert v["qualifies as a judge in ANY tested mode (>= 4/5)"].startswith("NO")

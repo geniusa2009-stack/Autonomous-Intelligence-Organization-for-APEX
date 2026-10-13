@@ -458,6 +458,49 @@ HYPOTHESES = [
 ]
 
 
+def hypothesis_verdicts(rep: dict[str, Any]) -> list[tuple[str, str, str]]:
+    """Each suspected cause, judged only from the experiments that isolate it (absent experiment -> NOT TESTED)."""
+    def ok(k: str) -> int | None:
+        e = rep.get(k)
+        return None if not e else e.get("correct")
+
+    rows = []
+    e0 = rep.get("E0")
+    if e0:
+        a0 = sum(1 for v in e0["result"]["checks"].values() if v)
+        rows.append(("scoring schema: absolute scores tie", f"ties on targeted role {e0['ties_on_target']}/5, "
+                     f"inversions {e0['inversions_on_target']}/5",
+                     "CONFIRMED" if e0["ties_on_target"] >= 2 else "not the main cause"))
+        rows.append(("model ranks broken pages HIGHER", f"inversions {e0['inversions_on_target']}/5",
+                     "CONFIRMED" if e0["inversions_on_target"] >= 2 else "no"))
+        errs = sum(1 for r in e0.get("reviews", {}).values() if r.get("errors"))
+        rows.append(("output parser / truncation", f"{errs} review(s) with parse/execution errors",
+                     "RULED OUT" if errs == 0 else "CONTRIBUTES"))
+        if ok("E3") is not None:
+            rows.append(("rubric overload (six roles in one call)", f"six-role {a0}/5 vs single-role {ok('E3')}/5",
+                         "CONFIRMED (partial)" if ok("E3") > a0 else "RULED OUT"))
+    if rep.get("E1"):
+        bias = sum(1 for d in rep["E1"]["detail"].values() if d["position_bias"])
+        rows.append(("pair-order sensitivity / position bias", f"{bias}/5 cases picked the same POSITION in both orders",
+                     "CONFIRMED" if bias >= 3 else "minor" if bias else "RULED OUT"))
+        if rep.get("E2"):
+            rows.append(("image scaling", f"pairwise 640 px {ok('E1')}/5 vs 1024 px {ok('E2')}/5",
+                         "CONFIRMED (helps)" if ok("E2") > ok("E1") else "RULED OUT"))
+    if rep.get("E3") and rep.get("E4"):
+        same = sum(1 for k in rep["E3"]["cases"] if rep["E3"]["cases"][k]["good"]["score"] ==
+                   rep["E4"]["cases"][k]["good"]["score"] and rep["E3"]["cases"][k]["broken"]["score"] ==
+                   rep["E4"]["cases"][k]["broken"]["score"])
+        rows.append(("model instability (temperature 0)", f"{same}/5 cases identical on repeat",
+                     "RULED OUT" if same >= 4 else "CONFIRMED"))
+    rows.append(("prompt leakage", "rubric text never contains the case name or the expected answer",
+                 "RULED OUT by construction"))
+    best = max([v for v in (ok("E1"), ok("E2"), ok("E3"), ok("E4")) if v is not None] +
+               [sum(1 for v in e0["result"]["checks"].values() if v)] if e0 else [0])
+    rows.append(("qualifies as a judge in ANY tested mode (>= 4/5)", f"best mode {best}/5",
+                 "YES" if best >= 4 else "NO — stays out of every gate"))
+    return rows
+
+
 def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, Any] | None,
                        runs: list[dict[str, Any]]) -> str:
     out = ["# Vision Calibration Analysis", "", _stamp(),
@@ -511,7 +554,12 @@ def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, An
                        rep["E4"]["cases"][k]["good"]["score"] and rep["E3"]["cases"][k]["broken"]["score"] ==
                        rep["E4"]["cases"][k]["broken"]["score"])
             out += [f"Stability: {same}/5 cases gave identical scores on repeat.", ""]
-    out += ["## Hypotheses checked", "", "| hypothesis | evidence used |", "|---|---|"]
+    out += ["## Hypotheses — verdicts derived from the experiments", "",
+            "| model | hypothesis | evidence | verdict |", "|---|---|---|---|"]
+    for mid, rep in inv.items():
+        for row in hypothesis_verdicts(rep):
+            out.append(f"| {mid} | {row[0]} | {row[1]} | **{row[2]}** |")
+    out += ["", "| hypothesis | evidence used |", "|---|---|"]
     out += [f"| {h} | {e} |" for h, e in HYPOTHESES]
     out += ["", "## Qualification status", ""]
     for section, title in (("models", "absolute"), ("pairwise_models", "pairwise")):

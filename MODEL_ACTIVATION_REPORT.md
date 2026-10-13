@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -36,5 +36,5 @@ Each vision model reviews a known-good page and five deliberately broken variant
 
 | model | low_contrast | card_overuse | gradient | cramped | no_hierarchy | discrimination | reliable |
 |---|---|---|---|---|---|---|---|
-| gemma-multimodal | False | False | False | False | False | 0.00 | **False** |
+| gemma-multimodal | False | True | False | False | False | 0.20 | **False** |
 | qwen-vl-current | False | False | True | False | False | 0.20 | **False** |

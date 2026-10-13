@@ -1,6 +1,6 @@
 # Design Model Activation (Phases 16, 19, 26)
 
-_Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
 
 Every design system named in the APEX spec, with the evidence actually gathered here. Statuses: ACTIVATED, PROTOCOL_REIMPLEMENTED, PACKAGE_INSTALLABLE, WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED, ARCHITECTURE_REFERENCE, NOT_RELEASED_OR_UNFOUND, LICENSE_BLOCKED, RESEARCH_ONLY. Nothing is marked ACTIVATED without a stored smoke-test artifact.
 
@@ -93,6 +93,12 @@ The offline verification bundle ships **2 samples per task**, so every score bel
 | gemma3-4b-q4km | svg-1 | 2 | 2 | 0 | accuracy=0.50 | — s total |
 | gemma3-4b-q4km | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | — s total |
 | gemma3-4b-q4km | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 | — s total |
+| gemma3-4b-q4km-full | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 | 795 s total |
+| gemma3-4b-q4km-full | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | 795 s total |
+| gemma3-4b-q4km-full | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 | 795 s total |
+| gemma3-4b-q4km-full | svg-1 | 2 | 2 | 0 | accuracy=0.50 | 795 s total |
+| gemma3-4b-q4km-full | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | 795 s total |
+| gemma3-4b-q4km-full | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 | 795 s total |
 | qwen3-vl-4b-q4kxl-full | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.50, macro_f1=0.00 | 491 s total |
 | qwen3-vl-4b-q4kxl-full | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | 491 s total |
 | qwen3-vl-4b-q4kxl-full | layout-5 | 2 | 2 | 0 | mae=24.50, mse=690.50 | 491 s total |

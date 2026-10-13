@@ -1,6 +1,6 @@
 # Model Comparison Matrix
 
-_Generated 2026-10-13 11:35 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
 
 One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models measured on that same task.
 
@@ -56,8 +56,9 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 
 ## Vision judge qualification (calibration, not benchmark)
 
-* absolute six-role council — **gemma-multimodal**: 0/5 cases passed (valid 5); qualified: **False**
+* absolute six-role council — **gemma-multimodal**: 1/5 cases passed (valid 5); qualified: **False**
 * absolute six-role council — **qwen-vl-current**: 1/5 cases passed (valid 5); qualified: **False**
 * pairwise A/B (both orders) — **qwen-vl-current**: 0/5 cases passed (valid 5); qualified: **False**
+* pairwise A/B (both orders) — **gemma-multimodal**: 0/5 cases passed (valid 5); qualified: **False**
 
 A model enters a quality gate only by passing calibration (≥ 4/5, all cases valid). Benchmark wins never qualify a judge.

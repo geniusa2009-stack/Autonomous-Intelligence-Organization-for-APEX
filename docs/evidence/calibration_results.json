@@ -3,17 +3,45 @@
     "gemma-multimodal": {
       "checks": {
         "low_contrast": false,
-        "card_overuse": false,
+        "card_overuse": true,
         "gradient": false,
         "cramped": false,
         "no_hierarchy": false
       },
-      "discrimination_rate": 0.0,
-      "reliable": false,
+      "scores": {
+        "low_contrast": {
+          "role": "TypographyJudge",
+          "good": 85.0,
+          "broken": 92.0
+        },
+        "card_overuse": {
+          "role": "AIClicheJudge",
+          "good": 95.0,
+          "broken": 70.0
+        },
+        "gradient": {
+          "role": "APEXBrandJudge",
+          "good": 90.0,
+          "broken": 95.0
+        },
+        "cramped": {
+          "role": "EditorialDesignJudge",
+          "good": 65.0,
+          "broken": 78.0
+        },
+        "no_hierarchy": {
+          "role": "VisualHierarchyJudge",
+          "good": 75.0,
+          "broken": 75.0
+        }
+      },
+      "discrimination_rate": 0.2,
       "valid_checks": 5,
-      "at": "2026-10-10T16:52:34+00:00",
+      "reliable": false,
+      "errors": {},
+      "at": "2026-10-13T13:03:08.433377+00:00",
       "model_digest": "sha256:04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19",
-      "stamp_note": "stamped after the run from the server log: the run started before stamping existed; the served model was gemma3-4b-q4km"
+      "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
     },
     "qwen-vl-current": {
       "checks": {
@@ -121,6 +149,69 @@
       "reliable": false,
       "at": "2026-10-13T05:02:38.677969+00:00",
       "model_digest": "sha256:a5563711a524defc06d67438a497ce4ba9a0fb126f28456a9f207e2ad104eb75",
+      "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
+    },
+    "gemma-multimodal": {
+      "checks": {
+        "low_contrast": false,
+        "card_overuse": false,
+        "gradient": false,
+        "cramped": false,
+        "no_hierarchy": false
+      },
+      "detail": {
+        "low_contrast": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A exhibits a clearer visual hierarchy and more intentional composition, prioritizing the deadline and key information with a cleaner layout and reduced visual clutter.",
+            "Page A presents a more focused and legible layout with a clearer hierarchy of information, particularly regarding the deadline, while Page B feels cluttered and lacks a strong visual anchor."
+          ]
+        },
+        "card_overuse": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A utilizes a clearer visual hierarchy with a more restrained typographic treatment and avoids the unnecessary graphic element present in Page B, resulting in a more focused and professional prese",
+            "Page A exhibits a more refined layout with clearer visual hierarchy and a more restrained typographic approach, avoiding the cluttered feel of Page B."
+          ]
+        },
+        "gradient": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A utilizes a clearer visual hierarchy with a prominent headline and more deliberate spacing, resulting in a more focused and professional presentation.",
+            "Page A\u2019s layout is significantly more organized and prioritizes key information with a clearer visual hierarchy, avoiding the cluttered feel of Page B."
+          ]
+        },
+        "cramped": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A utilizes a clearer visual hierarchy with distinct headings and a more restrained typographic treatment, presenting the key information in a more focused and intentional manner.",
+            "Page A utilizes a clearer visual hierarchy with the deadline prominently displayed and a more restrained layout, avoiding the cluttered feel of page B."
+          ]
+        },
+        "no_hierarchy": {
+          "good_as_A": "first",
+          "good_as_B": "second",
+          "position_bias": true,
+          "reasons": [
+            "Page A utilizes a clearer visual hierarchy with a more restrained layout and avoids unnecessary decorative elements, presenting the key information more effectively.",
+            "Page A\u2019s bolder typography and clearer visual separation of information create a more immediate and decisive entry point for the critical deadline details."
+          ]
+        }
+      },
+      "valid_checks": 5,
+      "correct": 0,
+      "discrimination_rate": 0.0,
+      "reliable": false,
+      "at": "2026-10-13T13:16:29.458288+00:00",
+      "model_digest": "sha256:04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19",
       "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
     }
   }

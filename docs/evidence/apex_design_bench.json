@@ -18,6 +18,63 @@
     "Warning"
   ],
   "systems": {
+    "llm:qwen-vl-current": {
+      "pages": 5,
+      "produced": 5,
+      "critical_pages": 5,
+      "contract_violations": 0,
+      "median_latency_s": 97.1,
+      "metrics": {
+        "design.hierarchy": {
+          "mean": 30.0,
+          "min": 30.0,
+          "measured_pages": 5,
+          "below_90": 5
+        },
+        "design.typography": {
+          "mean": 88.0,
+          "min": 85.0,
+          "measured_pages": 5,
+          "below_90": 4
+        },
+        "design.brand_fit": {
+          "mean": 100.0,
+          "min": 100.0,
+          "measured_pages": 5,
+          "below_90": 0
+        },
+        "rtl.quality": {
+          "mean": 97.8,
+          "min": 94.0,
+          "measured_pages": 5,
+          "below_90": 0
+        },
+        "accessibility.contrast": {
+          "mean": 100.0,
+          "min": 100.0,
+          "measured_pages": 5,
+          "below_90": 0
+        },
+        "fact.critical_accuracy": {
+          "mean": 0.0,
+          "min": 0.0,
+          "measured_pages": 4,
+          "below_90": 4
+        },
+        "geometry.alignment": {
+          "mean": 12.7,
+          "min": 8.3,
+          "measured_pages": 5,
+          "below_90": 5
+        },
+        "geometry.whitespace_ratio": {
+          "mean": 89.1,
+          "min": 83.8,
+          "measured_pages": 5,
+          "below_90": 2
+        }
+      }
+    },
     "native-baseline": {
       "pages": 15,
       "produced": 15,
@@ -133,6 +190,6 @@
       }
     }
   },
-  "rows": 30,
+  "rows": 35,
   "note": "separate metrics per system; no single aggregate score by design"
 }
