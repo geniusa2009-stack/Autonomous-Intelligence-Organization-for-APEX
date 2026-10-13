@@ -81,7 +81,10 @@ def _plain(block: Block, locks: dict) -> str:
         if r.kind == "fact" and r.slot in locks:
             lk = locks[r.slot]
             txt = lk.display_en if r.display == "en" else lk.display_ar
-            out.append(f'<span data-slot="{r.slot}">{txt}</span>')
+            # the SAME fact markup the native compiler emits, so the model only has to copy it verbatim and the
+            # lock-integrity check measures the model, not a missing attribute in our prompt
+            out.append(f'<span class="fact" data-slot="{r.slot}" data-claim="{r.claim_id or lk.claim_id}" '
+                       f'data-lock-hash="{lk.lock_hash}" data-display="{r.display}">{txt}</span>')
         elif r.kind in ("term", "url") or r.lang == "en":
             out.append(f'<bdi dir="ltr" lang="en">{r.text}</bdi>')
         else:
@@ -101,11 +104,63 @@ def llm_prompt(node: DocNode, locks: dict, palette: dict[str, str], fonts: dict[
         "hierarchy; one clear first fixation; generous margins (>= 15 mm).\n"
         "CONTRACT (mandatory): output exactly one <section class=\"page\" dir=\"rtl\" lang=\"ar\"> element containing a "
         "<div class=\"page-body\">. Put EVERY content block below in its own element carrying the given data-block and "
-        "data-role attributes, with the text EXACTLY as given (keep every <span data-slot> and <bdi> element "
+        "data-role attributes, with the text EXACTLY as given (keep every <span class=\"fact\" ...> and <bdi> element "
         "unchanged). You may add a <style> element inside the section; select only descendants of .page. "
         "End the page with <footer data-brand=\"footer\">APEX</footer>.\n"
         f"Content blocks:\n{blocks}\n"
         "Return ONLY the HTML of the section.")
+
+
+NEUTRAL_CSS = ("*{box-sizing:border-box}html,body{margin:0;padding:0;background:#ECEFF3}"
+               ".page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#FFFFFF;"
+               "font-family:'IBM Plex Sans Arabic',sans-serif;color:#0B1424;margin:0 auto}")
+
+
+def neutral_document(section: str) -> str:
+    """A model-written page is rendered on a NEUTRAL canvas: brand fonts + an A4 page box, none of the native
+    layout rules (the native `.page-body` 12-column grid would otherwise re-lay-out the model's markup and the
+    bench would measure APEX's CSS, not the model's design)."""
+    from apex_one.document.compiler.styles import font_css
+
+    return ('<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>model page</title>'
+            f"<style>{font_css()}{NEUTRAL_CSS}</style></head><body>{section}</body></html>")
+
+
+def rewrap_llm_pages(job_id: str, out_dir: Path) -> int:
+    """Re-render already generated model pages on the neutral canvas (no model is re-run) and append fresh rows."""
+    rows_path = out_dir / "apex_design_bench_rows.jsonl"
+    rows = [json.loads(x) for x in rows_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+    latest = {(r["system"], r["page_type"]): r for r in rows if r["system"].startswith("llm:") and r["produced"]}
+    if not latest:
+        return 0
+    from apex_one.core.governor.runner import JobRunner
+    from apex_one.design.genome import load_genome
+    from apex_one.qa.deterministic import page_qa
+    from apex_one.vision.render import Renderer
+
+    runner, genome = JobRunner.load(job_id), load_genome()
+    n = 0
+    with Renderer() as r:
+        for (system, ptype), row in latest.items():
+            path = out_dir / f"{ptype}--llm-{re.sub(r'[^a-z0-9]+', '-', system[4:].lower())}.html"
+            if not path.exists():
+                continue
+            section = extract_section(path.read_text(encoding="utf-8"))
+            if not section:
+                continue
+            path.write_text(neutral_document(section), encoding="utf-8")
+            res = r.measure(path, float(genome.invariants["page"]["min_margin_mm"]), screenshot_dir=out_dir / "shots",
+                            screenshot_prefix=path.stem)
+            if not res.metrics.get("pages"):
+                continue
+            pq = page_qa(res.metrics["pages"][0], genome, runner.locks, allowed_years=runner.allowed_years,
+                         fonts_loaded=res.metrics.get("fonts", []), html_dir=res.metrics.get("htmlDir", "rtl"))
+            new = {**row, "metrics": {m: (pq.metrics[m].value if m in pq.metrics else None) for m in METRICS},
+                   "critical": bool(pq.critical), "detail": f"{row.get('detail', '')}; re-measured on neutral canvas"}
+            with rows_path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(new, ensure_ascii=False, default=str) + "\n")
+            n += 1
+    return n
 
 
 def extract_section(text: str) -> str | None:
@@ -238,9 +293,7 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
                             "screenshot": None, "detail": (res.text or res.decision.outcome.value)[:300]})
                     continue
                 probs = contract_problems(section, node)
-                start = base_html.find('<section class="page')
-                end = base_html.find("</section>", start) + len("</section>")
-                html = base_html[:start] + section + base_html[end:]
+                html = neutral_document(section)
                 mets, crit, shot = measure(r, html, f"{ptype}--llm-{re.sub(r'[^a-z0-9]+', '-', mid.lower())}", node)
                 record({"system": f"llm:{mid}", "page_type": ptype, "produced": True, "metrics": mets,
                         "critical": crit, "contract": probs, "latency_s": lat,

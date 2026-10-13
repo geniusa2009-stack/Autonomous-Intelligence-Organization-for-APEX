@@ -150,7 +150,8 @@ def run_step(step: str, spec, bench: Path) -> object:
     raise ValueError(step)
 
 
-def main() -> None:
+def main(max_steps: int | None = None) -> None:
+    """Run pending steps; with max_steps, stop (exit cleanly, state saved) after that many steps."""
     from apex_one.compute.local import LocalServer, acquire, load_catalogue
 
     bench = get_settings().artifacts_dir / "bench"
@@ -198,6 +199,11 @@ def main() -> None:
             continue
         try:
             for step in todo:
+                if max_steps is not None and max_steps <= 0:
+                    log("step budget used; stopping (re-run to continue)")
+                    return
+                if max_steps is not None:
+                    max_steps -= 1
                 log(f"{key}: {step} ...")
                 try:
                     info = run_step(step, spec, bench)
@@ -212,4 +218,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(int(sys.argv[sys.argv.index("--max-steps") + 1]) if "--max-steps" in sys.argv else None)
