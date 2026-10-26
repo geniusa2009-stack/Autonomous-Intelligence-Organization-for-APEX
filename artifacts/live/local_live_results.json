@@ -138,5 +138,40 @@
     "quota_headers": {},
     "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
     "status": "LIVE_TESTED"
+  },
+  "qwen3-vl-8b-q4kxl": {
+    "provider": "llamacpp_local",
+    "model": "qwen3-vl-8b",
+    "provider_model_id": "qwen3-vl-8b-q4kxl",
+    "kind": "local",
+    "at": "2026-10-26T22:55:30.439424+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 55.7,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "qwen3-vl-8b-q4kxl"
+    ],
+    "structured_ms": 16451.1,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 25,
+      "prompt_tokens": 57,
+      "total_tokens": 82,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED"
   }
 }

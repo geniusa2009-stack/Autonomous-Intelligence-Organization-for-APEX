@@ -758,3 +758,28 @@ def test_page_compare_accepts_lock_defined_conditional_wording():
     lock = SimpleNamespace(display_ar="لأ", display_en="No", value=SimpleNamespace(canonical="false"))
     assert "مش مطلوبين" in accepted_texts(lock, {"cond": "مطلوبين|مش مطلوبين"})
     assert accepted_texts(lock, {}) == {"لأ", "No"}
+
+
+def test_license_verify_local_keeps_records_of_weights_not_on_disk(tmp_path, monkeypatch):
+    import shutil
+
+    import yaml
+    from typer.testing import CliRunner
+
+    from apex_one.apps.cli.main import app
+    from apex_one.settings import REPO_ROOT, reset_settings_cache
+
+    home = tmp_path / "home"
+    shutil.copytree(REPO_ROOT / "config", home / "config")          # no var/models -> every artifact is missing
+    monkeypatch.setenv("APEX_HOME", str(home))
+    reset_settings_cache()
+    path = home / "config" / "license_verifications.yaml"
+    before = yaml.safe_load(path.read_text(encoding="utf-8"))["verifications"]
+    assert before
+    res = CliRunner().invoke(app, ["license", "verify-local"])
+    assert res.exit_code == 0, res.output
+    after = yaml.safe_load(path.read_text(encoding="utf-8"))["verifications"]
+    assert set(after) == set(before)                                   # freed weights never erase evidence
+    for lid, rec in before.items():
+        assert after[lid]["production_allowed"] == rec["production_allowed"]
+        assert after[lid]["artifacts"] == rec["artifacts"] and after[lid]["carried_forward"]

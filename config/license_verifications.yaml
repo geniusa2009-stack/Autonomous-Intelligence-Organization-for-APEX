@@ -28,6 +28,8 @@ verifications:
   lic-gpt-oss:
     artifacts:
     - gpt-oss-20b-mxfp4
+    carried_forward: gpt-oss-20b-mxfp4 not on disk at re-verification; earlier evidence
+      kept
     commercial_use: unknown
     derivative_use: unknown
     evidence:
@@ -71,6 +73,28 @@ verifications:
     verification_method: 'local artifact evidence: gguf_metadata'
     verified_at: null
     verified_by: null
+  lic-qwen3-vl-8b:
+    artifacts:
+    - qwen3-vl-8b-q4kxl
+    commercial_use: 'yes'
+    derivative_use: 'yes'
+    evidence:
+    - source: gguf_metadata
+      spdx: Apache-2.0
+      value: apache-2.0
+    - source: licence_layer
+      spdx: Apache-2.0
+      value: LICENSE
+    license_name: Apache-2.0
+    production_allowed: true
+    production_state: PRODUCTION_ALLOWED
+    reasons_not_allowed: []
+    redistribution: yes, with the licence text and NOTICE preserved
+    research_use: 'yes'
+    source_reference: registry-1.docker.io/ai/qwen3-vl:8B-UD-Q4_K_XL
+    verification_method: 'local artifact evidence: gguf_metadata, licence_layer'
+    verified_at: '2026-10-26T22:54:27.102538+00:00'
+    verified_by: apex-one license verify-local (artifact evidence rule)
   lic-qwen3-vl-apache:
     artifacts:
     - qwen3-vl-4b-q4kxl
@@ -91,5 +115,5 @@ verifications:
     research_use: 'yes'
     source_reference: registry-1.docker.io/ai/qwen3-vl:4B-UD-Q4_K_XL
     verification_method: 'local artifact evidence: gguf_metadata, licence_layer'
-    verified_at: '2026-10-12T12:04:06.991238+00:00'
+    verified_at: '2026-10-26T22:53:56.193407+00:00'
     verified_by: apex-one license verify-local (artifact evidence rule)
