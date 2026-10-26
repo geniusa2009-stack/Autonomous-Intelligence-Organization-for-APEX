@@ -100,6 +100,7 @@ def llm_prompt(node: DocNode, locks: dict, palette: dict[str, str], fonts: dict[
         "(794x1123 CSS px, fixed size, overflow hidden) as HTML. Arabic, right-to-left.\n"
         f"Page type: {node.semantic_type.value}. Reading mode: {node.reading_mode.value}.\n"
         f"Brand palette ONLY: {json.dumps(palette)}. Fonts: {json.dumps(fonts)}.\n"
+        f"The reader's eye must land FIRST on block {node.first_fixation} (make it the dominant element).\n"
         "Rules: no gradients, no rounded cards, no icons, no emojis; deep navy / silver / white; strong typographic "
         "hierarchy; one clear first fixation; generous margins (>= 15 mm).\n"
         "CONTRACT (mandatory): output exactly one <section class=\"page\" dir=\"rtl\" lang=\"ar\"> element containing a "
@@ -139,6 +140,7 @@ def rewrap_llm_pages(job_id: str, out_dir: Path) -> int:
     from apex_one.vision.render import Renderer
 
     runner, genome = JobRunner.load(job_id), load_genome()
+    nodes = {n.semantic_type.value: n for n in bench_nodes(runner._ast().pages(), {lk.slot: lk for lk in runner.locks})}
     n = 0
     with Renderer() as r:
         for (system, ptype), row in latest.items():
@@ -153,6 +155,8 @@ def rewrap_llm_pages(job_id: str, out_dir: Path) -> int:
                             screenshot_prefix=path.stem)
             if not res.metrics.get("pages"):
                 continue
+            node = nodes[ptype]
+            res.metrics["pages"][0]["firstFixation"] = res.metrics["pages"][0].get("firstFixation") or node.first_fixation
             pq = page_qa(res.metrics["pages"][0], genome, runner.locks, allowed_years=runner.allowed_years,
                          fonts_loaded=res.metrics.get("fonts", []), html_dir=res.metrics.get("htmlDir", "rtl"))
             new = {**row, "metrics": {m: (pq.metrics[m].value if m in pq.metrics else None) for m in METRICS},
@@ -239,6 +243,7 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
                         screenshot_prefix=name)
         if not res.metrics.get("pages"):
             return {}, True, None
+        res.metrics["pages"][0]["firstFixation"] = res.metrics["pages"][0].get("firstFixation") or node.first_fixation
         pq = page_qa(res.metrics["pages"][0], genome, runner.locks, allowed_years=runner.allowed_years,
                      fonts_loaded=res.metrics.get("fonts", []), html_dir=res.metrics.get("htmlDir", "rtl"))
         shot = res.page_screenshots[0] if res.page_screenshots else None

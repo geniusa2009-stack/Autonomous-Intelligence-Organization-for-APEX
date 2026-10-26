@@ -748,3 +748,13 @@ def test_vision_hypothesis_verdicts():
     assert v["image scaling"].startswith("CONFIRMED")
     assert v["model instability (temperature 0)"] == "RULED OUT"
     assert v["qualifies as a judge in ANY tested mode (>= 4/5)"].startswith("NO")
+
+
+def test_page_compare_accepts_lock_defined_conditional_wording():
+    from types import SimpleNamespace
+
+    from apex_one.lab.benchmarks.page_compare import accepted_texts
+
+    lock = SimpleNamespace(display_ar="لأ", display_en="No", value=SimpleNamespace(canonical="false"))
+    assert "مش مطلوبين" in accepted_texts(lock, {"cond": "مطلوبين|مش مطلوبين"})
+    assert accepted_texts(lock, {}) == {"لأ", "No"}

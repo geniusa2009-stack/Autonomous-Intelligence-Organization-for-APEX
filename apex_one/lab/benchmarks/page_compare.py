@@ -57,6 +57,16 @@ def word_recall(expected: str, got: str) -> float:
     return sum(min(n, g[w]) for w, n in e.items()) / total if total else 1.0
 
 
+def accepted_texts(lock, fact: dict[str, Any]) -> set[str]:
+    """Exact lock displays, plus the lock-defined conditional wording for boolean facts (data-cond "yes|no")."""
+    ok = {_norm(lock.display_ar), _norm(lock.display_en)}
+    cond = fact.get("cond")
+    if cond and "|" in cond:
+        yes, no = cond.split("|", 1)
+        ok.add(_norm(yes if str(lock.value.canonical).lower() == "true" else no))
+    return ok
+
+
 def _section(html: str) -> str:
     i = html.find('<section class="page')
     if i < 0:
@@ -129,6 +139,8 @@ def remeasure(job_id: str, bench_dir: Path) -> list[dict[str, Any]]:
                 out.append(rec)
                 continue
             page = res.metrics["pages"][0]
+            # the intended entry point is part of the brief, not of the markup: measure every system against it
+            page["firstFixation"] = page.get("firstFixation") or node.first_fixation
             pq = page_qa(page, genome, runner.locks, allowed_years=runner.allowed_years,
                          fonts_loaded=res.metrics.get("fonts", []), html_dir=res.metrics.get("htmlDir", "rtl"))
             items = {i["id"]: i for i in page["items"]}
@@ -138,8 +150,8 @@ def remeasure(job_id: str, bench_dir: Path) -> list[dict[str, Any]]:
                 ratios.append(0.0 if it is None else word_recall(_plain(b, lock_map),
                                                                  it.get("diffText") or it["text"]))
             slots = {run.slot for b in node.content for run in b.runs if run.kind == "fact" and run.slot in lock_map}
-            ok_facts = sum(1 for s in slots if any(f["slot"] == s and _norm(f["text"]) in (
-                _norm(lock_map[s].display_ar), _norm(lock_map[s].display_en)) for f in page["facts"]))
+            ok_facts = sum(1 for s in slots if any(f["slot"] == s and _norm(f["text"]) in accepted_texts(lock_map[s], f)
+                                                   for f in page["facts"]))
             css_err, inline = css_errors(section)
             grid = occupancy_grid(page)
             grids[(system, ptype)] = grid
