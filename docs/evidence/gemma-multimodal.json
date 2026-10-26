@@ -252,5 +252,177 @@
     "correct": 0,
     "discrimination_rate": 0.0,
     "reliable": false
+  },
+  "E3": {
+    "cases": {
+      "low_contrast": {
+        "role": "TypographyJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The Arabic typography is generally well-shaped and legible, with comfortable spacing and a clean rag, though minor adjustments to the leading could improve readability slightly.\"}",
+          "executed": true,
+          "latency_s": 37.5
+        },
+        "broken": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The Arabic typography is generally well-shaped and legible, with comfortable spacing and a clean rag, though minor adjustments to leading could improve readability slightly.\"}",
+          "executed": true,
+          "latency_s": 36.8
+        },
+        "pass": false
+      },
+      "card_overuse": {
+        "role": "AIClicheJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The design avoids common AI tropes by utilizing a clear, structured layout with text-based hierarchy and minimal visual embellishments, prioritizing information delivery.\"}",
+          "executed": true,
+          "latency_s": 36.2
+        },
+        "broken": {
+          "score": 90.0,
+          "raw": "{\"score\": 90, \"reason\": \"The design is clean, functional, and avoids unnecessary visual embellishments, prioritizing clear information presentation over trendy design elements.\"}",
+          "executed": true,
+          "latency_s": 35.6
+        },
+        "pass": false
+      },
+      "gradient": {
+        "role": "APEXBrandJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The page utilizes a deep navy background and metallic silver accents, aligning with APEX's color palette, but the overall design feels slightly too informational for the desired premium aesthetic.\"}",
+          "executed": true,
+          "latency_s": 36.4
+        },
+        "broken": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The page utilizes a deep navy background and metallic silver accents, aligning with APEX's color palette, but the overall design feels slightly restrained and could benefit from more futuristic elements.\"}",
+          "executed": true,
+          "latency_s": 36.9
+        },
+        "pass": false
+      },
+      "cramped": {
+        "role": "EditorialDesignJudge",
+        "good": {
+          "score": 65.0,
+          "raw": "{\"score\": 65, \"reason\": \"While the layout utilizes a grid and has some whitespace, the typography and overall visual hierarchy feel somewhat cluttered and lack the refined rhythm expected of a premium editorial publication.\"}",
+          "executed": true,
+          "latency_s": 35.9
+        },
+        "broken": {
+          "score": 65.0,
+          "raw": "{\"score\": 65, \"reason\": \"While the layout utilizes a grid, the overall design feels somewhat rigid and lacks the sophisticated visual hierarchy and whitespace needed to elevate it beyond a basic template.\"}",
+          "executed": true,
+          "latency_s": 36.8
+        },
+        "pass": false
+      },
+      "no_hierarchy": {
+        "role": "VisualHierarchyJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\n  \"score\": 85,\n  \"reason\": \"The large, bold title and the date immediately draw the eye, establishing a clear entry point and guiding the reader through the key information presented in a logical order.\"\n}",
+          "executed": true,
+          "latency_s": 37.8
+        },
+        "broken": {
+          "score": 75.0,
+          "raw": "{\"score\": 75, \"reason\": \"The deadline '1 نوفمبر 2026' is the most prominent element, guiding the eye, but the overall layout lacks consistent visual weight, slightly disrupting the reading flow.\"}",
+          "executed": true,
+          "latency_s": 37.1
+        },
+        "pass": true
+      }
+    },
+    "correct": 1,
+    "valid": 5
+  },
+  "E4": {
+    "cases": {
+      "low_contrast": {
+        "role": "TypographyJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The Arabic typography is generally well-shaped and legible, with comfortable spacing and a clean rag, though minor adjustments to the leading could improve readability slightly.\"}",
+          "executed": true,
+          "latency_s": 36.6
+        },
+        "broken": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The Arabic typography is generally well-shaped and legible, with comfortable spacing and a clean rag, though minor adjustments to leading could improve readability slightly.\"}",
+          "executed": true,
+          "latency_s": 36.5
+        },
+        "pass": false
+      },
+      "card_overuse": {
+        "role": "AIClicheJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The design avoids common AI tropes by utilizing a clear, structured layout with text-based hierarchy and minimal visual embellishments, prioritizing information delivery.\"}",
+          "executed": true,
+          "latency_s": 36.4
+        },
+        "broken": {
+          "score": 90.0,
+          "raw": "{\"score\": 90, \"reason\": \"The design is clean, functional, and avoids unnecessary visual embellishments, prioritizing clear information presentation over trendy design elements.\"}",
+          "executed": true,
+          "latency_s": 36.4
+        },
+        "pass": false
+      },
+      "gradient": {
+        "role": "APEXBrandJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The page utilizes a deep navy background and metallic silver accents, aligning with APEX's color palette, but the overall design feels slightly too informational for the desired premium aesthetic.\"}",
+          "executed": true,
+          "latency_s": 36.9
+        },
+        "broken": {
+          "score": 85.0,
+          "raw": "{\"score\": 85, \"reason\": \"The page utilizes a deep navy background and metallic silver accents, aligning with APEX's color palette, but the overall design feels slightly restrained and could benefit from more futuristic elements.\"}",
+          "executed": true,
+          "latency_s": 36.6
+        },
+        "pass": false
+      },
+      "cramped": {
+        "role": "EditorialDesignJudge",
+        "good": {
+          "score": 65.0,
+          "raw": "{\"score\": 65, \"reason\": \"While the layout utilizes a grid and has some whitespace, the typography and overall visual hierarchy feel somewhat cluttered and lack the refined rhythm expected of a premium editorial publication.\"}",
+          "executed": true,
+          "latency_s": 37.1
+        },
+        "broken": {
+          "score": 65.0,
+          "raw": "{\"score\": 65, \"reason\": \"While the layout utilizes a grid, the overall design feels somewhat rigid and lacks the sophisticated visual hierarchy and whitespace needed to elevate it beyond a basic template.\"}",
+          "executed": true,
+          "latency_s": 36.3
+        },
+        "pass": false
+      },
+      "no_hierarchy": {
+        "role": "VisualHierarchyJudge",
+        "good": {
+          "score": 85.0,
+          "raw": "{\n  \"score\": 85,\n  \"reason\": \"The large, bold title and the date immediately draw the eye, establishing a clear entry point and guiding the reader through the key information presented in a logical order.\"\n}",
+          "executed": true,
+          "latency_s": 38.7
+        },
+        "broken": {
+          "score": 75.0,
+          "raw": "{\"score\": 75, \"reason\": \"The deadline '1 نوفمبر 2026' is the most prominent element, guiding the eye, but the overall layout lacks consistent visual weight, slightly disrupting the reading flow.\"}",
+          "executed": true,
+          "latency_s": 37.5
+        },
+        "pass": true
+      }
+    },
+    "correct": 1,
+    "valid": 5
   }
 }

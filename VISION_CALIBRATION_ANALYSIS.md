@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-26 08:40 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -44,6 +44,28 @@ Parser/execution errors: none
 | gradient | first | second | False |
 | cramped | first | second | False |
 | no_hierarchy | first | second | False |
+
+**E3 single-role absolute:** 1/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 85 | 85 | False |
+| card_overuse | AIClicheJudge | 85 | 90 | False |
+| gradient | APEXBrandJudge | 85 | 85 | False |
+| cramped | EditorialDesignJudge | 65 | 65 | False |
+| no_hierarchy | VisualHierarchyJudge | 85 | 75 | True |
+
+**E4 single-role repeat:** 1/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 85 | 85 | False |
+| card_overuse | AIClicheJudge | 85 | 90 | False |
+| gradient | APEXBrandJudge | 85 | 85 | False |
+| cramped | EditorialDesignJudge | 65 | 65 | False |
+| no_hierarchy | VisualHierarchyJudge | 85 | 75 | True |
+
+Stability: 5/5 cases gave identical scores on repeat.
 
 ## qwen-vl-current
 
@@ -108,8 +130,10 @@ Stability: 5/5 cases gave identical scores on repeat.
 | gemma-multimodal | scoring schema: absolute scores tie | ties on targeted role 1/5, inversions 3/5 | **not the main cause** |
 | gemma-multimodal | model ranks broken pages HIGHER | inversions 3/5 | **CONFIRMED** |
 | gemma-multimodal | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
+| gemma-multimodal | rubric overload (six roles in one call) | six-role 1/5 vs single-role 1/5 | **RULED OUT** |
 | gemma-multimodal | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
 | gemma-multimodal | image scaling | pairwise 640 px 0/5 vs 1024 px 0/5 | **RULED OUT** |
+| gemma-multimodal | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | gemma-multimodal | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | gemma-multimodal | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 1/5 | **NO — stays out of every gate** |
 | qwen-vl-current | scoring schema: absolute scores tie | ties on targeted role 4/5, inversions 0/5 | **CONFIRMED** |

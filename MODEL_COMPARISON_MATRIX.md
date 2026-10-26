@@ -1,6 +1,6 @@
 # Model Comparison Matrix
 
-_Generated 2026-10-13 17:49 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-26 08:40 UTC by `apex-one reports build` from measured artifacts._
 
 One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models measured on that same task.
 
