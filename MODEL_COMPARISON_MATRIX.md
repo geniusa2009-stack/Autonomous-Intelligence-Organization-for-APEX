@@ -1,6 +1,6 @@
 # Model Comparison Matrix
 
-_Generated 2026-10-26 08:43 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-26 09:39 UTC by `apex-one reports build` from measured artifacts._
 
 One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models measured on that same task.
 
@@ -31,7 +31,7 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 | nemotron-nano-omni | long_context | yes | 100 | 140.7 s | yes | v1 | 300 (task default) | got 2027-01-20 |
 | nemotron-nano-omni | design_criticism | yes | 100 | 84.5 s | yes | v1 | 600 (task default) | {"hierarchy": true, "contrast": true, "line_length": true, "cards": true} |
 | nemotron-nano-omni | visual_hierarchy | no | — | — | — | — | — | text-only model: vision task not applicable |
-| nemotron-nano-omni | reasoning | yes | 0 | 128.1 s | EMPTY | v1 | 900 (task default) | expected 2026-10-17, got None |
+| nemotron-nano-omni | reasoning | yes | 0 | 146.1 s | yes | v2 | 4096 | expected 2026-10-17, got 2026-10-21 |
 | qwen-vl-current | structured_json | yes | 100 | 8.9 s | yes | v1 | 500 (task default) | 4/4 fields exact |
 | qwen-vl-current | fact_preservation | yes | 100 | 5.0 s | yes | v1 | 500 (task default) | dates=['2026-11-01'] money=[('USD', 50.0)] |
 | qwen-vl-current | egyptian_arabic | yes | 0 | 3.8 s | yes | v1 | 500 (task default) | dialect_markers=0 msa=0 number_kept=True |
@@ -52,7 +52,7 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 | best long-context retrieval | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
 | best design criticism | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
 | best vision hierarchy (pairwise, single pair) | qwen-vl-current — NOT a judge qualification; see calibration below | 100 | 2 | gpt-oss-20b, nemotron-nano-omni |
-| best date reasoning | NO WINNER (every measured model failed) — production date arithmetic is deterministic (apex_one/core/dates.py) regardless | 0 | 2 | gpt-oss-20b, nemotron-nano-omni |
+| best date reasoning | NO WINNER (every measured model failed) — production date arithmetic is deterministic (apex_one/core/dates.py) regardless | 0 | 3 | gpt-oss-20b |
 
 ## Vision judge qualification (calibration, not benchmark)
 

@@ -91,6 +91,84 @@
       "novelty_vs_native": 53.2
     },
     {
+      "system": "llm:nemotron-nano-omni",
+      "page_type": "ApexTake",
+      "produced": true,
+      "text_fidelity": 95.0,
+      "fact_preservation": null,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 95.0,
+      "overflow_issues": 0,
+      "visual_hierarchy": 100.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": null,
+      "critical_issues": 0,
+      "novelty_vs_native": 35.7
+    },
+    {
+      "system": "llm:nemotron-nano-omni",
+      "page_type": "Checklist",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 100.0,
+      "overflow_issues": 0,
+      "visual_hierarchy": 90.0,
+      "editability": 100.0,
+      "apex_similarity": 80.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 9,
+      "novelty_vs_native": 70.6
+    },
+    {
+      "system": "llm:nemotron-nano-omni",
+      "page_type": "Cover",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 100.0,
+      "overflow_issues": 1,
+      "visual_hierarchy": 88.945,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 6,
+      "novelty_vs_native": 88.4
+    },
+    {
+      "system": "llm:nemotron-nano-omni",
+      "page_type": "OpportunitySnapshot",
+      "produced": false,
+      "note": "no page produced"
+    },
+    {
+      "system": "llm:nemotron-nano-omni",
+      "page_type": "Timeline",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": 100.0,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 95.0,
+      "overflow_issues": 0,
+      "visual_hierarchy": 100.0,
+      "editability": 100.0,
+      "apex_similarity": 80.0,
+      "reader_comprehension": 100.0,
+      "critical_issues": 7,
+      "novelty_vs_native": 74.0
+    },
+    {
       "system": "llm:qwen-vl-current",
       "page_type": "ApexTake",
       "produced": true,
@@ -708,8 +786,9 @@
   ],
   "layout_repetition": {
     "native-tournament": 39.6,
+    "llm:qwen-vl-current": 73.3,
+    "llm:nemotron-nano-omni": 67.9,
     "llm:gemma-multimodal": 21.9,
-    "native-baseline": 51.5,
-    "llm:qwen-vl-current": 73.3
+    "native-baseline": 51.5
   }
 }

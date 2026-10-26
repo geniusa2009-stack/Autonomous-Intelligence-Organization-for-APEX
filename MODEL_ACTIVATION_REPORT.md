@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-26 08:43 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-26 09:39 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -22,7 +22,7 @@ Tasks are scored by deterministic checkers (no model grades another model): date
 | model | reasoning | egyptian_arabic | en_ar_mixing | structured_json | fact_preservation | html_css | design_criticism | long_context | visual_hierarchy | overall (mean of measured) | measured tasks |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | gemma-multimodal | 0 | 75 | 100 | 100 | 50 | 100 | 100 | 100 | 50 | 78.1 | 8/9 |
-| nemotron-nano-omni | — | 0 | 100 | 100 | 100 | 100 | 100 | 100 | — | 85.7 | 7/9 |
+| nemotron-nano-omni | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | — | 75.0 | 8/9 |
 | qwen-vl-current | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 75.0 | 8/9 |
 | gpt-oss-20b | — | 50 | 100 | 100 | — | 100 | 100 | 100 | — | 91.7 | 6/9 |
 
