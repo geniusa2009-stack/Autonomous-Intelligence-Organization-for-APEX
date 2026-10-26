@@ -307,6 +307,105 @@
           }
         }
       }
+    },
+    "gpt-oss-20b-mxfp4:rerun": {
+      "at": "2026-10-26T09:45:24",
+      "info": {
+        "rerun_tasks": [
+          "reasoning",
+          "fact_preservation"
+        ],
+        "scores": {
+          "egyptian_arabic": 50,
+          "en_ar_mixing": 100.0,
+          "structured_json": 100.0,
+          "html_css": 100.0,
+          "design_criticism": 100.0,
+          "long_context": 100.0,
+          "reasoning": 100.0,
+          "fact_preservation": 100.0,
+          "mission.analyze": 100.0,
+          "opportunity.model": 100.0,
+          "editorial.write": 100.0,
+          "editorial.critique": 50,
+          "evidence.extract": 100.0,
+          "live.structured": 100.0,
+          "design.html": 100.0,
+          "design.reward": 100.0,
+          "overall": 93.8,
+          "measured_tasks": 8
+        }
+      }
+    },
+    "gpt-oss-20b-mxfp4:pages": {
+      "at": "2026-10-26T10:34:49",
+      "info": {
+        "pages": 5,
+        "produced": 1,
+        "critical_pages": 5,
+        "contract_violations": 4,
+        "median_latency_s": 617.3,
+        "metrics": {
+          "design.hierarchy": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 1,
+            "below_90": 0
+          },
+          "design.typography": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 1,
+            "below_90": 0
+          },
+          "design.brand_fit": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 1,
+            "below_90": 0
+          },
+          "rtl.quality": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 1,
+            "below_90": 0
+          },
+          "accessibility.contrast": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 1,
+            "below_90": 0
+          },
+          "fact.critical_accuracy": {
+            "mean": null,
+            "min": null,
+            "measured_pages": 0,
+            "below_90": 0
+          },
+          "geometry.alignment": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 1,
+            "below_90": 0
+          },
+          "geometry.whitespace_ratio": {
+            "mean": 81.8,
+            "min": 81.8,
+            "measured_pages": 1,
+            "below_90": 1
+          }
+        }
+      }
+    },
+    "gpt-oss-20b-mxfp4:weights_freed": {
+      "at": "2026-10-26T10:34:50",
+      "info": {
+        "reason": "disk room for qwen3-vl-8b-q4kxl"
+      }
+    },
+    "qwen3-vl-8b-q4kxl:acquire": {
+      "at": "2026-10-26T10:38:58",
+      "info": null
     }
   },
   "failed": {

@@ -69,14 +69,18 @@
       "html_css": 100.0,
       "design_criticism": 100.0,
       "long_context": 100.0,
+      "reasoning": 100.0,
+      "fact_preservation": 100.0,
+      "mission.analyze": 100.0,
+      "opportunity.model": 100.0,
       "editorial.write": 100.0,
       "editorial.critique": 50,
       "evidence.extract": 100.0,
       "live.structured": 100.0,
       "design.html": 100.0,
       "design.reward": 100.0,
-      "overall": 91.7,
-      "measured_tasks": 6
+      "overall": 93.8,
+      "measured_tasks": 8
     }
   },
   "checker_version": 2,

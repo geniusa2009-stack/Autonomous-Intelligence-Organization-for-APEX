@@ -91,6 +91,48 @@
       "novelty_vs_native": 53.2
     },
     {
+      "system": "llm:gpt-oss-20b",
+      "page_type": "ApexTake",
+      "produced": true,
+      "text_fidelity": 100.0,
+      "fact_preservation": null,
+      "html_validity": 100,
+      "css_validity": 100,
+      "inline_styles": 0,
+      "rtl": 100.0,
+      "overflow_issues": 4,
+      "visual_hierarchy": 100.0,
+      "editability": 100.0,
+      "apex_similarity": 100.0,
+      "reader_comprehension": null,
+      "critical_issues": 4,
+      "novelty_vs_native": 13.3
+    },
+    {
+      "system": "llm:gpt-oss-20b",
+      "page_type": "Checklist",
+      "produced": false,
+      "note": "no page produced"
+    },
+    {
+      "system": "llm:gpt-oss-20b",
+      "page_type": "Cover",
+      "produced": false,
+      "note": "no page produced"
+    },
+    {
+      "system": "llm:gpt-oss-20b",
+      "page_type": "OpportunitySnapshot",
+      "produced": false,
+      "note": "no page produced"
+    },
+    {
+      "system": "llm:gpt-oss-20b",
+      "page_type": "Timeline",
+      "produced": false,
+      "note": "no page produced"
+    },
+    {
       "system": "llm:nemotron-nano-omni",
       "page_type": "ApexTake",
       "produced": true,
@@ -785,10 +827,11 @@
     }
   ],
   "layout_repetition": {
-    "native-tournament": 39.6,
-    "llm:qwen-vl-current": 73.3,
-    "llm:nemotron-nano-omni": 67.9,
+    "llm:gpt-oss-20b": null,
     "llm:gemma-multimodal": 21.9,
-    "native-baseline": 51.5
+    "llm:nemotron-nano-omni": 67.9,
+    "llm:qwen-vl-current": 73.3,
+    "native-baseline": 51.5,
+    "native-tournament": 39.6
   }
 }

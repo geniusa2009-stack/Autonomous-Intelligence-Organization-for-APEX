@@ -1,6 +1,6 @@
 # Model Comparison Matrix
 
-_Generated 2026-10-26 09:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-26 22:50 UTC by `apex-one reports build` from measured artifacts._
 
 One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models measured on that same task.
 
@@ -17,13 +17,13 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 | gemma-multimodal | visual_hierarchy | yes | 50 | 106.4 s | n/a (vision A/B) | v1 | 60 (A/B) | order-swapped answers correct=[True, False] |
 | gemma-multimodal | reasoning | yes | 0 | 3.9 s | yes | v1 | 900 (task default) | expected 2026-10-17, got 2026-10-26 |
 | gpt-oss-20b | structured_json | yes | 100 | 35.5 s | yes | v1 | 500 (task default) | 4/4 fields exact |
-| gpt-oss-20b | fact_preservation | yes | 0 | 62.9 s | EMPTY | v1 | 500 (task default) | dates=[] money=[] |
+| gpt-oss-20b | fact_preservation | yes | 100 | 95.2 s | yes | v2 | 4096 | dates=['2026-11-01'] money=[('USD', 50.0)] |
 | gpt-oss-20b | egyptian_arabic | yes | 50 | 28.8 s | yes | v1 | 500 (task default) | dialect_markers=1 msa=0 number_kept=True |
 | gpt-oss-20b | html_css | yes | 100 | 36.0 s | yes | v1 | 700 (task default) | {"rtl": true, "h2": true, "p": true, "no_script": true, "no_gradient": true, "bdi_or_ltr": |
 | gpt-oss-20b | long_context | yes | 100 | 205.4 s | yes | v1 | 300 (task default) | got 2027-01-20 |
 | gpt-oss-20b | design_criticism | yes | 100 | 76.6 s | truncated in log | v1 | 600 (task default) | {"hierarchy": true, "contrast": true, "line_length": true, "cards": true} |
 | gpt-oss-20b | visual_hierarchy | no | — | — | — | — | — | text-only model: vision task not applicable |
-| gpt-oss-20b | reasoning | yes | 0 | 113.2 s | EMPTY | v1 | 900 (task default) | expected 2026-10-17, got None |
+| gpt-oss-20b | reasoning | yes | 100 | 162.4 s | yes | v2 | 4096 | expected 2026-10-17, got 2026-10-17 |
 | nemotron-nano-omni | structured_json | yes | 100 | 39.1 s | yes | v1 | 500 (task default) | 4/4 fields exact |
 | nemotron-nano-omni | fact_preservation | yes | 100 | 20.9 s | yes | v1 | 500 (task default) | dates=['2026-11-01'] money=[('USD', 50.0)] |
 | nemotron-nano-omni | egyptian_arabic | yes | 0 | 29.5 s | yes | v1 | 500 (task default) | dialect_markers=0 msa=0 number_kept=True |
@@ -46,13 +46,13 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 | task | winner(s) | score | measured models | not measured |
 |---|---|---|---|---|
 | best structured output | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
-| best fact preservation | nemotron-nano-omni, qwen-vl-current | 100 | 3 | gpt-oss-20b |
+| best fact preservation | gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
 | best Egyptian Arabic | gemma-multimodal | 75 | 4 | — |
 | best HTML/CSS | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
 | best long-context retrieval | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
 | best design criticism | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current | 100 | 4 | — |
 | best vision hierarchy (pairwise, single pair) | qwen-vl-current — NOT a judge qualification; see calibration below | 100 | 2 | gpt-oss-20b, nemotron-nano-omni |
-| best date reasoning | NO WINNER (every measured model failed) — production date arithmetic is deterministic (apex_one/core/dates.py) regardless | 0 | 3 | gpt-oss-20b |
+| best date reasoning | gpt-oss-20b — production date arithmetic is deterministic (apex_one/core/dates.py) regardless | 100 | 4 | — |
 
 ## Vision judge qualification (calibration, not benchmark)
 
