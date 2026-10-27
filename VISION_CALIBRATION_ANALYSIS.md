@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-26 22:50 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-27 00:07 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -123,6 +123,30 @@ Parser/execution errors: none
 
 Stability: 5/5 cases gave identical scores on repeat.
 
+## qwen3-vl-8b
+
+**E0 absolute (production protocol):** 3/5 passed; ties on targeted role: 2; inversions: 0; distinct scores used across all pages/roles: [60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0]
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 95 | 95 | False |
+| card_overuse | AIClicheJudge | 95 | 65 | True |
+| gradient | APEXBrandJudge | 90 | 75 | True |
+| cramped | EditorialDesignJudge | 80 | 80 | False |
+| no_hierarchy | VisualHierarchyJudge | 85 | 70 | True |
+
+Parser/execution errors: none
+
+**E1 pairwise 640 px:** 4/5 order-consistent wins; position-biased cases: 0
+
+| case | good shown as A → pick | good shown as B → pick | pass |
+|---|---|---|---|
+| low_contrast | first | first | True |
+| card_overuse | first | first | True |
+| gradient | first | first | True |
+| cramped | second | second | False |
+| no_hierarchy | first | first | True |
+
 ## Hypotheses — verdicts derived from the experiments
 
 | model | hypothesis | evidence | verdict |
@@ -145,6 +169,12 @@ Stability: 5/5 cases gave identical scores on repeat.
 | qwen-vl-current | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen-vl-current | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | qwen-vl-current | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 3/5 | **NO — stays out of every gate** |
+| qwen3-vl-8b | scoring schema: absolute scores tie | ties on targeted role 2/5, inversions 0/5 | **CONFIRMED** |
+| qwen3-vl-8b | model ranks broken pages HIGHER | inversions 0/5 | **no** |
+| qwen3-vl-8b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
+| qwen3-vl-8b | pair-order sensitivity / position bias | 0/5 cases picked the same POSITION in both orders | **RULED OUT** |
+| qwen3-vl-8b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
+| qwen3-vl-8b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 4/5 | **YES** |
 
 | hypothesis | evidence used |
 |---|---|
@@ -161,5 +191,13 @@ Stability: 5/5 cases gave identical scores on repeat.
 
 * absolute — gemma-multimodal: 1/5 → **NOT QUALIFIED**
 * absolute — qwen-vl-current: 1/5 → **NOT QUALIFIED**
+* absolute — qwen3-vl-8b: 3/5 → **NOT QUALIFIED**
 * pairwise — qwen-vl-current: 0/5 → **NOT QUALIFIED**
 * pairwise — gemma-multimodal: 0/5 → **NOT QUALIFIED**
+* pairwise — qwen3-vl-8b: 4/5 → **QUALIFIED**
+
+## What the gates may use (re-checked: bar, timestamp, model digest)
+
+* six-role scoring council (absolute): none → **Vision Quality scores = NOT_MEASURED**
+* finalist A/B judging (pairwise, both orders): qwen3-vl-8b → pairwise finalist votes ACTIVE (a vote counts only when both orders agree)
+* a pass in one mode never qualifies the other; deterministic DOM gates remain authoritative

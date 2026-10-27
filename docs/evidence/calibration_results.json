@@ -85,6 +85,49 @@
       "at": "2026-10-12T12:48:23.472996+00:00",
       "model_digest": "sha256:a5563711a524defc06d67438a497ce4ba9a0fb126f28456a9f207e2ad104eb75",
       "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
+    },
+    "qwen3-vl-8b": {
+      "checks": {
+        "low_contrast": false,
+        "card_overuse": true,
+        "gradient": true,
+        "cramped": false,
+        "no_hierarchy": true
+      },
+      "scores": {
+        "low_contrast": {
+          "role": "TypographyJudge",
+          "good": 95.0,
+          "broken": 95.0
+        },
+        "card_overuse": {
+          "role": "AIClicheJudge",
+          "good": 95.0,
+          "broken": 65.0
+        },
+        "gradient": {
+          "role": "APEXBrandJudge",
+          "good": 90.0,
+          "broken": 75.0
+        },
+        "cramped": {
+          "role": "EditorialDesignJudge",
+          "good": 80.0,
+          "broken": 80.0
+        },
+        "no_hierarchy": {
+          "role": "VisualHierarchyJudge",
+          "good": 85.0,
+          "broken": 70.0
+        }
+      },
+      "discrimination_rate": 0.6,
+      "valid_checks": 5,
+      "reliable": false,
+      "errors": {},
+      "at": "2026-10-26T23:53:17.009480+00:00",
+      "model_digest": "sha256:e3d1a6e87c5cb31e054f2c3bc0dd82ffde052f613de5eef3665b7bd33c9b703e",
+      "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
     }
   },
   "pairwise_models": {
@@ -212,6 +255,69 @@
       "reliable": false,
       "at": "2026-10-13T13:16:29.458288+00:00",
       "model_digest": "sha256:04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19",
+      "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
+    },
+    "qwen3-vl-8b": {
+      "checks": {
+        "low_contrast": true,
+        "card_overuse": true,
+        "gradient": true,
+        "cramped": false,
+        "no_hierarchy": true
+      },
+      "detail": {
+        "low_contrast": {
+          "good_as_A": "first",
+          "good_as_B": "first",
+          "position_bias": false,
+          "reasons": [
+            "Page A's bold, high-contrast typography and clear visual hierarchy make the deadline and key facts immediately legible and impactful, aligning with premium, restrained branding.",
+            "B's darker, more intentional typography and calmer composition better serve the premium, restrained brand identity while enhancing clarity and hierarchy."
+          ]
+        },
+        "card_overuse": {
+          "good_as_A": "first",
+          "good_as_B": "first",
+          "position_bias": false,
+          "reasons": [
+            "Page A\u2019s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better suited for a decision-critical snapshot.",
+            "B's reversed text alignment and tighter vertical spacing create a more intentional, high-contrast hierarchy that better emphasizes the deadline and critical facts."
+          ]
+        },
+        "gradient": {
+          "good_as_A": "first",
+          "good_as_B": "first",
+          "position_bias": false,
+          "reasons": [
+            "Page A\u2019s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of",
+            "Page B\u2019s deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clich\u00e9s while emphasizing the deadline."
+          ]
+        },
+        "cramped": {
+          "good_as_A": "second",
+          "good_as_B": "second",
+          "position_bias": false,
+          "reasons": [
+            "Page B\u2019s minimalist composition and intentional whitespace create a calmer, more premium feel, enhancing clarity and focus on the deadline-critical facts without visual clutter.",
+            "Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint."
+          ]
+        },
+        "no_hierarchy": {
+          "good_as_A": "first",
+          "good_as_B": "first",
+          "position_bias": false,
+          "reasons": [
+            "Page A's cleaner layout, stronger visual hierarchy, and more intentional spacing create a more authoritative and focused impression for critical decision-making.",
+            "B's bolded date and larger font create a stronger visual anchor and clearer hierarchy, making the deadline immediately dominant and intentional."
+          ]
+        }
+      },
+      "valid_checks": 5,
+      "correct": 4,
+      "discrimination_rate": 0.8,
+      "reliable": true,
+      "at": "2026-10-27T00:06:03.684852+00:00",
+      "model_digest": "sha256:e3d1a6e87c5cb31e054f2c3bc0dd82ffde052f613de5eef3665b7bd33c9b703e",
       "pages_hash": "3f9fb5578b6198f0dc510a9146642c71f8257f3491a1f282ca6ce8bedf1dc180"
     }
   }

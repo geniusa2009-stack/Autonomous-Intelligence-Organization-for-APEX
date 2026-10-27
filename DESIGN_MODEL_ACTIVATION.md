@@ -1,6 +1,6 @@
 # Design Model Activation (Phases 16, 19, 26)
 
-_Generated 2026-10-26 22:50 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-27 00:07 UTC by `apex-one reports build` from measured artifacts._
 
 Every design system named in the APEX spec, with the evidence actually gathered here. Statuses: ACTIVATED, PROTOCOL_REIMPLEMENTED, PACKAGE_INSTALLABLE, WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED, ARCHITECTURE_REFERENCE, NOT_RELEASED_OR_UNFOUND, LICENSE_BLOCKED, RESEARCH_ONLY. Nothing is marked ACTIVATED without a stored smoke-test artifact.
 

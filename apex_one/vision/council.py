@@ -148,6 +148,10 @@ class VisionCouncil:
         return pr
 
 
+# a judge qualifies only with >= 4 of the 5 calibration cases right (never lowered to make a model pass)
+MIN_PASS_RATE = 0.8
+
+
 def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path], intent: str) -> dict[str, Any]:
     """Judge reliability: each model must score the good page above every deliberately broken variant on the
     role that the breakage targets. Returns per-model reliability; unreliable judges are excluded from gates."""
@@ -169,7 +173,7 @@ def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path],
         complete = len(valid) == len(checks) and len(checks) > 0     # one lucky data point is not calibration
         result["models"][mid] = {"checks": checks, "scores": scores, "discrimination_rate": rate,
                                  "valid_checks": len(valid),
-                                 "reliable": complete and rate is not None and rate >= 0.6,
+                                 "reliable": complete and rate is not None and rate >= MIN_PASS_RATE,
                                  "errors": {k: br.errors.get(mid) for k, br in bad_reviews.items() if br.errors.get(mid)}
                                  | ({"good": good.errors[mid]} if good.errors.get(mid) else {})}
     return result
@@ -227,8 +231,11 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
         if not r.get("reliable"):
             continue
         why = None
-        if r.get("valid_checks") != len(r.get("checks", {})) or not r.get("checks"):
+        checks = r.get("checks") or {}
+        if r.get("valid_checks") != len(checks) or not checks or None in checks.values():
             why = "incomplete calibration"
+        elif sum(bool(v) for v in checks.values()) / len(checks) < MIN_PASS_RATE:
+            why = f"below the calibration bar ({sum(bool(v) for v in checks.values())}/{len(checks)}; >= 4/5 needed)"
         elif not r.get("at") or datetime.fromisoformat(r["at"]) < datetime.now(UTC) - timedelta(days=MAX_CALIBRATION_AGE_DAYS):
             why = "calibration missing a timestamp or older than %d days" % MAX_CALIBRATION_AGE_DAYS
         elif r.get("model_digest") != model_digest(m):

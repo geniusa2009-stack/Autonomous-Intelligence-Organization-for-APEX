@@ -566,6 +566,16 @@ def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, An
         for mid, r in ((calibration or {}).get(section) or {}).items():
             out.append(f"* {title} — {mid}: {sum(1 for v in r.get('checks', {}).values() if v)}/5 → "
                        f"**{'QUALIFIED' if r.get('reliable') else 'NOT QUALIFIED'}**")
+    from apex_one.vision.council import reliable_judges
+
+    absolute, pairwise = reliable_judges()[0], reliable_judges(mode="pairwise")[0]
+    out += ["", "## What the gates may use (re-checked: bar, timestamp, model digest)", "",
+            f"* six-role scoring council (absolute): {', '.join(absolute) if absolute else 'none'} → "
+            + ("Vision Council scores ACTIVE" if absolute else "**Vision Quality scores = NOT_MEASURED**"),
+            f"* finalist A/B judging (pairwise, both orders): {', '.join(pairwise) if pairwise else 'none'} → "
+            + ("pairwise finalist votes ACTIVE (a vote counts only when both orders agree)" if pairwise
+               else "pairwise judging NOT_MEASURED"),
+            "* a pass in one mode never qualifies the other; deterministic DOM gates remain authoritative"]
     return "\n".join(out) + "\n"
 
 

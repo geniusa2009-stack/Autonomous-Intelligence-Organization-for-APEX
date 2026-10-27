@@ -610,6 +610,22 @@ def test_absolute_and_pairwise_reliability_are_separate(tmp_path):
     assert reliable_judges(p)[0] == [] and reliable_judges(p, mode="pairwise")[0] == ["m"]
 
 
+def test_calibration_bar_is_four_of_five_even_if_a_stored_flag_says_reliable(tmp_path):
+    from datetime import UTC, datetime
+
+    from apex_one.vision.council import MIN_PASS_RATE, reliable_judges
+
+    assert MIN_PASS_RATE == 0.8
+    three = {"a": True, "b": True, "c": True, "d": False, "e": False}     # 3/5 (Qwen3-VL 8B absolute run)
+    four = {**three, "d": True}
+    stamp = {"valid_checks": 5, "at": datetime.now(UTC).isoformat(), "model_digest": None}
+    p = tmp_path / "cal.json"
+    p.write_text(json.dumps({"models": {"three": {"reliable": True, "checks": three, **stamp},
+                                        "four": {"reliable": True, "checks": four, **stamp}}}))
+    judges, info = reliable_judges(p)
+    assert judges == ["four"] and "below the calibration bar" in info["three"]["rejected"]
+
+
 def _brand_pkg(d: Path, *, placeholder_logo: bool = False, missing_robot: bool = False) -> Path:
     d.mkdir(parents=True, exist_ok=True)
     svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40"><rect fill="#0A1A33" width="120" height="40"/></svg>'
