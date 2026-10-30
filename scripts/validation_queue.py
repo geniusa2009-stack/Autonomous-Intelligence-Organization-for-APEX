@@ -11,6 +11,7 @@ steps. Steps per model, in order (only steps that apply to the model run):
   council   general council benchmark (new models only)
   rerun     council tasks whose output was empty, at a 4096-token budget
   pages     model writes APEX pages under the DOM contract (5 decision-critical page types)
+  robust:W  vision-judge robustness at width W (5 cases x both orders x 3 repeats + legibility probe)
   vector    council tasks added for the capability vector (English factual writing, structured editorial),
             same 500-token task budget as the other prose tasks
 
@@ -36,8 +37,8 @@ PLAN = [
     ("gemma3-4b-q4km", ["gdb", "calib", "pcalib", "invest", "pages"]),
     ("nemotron-3-nano-4b-q4km", ["rerun", "pages"]),
     ("gpt-oss-20b-mxfp4", ["rerun", "pages"]),
-    ("qwen3-vl-8b-q4kxl", ["acquire", "live", "calib", "pcalib", "invest", "council", "gdb", "vector",
-                           *[f"robust:{w}" for w in ROBUST_WIDTHS]]),
+    ("qwen3-vl-8b-q4kxl", ["acquire", "live", "calib", "pcalib", "invest", "council", "robust:640", "gdb", "vector",
+                           *[f"robust:{w}" for w in ROBUST_WIDTHS if w != "640"]]),
     ("gemma3-12b-q4km", ["acquire", "live", "calib", "pcalib", "invest", "council", "gdb"]),
     ("qwen3-vl-4b-q4kxl", ["vector"]),
     ("gemma3-4b-q4km", ["vector"]),
@@ -136,6 +137,10 @@ def run_step(step: str, spec, bench: Path) -> object:
 
         run_council(ComputeBroker(), [rid], bench, calib_dir=calib if spec.vision else None)
         return rescore(bench)["models"].get(rid)
+    if step.startswith("robust:"):
+        from apex_one.lab.benchmarks.vision_robustness import run_width
+
+        return run_width(rid, calib, step.split(":", 1)[1])
     if step == "vector":
         from apex_one.compute.benchmark.council import rescore, run_council
 

@@ -605,9 +605,72 @@ def test_absolute_and_pairwise_reliability_are_separate(tmp_path):
 
     rec = {"reliable": True, "checks": {"a": True}, "valid_checks": 1, "at": datetime.now(UTC).isoformat(),
            "model_digest": None}
-    p = tmp_path / "cal.json"
+    p = tmp_path / "vision_calibration" / "cal.json"
+    p.parent.mkdir()
     p.write_text(json.dumps({"models": {}, "pairwise_models": {"m": rec}}))
+    judges, info = reliable_judges(p, mode="pairwise")
+    assert judges == [] and "robustness INCOMPLETE" in info["m"]["rejected"]     # one run at one width: not enough
+    _write_robustness(tmp_path / "vision_robustness", "m", {"640": [4, 4, 4]})
     assert reliable_judges(p)[0] == [] and reliable_judges(p, mode="pairwise")[0] == ["m"]
+
+
+def _robust_rep(correct: int, bias: int = 0) -> dict:
+    cases = ["low_contrast", "card_overuse", "gradient", "cramped", "no_hierarchy"]
+    checks = {k: i < correct for i, k in enumerate(cases)}
+    detail = {k: {"good_as_A": "first" if checks[k] or i < correct + bias else "second",
+                  "good_as_B": "first" if checks[k] else "second", "position_bias": (not checks[k]) and i < correct + bias,
+                  "latency_s": [70.0, 71.0]} for i, k in enumerate(cases)}
+    return {"checks": checks, "detail": detail, "valid_checks": 5, "correct": correct}
+
+
+def _write_robustness(d: Path, model: str, widths: dict, illegible: tuple = ()) -> dict:
+    from apex_one.vision.council import PREPROCESS_VERSION
+
+    data = {"model": model, "model_digest": None, "widths": {
+        w: {"width": 794 if w == "native" else int(w), "preprocess_version": PREPROCESS_VERSION,
+            "reps": [_robust_rep(c) for c in reps], "legibility": {"legible": w not in illegible}}
+        for w, reps in widths.items()}}
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"{model}.json").write_text(json.dumps(data))
+    return data
+
+
+def test_judge_robustness_status_follows_the_preregistered_rules(tmp_path):
+    from apex_one.lab.benchmarks.vision_robustness import status, summarize_width
+
+    all_widths = {w: [5, 5, 5] for w in ("320", "480", "640", "768", "native", "1024")}
+    assert status(None)[0] == "INCOMPLETE"
+    assert status(_write_robustness(tmp_path, "a", {"640": [4, 4]}))[0] == "INCOMPLETE"          # 2/3 repeats
+    assert status(_write_robustness(tmp_path, "b", {"640": [4, 4, 3]}))[0] == "UNQUALIFIED"      # one repeat fails
+    assert status(_write_robustness(tmp_path, "c", {"640": [5, 5, 5]}, illegible=("640",)))[0] == "UNQUALIFIED"
+    assert status(_write_robustness(tmp_path, "d", {"640": [4, 4, 4]}))[0] == "CANONICAL_640_ONLY"
+    st, why = status(_write_robustness(tmp_path, "e", {**all_widths, "1024": [4, 3, 4]}))
+    assert st == "CANONICAL_640_ONLY" and "1024" in why                                         # 8B-like sensitivity
+    assert status(_write_robustness(tmp_path, "f", all_widths))[0] == "ROBUSTLY_CALIBRATED"
+    # an illegible stress width is excluded, an illegible REQUIRED width (native / 1024) is not
+    assert status(_write_robustness(tmp_path, "g", {**all_widths, "320": [1, 2, 0]}, illegible=("320",)))[0] \
+        == "ROBUSTLY_CALIBRATED"
+    assert status(_write_robustness(tmp_path, "h", all_widths, illegible=("1024",)))[0] == "CANONICAL_640_ONLY"
+    s = summarize_width({"width": 640, "reps": [_robust_rep(4), _robust_rep(4), _robust_rep(3)]})
+    assert s["correct_per_repeat"] == [4, 4, 3] and s["cases_flipping_across_repeats"] == ["cramped"]
+    assert s["run_variance"] > 0 and not s["reliable_all_repeats"]
+
+
+def test_judge_input_is_width_bound_so_candidates_share_one_scale(tmp_path):
+    from PIL import Image
+
+    from apex_one.vision.council import normalize_for_judge, preprocess_hash
+
+    a4, tall = tmp_path / "a4.png", tmp_path / "tall.png"
+    Image.new("RGB", (794, 1123), "white").save(a4)
+    Image.new("RGB", (794, 2400), "white").save(tall)            # overflowing candidate: taller than A4
+    import io
+
+    sizes = [Image.open(io.BytesIO(normalize_for_judge(p, 640))).size for p in (a4, tall)]
+    assert sizes[0][0] == sizes[1][0] == 640                     # same width -> same scale for both candidates
+    assert abs(sizes[1][1] / 640 - 2400 / 794) < 0.01             # aspect ratio preserved, no height cap
+    assert Image.open(io.BytesIO(normalize_for_judge(a4, 1024))).size == (794, 1123)   # never upscaled
+    assert preprocess_hash(a4, 640) == preprocess_hash(a4, 640) != preprocess_hash(a4, 480)
 
 
 def test_calibration_bar_is_four_of_five_even_if_a_stored_flag_says_reliable(tmp_path):

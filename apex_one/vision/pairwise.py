@@ -16,7 +16,7 @@ from typing import Any
 
 from apex_one.compute.providers import ChatMessage
 from apex_one.core.schemas.compute import CapabilityRequest
-from apex_one.vision.council import encode_png
+from apex_one.vision.council import PREPROCESS_VERSION, encode_png, preprocess_hash
 
 QUESTION = ("Two rendered A4 pages of the same Arabic student-guide content. Image A is first, image B is second. "
             "As a strict editorial art director for a premium, restrained brand (deep navy, silver, white), which page "
@@ -42,6 +42,9 @@ class PairwiseResult:
     disagreements: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)       # calls that did not execute / did not parse
     executed_judges: int = 0                                 # judges whose BOTH calls returned a valid answer
+    raw_text: dict[str, list[str]] = field(default_factory=dict)     # model -> verbatim answers (A/B order, B/A order)
+    latency_s: dict[str, list[float]] = field(default_factory=dict)
+    preprocess: dict[str, Any] = field(default_factory=dict)          # width, contract version, input hashes
 
     @property
     def measured(self) -> bool:
@@ -50,7 +53,8 @@ class PairwiseResult:
     def as_dict(self) -> dict[str, Any]:
         return {"status": "MEASURED" if self.measured else "NOT_MEASURED", "winner": self.winner, "votes": self.votes,
                 "raw": self.raw, "disagreements": self.disagreements, "failures": self.failures,
-                "executed_judges": self.executed_judges}
+                "executed_judges": self.executed_judges, "raw_text": self.raw_text, "latency_s": self.latency_s,
+                "preprocess": self.preprocess}
 
 
 # production judges at the width they were calibrated at: Qwen3-VL 8B is 4/5 at 640 px but 3/5 at 1024 px
@@ -63,16 +67,24 @@ class PairwiseJudge:
         self.broker, self.models, self.ws, self.max_w, self.timeout = broker, model_ids, workspace, max_w, timeout
 
     def compare(self, first: Path, second: Path, intent: str) -> PairwiseResult:
+        import time
+
         a, b = encode_png(first, self.max_w), encode_png(second, self.max_w)
-        res = PairwiseResult(winner=None)
+        res = PairwiseResult(winner=None, preprocess={
+            "width": self.max_w, "version": PREPROCESS_VERSION,
+            "first": preprocess_hash(first, self.max_w), "second": preprocess_hash(second, self.max_w)})
         for mid in self.models:
             picks = []
+            res.raw_text[mid], res.latency_s[mid] = [], []
             for img1, img2, map_ in ((a, b, {"A": "first", "B": "second"}), (b, a, {"A": "second", "B": "first"})):
+                t0 = time.perf_counter()
                 req = CapabilityRequest(task="vision.pairwise", vision=True, purpose="evaluation", model_id=mid)
                 out = self.broker.complete(req, [ChatMessage("user", QUESTION.format(intent=intent),
                                                              images_b64_png=[img1, img2])],
                                            json_mode=True, max_tokens=120, temperature=0.0, workspace=self.ws,
                                            timeout=self.timeout)
+                res.latency_s[mid].append(round(time.perf_counter() - t0, 1))
+                res.raw_text[mid].append((out.text or "")[:400])
                 w, why = _winner(out.text or "") if out.executed else (None, out.decision.outcome.value)
                 picks.append((map_.get(w) if w else None, why))
             res.raw[mid] = picks
@@ -110,7 +122,8 @@ def calibrate_pairwise(judge: PairwiseJudge, good: Path, broken: dict[str, Path]
             checks[k] = None if p1 is None or p2 is None else (p1 == "first" and p2 == "first")
             detail[k] = {"good_as_A": p1, "good_as_B": p2,
                          "position_bias": None if p1 is None or p2 is None else p1 != p2,
-                         "reasons": [w1, w2]}
+                         "reasons": [w1, w2], "raw_text": res.raw_text.get(mid), "latency_s": res.latency_s.get(mid),
+                         "preprocess": res.preprocess}
         valid = [v for v in checks.values() if v is not None]
         correct = sum(valid)
         out["models"][mid] = {"checks": checks, "detail": detail, "valid_checks": len(valid), "correct": correct,

@@ -257,11 +257,38 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
             why = "calibration missing a timestamp or older than %d days" % MAX_CALIBRATION_AGE_DAYS
         elif r.get("model_digest") != model_digest(m):
             why = "calibrated a different model build (digest mismatch)"
+        elif mode == "pairwise":
+            why = _robustness_block(m, path.parent.parent / "vision_robustness")
         if why:
             r["rejected"] = why
         else:
             ok.append(m)
     return sorted(ok), models
+
+
+def _robustness_block(model_id: str, robust_dir: Path) -> str | None:
+    """Pairwise production use additionally needs the resolution-robustness experiment: the judge must be reliable
+    and legible at the canonical width over every repeat (CANONICAL_640_ONLY or ROBUSTLY_CALIBRATED), for this
+    exact model build and preprocessing contract. One calibration run at one width is not enough."""
+    from apex_one.lab.benchmarks.vision_robustness import load, status
+
+    data = load(model_id, robust_dir)
+    st, why = status(data)
+    if st not in ("CANONICAL_640_ONLY", "ROBUSTLY_CALIBRATED"):
+        return f"robustness {st}: {why}"
+    if data.get("model_digest") != model_digest(model_id):
+        return "robustness measured a different model build (digest mismatch)"
+    canon = data["widths"]["640"]
+    if canon.get("preprocess_version") != PREPROCESS_VERSION:
+        return "robustness used a different judge-input preprocessing contract"
+    return None
+
+
+def judge_status(model_id: str, robust_dir: Path | None = None) -> tuple[str, str]:
+    """UNQUALIFIED / CANONICAL_640_ONLY / ROBUSTLY_CALIBRATED / INCOMPLETE for a pairwise judge."""
+    from apex_one.lab.benchmarks.vision_robustness import load, status
+
+    return status(load(model_id, robust_dir))
 
 
 def page_budget(mode: str) -> int:
