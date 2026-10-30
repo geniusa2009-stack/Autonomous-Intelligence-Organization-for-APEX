@@ -1,6 +1,6 @@
 # Local model resource matrix
 
-_Generated 2026-10-30 23:37 UTC by `apex-one reports` at commit `551042c` from measured artifacts._
+_Generated 2026-10-30 23:39 UTC by `apex-one reports` at commit `2e7ded4` from measured artifacts._
 
 Machine: 16.9 GB RAM, no swap, 4 CPU threads, no GPU. Memory available with no model loaded: **16.0 GB** (ESTIMATE 95% of MemTotal — no load recorded under the scheduler yet). On this machine compute scheduling is part of correctness: the resource scheduler (`apex_one/compute/local/resources.py`) refuses a load with RESOURCE_BLOCKED when `expected_peak + reserves > available`, never runs two large models at once, and asserts after every unload that the server process is gone and its memory has returned.
 

@@ -1,6 +1,6 @@
 # Production routing matrix
 
-_Generated 2026-10-30 23:37 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
 
 Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checker v2) and licence records. No global best model, no cross-task average. A task's score is the weakest of the capabilities it REQUIRES; a model measured below the floor (50, pre-registered) on any of them is rejected. **Primary / fallback must also be production-licensed and installed**; the best evaluation-only model is shown separately. Ties are broken by measured latency on the same evidence tasks (lower first).
 
@@ -68,7 +68,7 @@ Remote free-tier routes were never measured here (provider hosts are network-blo
 
 ## Frozen production routing policy
 
-Frozen at commit `551042c` against evidence `council_scores.json`=f95b7050afe7, `calibration_results.json`=858592959e12, `page_compare.json`=119855e92746, `vision_robustness/gemma3-12b.json`=49a120afa9ed, `vision_robustness/qwen3-vl-8b.json`=da9ee24665d7 (`docs/evidence/production_routing_policy.json`). Any change to that evidence requires regenerating and re-reviewing this table. A model is never routed to merely because it is installed.
+Frozen at commit `2e7ded4` against evidence `council_scores.json`=f95b7050afe7, `calibration_results.json`=858592959e12, `page_compare.json`=119855e92746, `vision_robustness/gemma3-12b.json`=49a120afa9ed, `vision_robustness/qwen3-vl-8b.json`=da9ee24665d7 (`docs/evidence/production_routing_policy.json`). Any change to that evidence requires regenerating and re-reviewing this table. A model is never routed to merely because it is installed.
 
 | task | decision | primary | fallback | why |
 |---|---|---|---|---|

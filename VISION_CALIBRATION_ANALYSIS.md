@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-30 23:37 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -235,9 +235,10 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | gemma-multimodal | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | gemma-multimodal | rubric overload (six roles in one call) | six-role 1/5 vs single-role 1/5 | **RULED OUT** |
 | gemma-multimodal | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
-| gemma-multimodal | prompt interpretation: answers the slot, not the page | answered "A" in 10/10 calls; reasons are near-identical templates whichever page is in slot A | **CONFIRMED** |
+| gemma-multimodal | prompt interpretation: answers the slot, not the page | answered "A" in 10/10 calls; the reasons read as the same template whichever page is in slot A | **CONFIRMED** |
 | gemma-multimodal | output parsing (pairwise) | 5/5 cases parsed in both orders | **RULED OUT** |
 | gemma-multimodal | inability to discriminate the visual defects | pairwise 0/5, absolute 1/5 | **CONFIRMED** |
+| gemma-multimodal | image scaling | pairwise 640 px 0/5 vs native 794 px 0/5 | **RULED OUT** |
 | gemma-multimodal | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | gemma-multimodal | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | gemma-multimodal | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 1/5 | **NO — stays out of every gate** |
@@ -246,11 +247,11 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | gemma3-12b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | gemma3-12b | rubric overload (six roles in one call) | six-role 1/5 vs single-role 2/5 | **CONFIRMED (partial)** |
 | gemma3-12b | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
-| gemma3-12b | prompt interpretation: answers the slot, not the page | answered "A" in 10/10 calls; reasons are near-identical templates whichever page is in slot A | **CONFIRMED** |
+| gemma3-12b | prompt interpretation: answers the slot, not the page | answered "A" in 10/10 calls; the reasons read as the same template whichever page is in slot A | **CONFIRMED** |
 | gemma3-12b | output parsing (pairwise) | 5/5 cases parsed in both orders | **RULED OUT** |
 | gemma3-12b | inability to discriminate the visual defects | pairwise 0/5, absolute 1/5 | **CONFIRMED** |
-| gemma3-12b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
 | gemma3-12b | image scaling | pairwise 640 px 0/5 vs native 794 px 0/5 | **RULED OUT** |
+| gemma3-12b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
 | gemma3-12b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | gemma3-12b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 2/5 | **NO — stays out of every gate** |
 | qwen-vl-current | scoring schema: absolute scores tie | ties on targeted role 4/5, inversions 0/5 | **CONFIRMED** |
@@ -258,9 +259,10 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | qwen-vl-current | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | qwen-vl-current | rubric overload (six roles in one call) | six-role 1/5 vs single-role 3/5 | **CONFIRMED (partial)** |
 | qwen-vl-current | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
-| qwen-vl-current | prompt interpretation: answers the slot, not the page | answered "A" in 10/10 calls; reasons are near-identical templates whichever page is in slot A | **CONFIRMED** |
+| qwen-vl-current | prompt interpretation: answers the slot, not the page | answered "A" in 10/10 calls; the reasons read as the same template whichever page is in slot A | **CONFIRMED** |
 | qwen-vl-current | output parsing (pairwise) | 5/5 cases parsed in both orders | **RULED OUT** |
 | qwen-vl-current | inability to discriminate the visual defects | pairwise 0/5, absolute 1/5 | **CONFIRMED** |
+| qwen-vl-current | image scaling | pairwise 640 px 0/5 vs native 794 px 2/5 | **CONFIRMED (helps)** |
 | qwen-vl-current | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen-vl-current | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | qwen-vl-current | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 3/5 | **NO — stays out of every gate** |
@@ -269,11 +271,11 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | qwen3-vl-8b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | qwen3-vl-8b | rubric overload (six roles in one call) | six-role 3/5 vs single-role 3/5 | **RULED OUT** |
 | qwen3-vl-8b | pair-order sensitivity / position bias | 0/5 cases picked the same POSITION in both orders | **RULED OUT** |
-| qwen3-vl-8b | prompt interpretation: answers the slot, not the page | answered "A" in 5/10 calls; reasons are near-identical templates whichever page is in slot A | **RULED OUT** |
+| qwen3-vl-8b | prompt interpretation: answers the slot, not the page | answered "A" in 5/10 calls | **RULED OUT** |
 | qwen3-vl-8b | output parsing (pairwise) | 5/5 cases parsed in both orders | **RULED OUT** |
 | qwen3-vl-8b | inability to discriminate the visual defects | pairwise 4/5, absolute 3/5 | **RULED OUT** |
-| qwen3-vl-8b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
 | qwen3-vl-8b | image scaling | pairwise 640 px 4/5 vs native 794 px 3/5 | **RULED OUT** |
+| qwen3-vl-8b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
 | qwen3-vl-8b | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen3-vl-8b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | qwen3-vl-8b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 4/5 | **YES** |

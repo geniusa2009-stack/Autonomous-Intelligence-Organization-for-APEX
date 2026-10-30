@@ -1,6 +1,6 @@
 # Final model matrix
 
-_Generated 2026-10-30 23:37 UTC by `apex-one reports` at commit `551042c` from measured artifacts._
+_Generated 2026-10-30 23:39 UTC by `apex-one reports` at commit `2e7ded4` from measured artifacts._
 
 One normalized table for the six local models. Every cell is ONE measured task under the same contract (same prompt, checker version, temperature 0, 500-token budget unless a cell says otherwise). **There is no overall score and no overall winner**: the models were not all measured on the same task set, and an average would hide a 0 behind unrelated 100s. Cells that did not measure say why (NOT_MEASURED / ERROR <kind>); none is ever counted as 0. GraphicDesignBench ran 2 samples per task — enough to show a model runs end to end, never enough to rank models.
 

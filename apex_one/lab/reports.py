@@ -512,23 +512,26 @@ def hypothesis_verdicts(rep: dict[str, Any], legible: bool | None = None) -> lis
         rows.append(("pair-order sensitivity / position bias", f"{bias}/5 cases picked the same POSITION in both orders",
                      "CONFIRMED" if bias >= 3 else "minor" if bias else "RULED OUT"))
         # which LETTER did it answer? good_as_A == "first" means it said "A"; good_as_B == "second" means "A" again
-        said_a = sum((d["good_as_A"] == "first") + (d["good_as_B"] == "second") for d in det.values())
-        n = 2 * len(det)
-        rows.append(("prompt interpretation: answers the slot, not the page", f"answered \"A\" in {said_a}/{n} calls; "
-                     "reasons are near-identical templates whichever page is in slot A",
-                     "CONFIRMED" if said_a >= n - 1 else "RULED OUT" if said_a <= n // 2 + 1 else "partial"))
+        slots = [d for d in det.values() if "good_as_A" in d and "good_as_B" in d]
+        if slots:
+            said_a = sum((d["good_as_A"] == "first") + (d["good_as_B"] == "second") for d in slots)
+            n = 2 * len(slots)
+            rows.append(("prompt interpretation: answers the slot, not the page", f"answered \"A\" in {said_a}/{n} "
+                         "calls" + ("; the reasons read as the same template whichever page is in slot A"
+                                    if said_a >= n - 1 else ""),
+                         "CONFIRMED" if said_a >= n - 1 else "RULED OUT" if said_a <= n // 2 + 1 else "partial"))
         rows.append(("output parsing (pairwise)", f"{rep['E1'].get('valid_checks')}/5 cases parsed in both orders",
                      "RULED OUT" if rep["E1"].get("valid_checks") == 5 else "CONTRIBUTES"))
         rows.append(("inability to discriminate the visual defects", f"pairwise {ok('E1')}/5"
                      + (f", absolute {sum(1 for v in e0['result']['checks'].values() if v)}/5" if e0 else ""),
                      "CONFIRMED" if (ok("E1") or 0) <= 1 else "partial" if (ok("E1") or 0) < 4 else "RULED OUT"))
+        if rep.get("E2"):
+            rows.append(("image scaling", f"pairwise 640 px {ok('E1')}/5 vs native 794 px {ok('E2')}/5",
+                         "CONFIRMED (helps)" if ok("E2") > ok("E1") else "RULED OUT"))
     if legible is not None:
         rows.append(("multimodal perception (can it read the page at 640 px?)",
                      f"legibility probe: deadline and tuition read {'correctly' if legible else 'WRONG'}",
                      "RULED OUT — perception works; the failure is judgement" if legible else "CONTRIBUTES"))
-        if rep.get("E2"):
-            rows.append(("image scaling", f"pairwise 640 px {ok('E1')}/5 vs native 794 px {ok('E2')}/5",
-                         "CONFIRMED (helps)" if ok("E2") > ok("E1") else "RULED OUT"))
     if rep.get("E3") and rep.get("E4"):
         same = sum(1 for k in rep["E3"]["cases"] if rep["E3"]["cases"][k]["good"]["score"] ==
                    rep["E4"]["cases"][k]["good"]["score"] and rep["E3"]["cases"][k]["broken"]["score"] ==

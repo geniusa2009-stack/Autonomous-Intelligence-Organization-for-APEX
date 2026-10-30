@@ -1,6 +1,6 @@
 # Model server reliability
 
-_Generated 2026-10-30 23:37 UTC by `apex-one reports` at commit `551042c` from measured artifacts._
+_Generated 2026-10-30 23:39 UTC by `apex-one reports` at commit `2e7ded4` from measured artifacts._
 
 A local model server can crash, hang, run out of memory, return nothing or return garbage. None of these is a wrong answer. `apex_one/compute/local/supervisor.py` classifies every failed call into exactly one failure kind, recovers the server when that is safe, and the benchmark records the sample as **ERROR** (never a score). Result states are kept separate: PASSED · FAILED (measured) · UNSUPPORTED · SKIPPED · ERROR.
 
