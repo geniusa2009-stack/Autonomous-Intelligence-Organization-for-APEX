@@ -509,6 +509,19 @@
         "preprocess_version": "width-bound-thumbnail-bicubic-v1",
         "input_hash_good": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27"
       }
+    },
+    "qwen3-vl-8b-q4kxl:gdb": {
+      "at": "2026-10-30T17:15:48",
+      "info": {
+        "exit": 0
+      }
+    },
+    "qwen3-vl-8b-q4kxl:vector": {
+      "at": "2026-10-30T17:16:12",
+      "info": {
+        "english_factual_writing": 100.0,
+        "structured_editorial": 100.0
+      }
     }
   },
   "failed": {
@@ -523,14 +536,6 @@
     "nemotron-3-nano-4b-q4km:server": {
       "at": "2026-10-12T12:09:33",
       "info": "llama-server exited (-4); see /home/user/Autonomous-Intelligence-Organization-for-APEX/var/models/nemotron-3-nano-4b-q4km/server.log"
-    },
-    "qwen3-vl-8b-q4kxl:gdb": {
-      "at": "2026-10-30T17:00:26",
-      "info": "INVALID: server died mid-run; empty outputs were scored as 0 (quarantined)"
-    },
-    "qwen3-vl-8b-q4kxl:vector": {
-      "at": "2026-10-30T17:00:26",
-      "info": "NOT_MEASURED: server not running, calls not executed"
     }
   }
 }

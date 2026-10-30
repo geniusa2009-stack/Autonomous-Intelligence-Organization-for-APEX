@@ -1,6 +1,6 @@
 # Vision judge robustness
 
-_Generated 2026-10-30 17:01 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 17:16 UTC by `apex-one reports build` from measured artifacts._
 
 Does a pairwise judge's calibration survive a change of input resolution? Same five calibration cases (good page vs each deliberately broken variant), both orders, 3 repeats per width.
 

@@ -1,6 +1,6 @@
 # Production routing matrix
 
-_Generated 2026-10-30 17:01 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 17:16 UTC by `apex-one reports build` from measured artifacts._
 
 Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checker v2) and licence records. No global best model, no cross-task average. A task's score is the weakest of the capabilities it REQUIRES; a model measured below the floor (50, pre-registered) on any of them is rejected. **Primary / fallback must also be production-licensed and installed**; the best evaluation-only model is shown separately. Ties are broken by measured latency on the same evidence tasks (lower first).
 
@@ -14,11 +14,11 @@ Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checke
 
 | capability | evidence task | gemma-multimodal | gpt-oss-20b | nemotron-nano-omni | qwen-vl-current | qwen3-vl-8b |
 |---|---|---|---|---|---|---|
-| editorial.write.general | english_factual_writing | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED |
+| editorial.write.general | english_factual_writing | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | 100 |
 | editorial.write.egyptian_arabic | egyptian_arabic | 75 | 50 | 0 | 0 | 0 |
 | editorial.write.fact_preserving | fact_preservation | 50 | 100 | 100 | 100 | 100 |
 | editorial.write.bilingual | en_ar_mixing | 100 | 100 | 100 | 100 | 67 |
-| editorial.write.structured | structured_editorial | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED |
+| editorial.write.structured | structured_editorial | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | NOT_MEASURED | 100 |
 | editorial.write.long_context | long_context | 100 | 100 | 100 | 100 | 100 |
 | extract.structured_json | structured_json | 100 | 100 | 100 | 100 | 100 |
 | design.html_css | html_css | 100 | 100 | 100 | 100 | 100 |
@@ -38,9 +38,9 @@ Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checke
 | task | requires (mandatory) | primary | fallback | best evaluation-only (licence-blocked) | rejected (below floor) | unmeasured |
 |---|---|---|---|---|---|---|
 | editorial.write.egyptian_guide | editorial.write.egyptian_arabic, editorial.write.fact_preserving | NONE passes → APEX native engine | — | gemma-multimodal (50, 10 s) | nemotron-nano-omni (egyptian_arabic=0); qwen-vl-current (egyptian_arabic=0); qwen3-vl-8b (egyptian_arabic=0) | — |
-| editorial.write.english | editorial.write.general | NONE passes → APEX native engine | — | — | — | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b |
+| editorial.write.english | editorial.write.general | qwen3-vl-8b (100, 12 s) | — | — | — | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current |
 | editorial.write.bilingual | editorial.write.bilingual, editorial.write.fact_preserving | qwen-vl-current (100, 16 s) | qwen3-vl-8b (67, 35 s) | nemotron-nano-omni (100, 75 s) | — | — |
-| editorial.write.checklist | editorial.write.structured | NONE passes → APEX native engine | — | — | — | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b |
+| editorial.write.checklist | editorial.write.structured | qwen3-vl-8b (100, 11 s) | — | — | — | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current |
 | editorial.write | editorial.write.egyptian_arabic, editorial.write.fact_preserving | NONE passes → APEX native engine | — | gemma-multimodal (50, 10 s) | nemotron-nano-omni (egyptian_arabic=0); qwen-vl-current (egyptian_arabic=0); qwen3-vl-8b (egyptian_arabic=0) | — |
 | editorial.critique | editorial.write.egyptian_arabic | NONE passes → APEX native engine | — | gemma-multimodal (75, 4 s) | nemotron-nano-omni (egyptian_arabic=0); qwen-vl-current (egyptian_arabic=0); qwen3-vl-8b (egyptian_arabic=0) | — |
 | evidence.extract | extract.structured_json | qwen-vl-current (100, 9 s) | qwen3-vl-8b (100, 20 s) | gemma-multimodal (100, 11 s) | — | — |
