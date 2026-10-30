@@ -52,9 +52,9 @@ def robustness_dir() -> Path:
 
 
 def _pages(calib_dir: Path) -> tuple[Path, dict[str, Path]]:
-    pages = json.loads((calib_dir / "calibration_pages.json").read_text(encoding="utf-8"))
-    good = Path(pages.pop("good"))
-    return good, {k: Path(v) for k, v in pages.items()}
+    from apex_one.lab.benchmarks.vision_calibration import calibration_pages
+
+    return calibration_pages(calib_dir)
 
 
 def native_width(calib_dir: Path) -> int:

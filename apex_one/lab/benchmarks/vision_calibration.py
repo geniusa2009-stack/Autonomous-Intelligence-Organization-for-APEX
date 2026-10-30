@@ -37,6 +37,18 @@ def build_calibration_pages(final_html: Path, page_index: int, out_dir: Path) ->
     return good, shots
 
 
+def calibration_pages(calib_dir: Path) -> tuple[Path, dict[str, Path]]:
+    """(good, broken) from calibration_pages.json. Stored paths may be relative to the APEX home (not the cwd), so
+    runs from a frozen worktree or another directory read the same files. The JSON is never rewritten: calibration
+    stamps hash its exact text."""
+    from apex_one.settings import get_settings
+
+    pages = json.loads((calib_dir / "calibration_pages.json").read_text(encoding="utf-8"))
+    fix = lambda v: Path(v) if Path(v).is_absolute() else get_settings().home / v  # noqa: E731
+    good = fix(pages.pop("good"))
+    return good, {k: fix(v) for k, v in pages.items()}
+
+
 def run_calibration(model_ids: list[str], out_dir: Path, intent: str = "one-page snapshot of decision-critical facts; "
                     "deadline must dominate", mode: str = "absolute", max_w: int = 768) -> dict:
     """mode="absolute": six-role council scoring; mode="pairwise": order-swapped A/B on the same five cases."""
@@ -44,9 +56,7 @@ def run_calibration(model_ids: list[str], out_dir: Path, intent: str = "one-page
     from apex_one.vision.council import VisionCouncil, calibrate
     from apex_one.vision.pairwise import PairwiseJudge, calibrate_pairwise
 
-    pages = json.loads((out_dir / "calibration_pages.json").read_text(encoding="utf-8"))
-    good = Path(pages.pop("good"))
-    broken = {k: Path(v) for k, v in pages.items()}
+    good, broken = calibration_pages(out_dir)
     if mode == "pairwise":
         res = calibrate_pairwise(PairwiseJudge(ComputeBroker(), model_ids, max_w=max_w), good, broken, intent)
     else:

@@ -64,9 +64,9 @@ def investigate(model_id: str, calib_dir: Path, out_dir: Path, intent: str = "on
     from apex_one.vision.council import VisionCouncil, calibrate
     from apex_one.vision.pairwise import PairwiseJudge, calibrate_pairwise
 
-    pages = json.loads((calib_dir / "calibration_pages.json").read_text(encoding="utf-8"))
-    good = Path(pages.pop("good"))
-    broken = {k: Path(v) for k, v in pages.items()}
+    from apex_one.lab.benchmarks.vision_calibration import calibration_pages
+
+    good, broken = calibration_pages(calib_dir)
     broker = ComputeBroker()
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{model_id}.json"
