@@ -1,0 +1,173 @@
+{
+  "frozen_at_commit": "11d21c6",
+  "evidence_sha256_12": {
+    "council_scores.json": "af212f01bbae",
+    "calibration_results.json": "c46d6a77ae09",
+    "page_compare.json": "119855e92746",
+    "vision_robustness/qwen3-vl-8b.json": "da9ee24665d7"
+  },
+  "rows": [
+    {
+      "task": "critical date arithmetic (date.*)",
+      "decision": "DETERMINISTIC_ENGINE",
+      "primary": "apex_one.core.dates",
+      "fallback": null,
+      "why": "permanently outside model reasoning; the $0 firewall refuses date.* for every model"
+    },
+    {
+      "task": "critical locked facts (deadline, eligibility, funding)",
+      "decision": "DETERMINISTIC_ENGINE",
+      "primary": "evidence system + fact locks",
+      "fallback": "HUMAN_REQUIRED for single-source critical claims",
+      "why": "models may phrase a locked fact, never change it"
+    },
+    {
+      "task": "editorial.write.egyptian_guide",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": "APEX native engine",
+      "fallback": null,
+      "why": "no production-licensed model passes editorial.write.egyptian_arabic, editorial.write.fact_preserving at the floor"
+    },
+    {
+      "task": "editorial.write.english",
+      "decision": "PRIMARY",
+      "primary": "qwen3-vl-8b (100)",
+      "fallback": null,
+      "why": "requires editorial.write.general; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "editorial.write.bilingual",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (67)",
+      "why": "requires editorial.write.bilingual, editorial.write.fact_preserving; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "editorial.write.checklist",
+      "decision": "PRIMARY",
+      "primary": "qwen3-vl-8b (100)",
+      "fallback": null,
+      "why": "requires editorial.write.structured; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "editorial.write",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": "APEX native engine",
+      "fallback": null,
+      "why": "no production-licensed model passes editorial.write.egyptian_arabic, editorial.write.fact_preserving at the floor"
+    },
+    {
+      "task": "editorial.critique",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": "APEX native engine",
+      "fallback": null,
+      "why": "no production-licensed model passes editorial.write.egyptian_arabic at the floor"
+    },
+    {
+      "task": "evidence.extract",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (100)",
+      "why": "requires extract.structured_json; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "live.structured",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (100)",
+      "why": "requires extract.structured_json; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "retrieval.long",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (100)",
+      "why": "requires editorial.write.long_context; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "mission.analyze",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": "APEX native engine",
+      "fallback": null,
+      "why": "no production-licensed model passes reasoning.general at the floor"
+    },
+    {
+      "task": "opportunity.model",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": "APEX native engine",
+      "fallback": null,
+      "why": "no production-licensed model passes reasoning.general at the floor"
+    },
+    {
+      "task": "design.html",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (100)",
+      "why": "requires design.html_css; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "design.reward",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (100)",
+      "why": "requires design.criticism; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "design.critique",
+      "decision": "PRIMARY",
+      "primary": "qwen-vl-current (100)",
+      "fallback": "qwen3-vl-8b (100)",
+      "why": "requires design.criticism; production-licensed, installed, ≥ floor"
+    },
+    {
+      "task": "visual finalist comparison (A/B)",
+      "decision": "PRIMARY",
+      "primary": "qwen3-vl-8b as SECONDARY_FINALIST_PAIRWISE_JUDGE (CANONICAL_640_ONLY)",
+      "fallback": "deterministic tournament order",
+      "why": "advisory only; canonical 640 px A4 renders of QA-passed finalists; never facts, dates, Arabic quality"
+    },
+    {
+      "task": "visual quality scores (absolute council)",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": null,
+      "fallback": null,
+      "why": "needs absolute calibration ≥ 4/5 AND ROBUSTLY_CALIBRATED; otherwise Vision Quality = NOT_MEASURED"
+    },
+    {
+      "task": "SVG / vector assets",
+      "decision": "NO_QUALIFIED_MODEL",
+      "primary": "native SVG assets",
+      "fallback": null,
+      "why": "specialist vector models (StarVector / OmniSVG) not activated: weights host egress-denied"
+    },
+    {
+      "task": "document layout",
+      "decision": "DETERMINISTIC_ENGINE",
+      "primary": "APEX native layout engine + tournament",
+      "fallback": null,
+      "why": "specialist layout models not activated"
+    },
+    {
+      "task": "page design (HTML writing)",
+      "decision": "DETERMINISTIC_ENGINE",
+      "primary": "APEX native engine",
+      "fallback": null,
+      "why": "no model page beat native without a safety loss"
+    },
+    {
+      "task": "release approval",
+      "decision": "HUMAN_REQUIRED",
+      "primary": "authenticated approver (token)",
+      "fallback": null,
+      "why": "hash-chained approval ledger"
+    },
+    {
+      "task": "brand assets",
+      "decision": "HUMAN_REQUIRED",
+      "primary": "apex-one brand import",
+      "fallback": null,
+      "why": "original APEX package; placeholders fail"
+    }
+  ],
+  "rule": "no global best model; per-task evidence; licence + installation required for production"
+}

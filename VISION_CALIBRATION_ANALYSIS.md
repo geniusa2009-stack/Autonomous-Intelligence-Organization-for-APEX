@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-30 21:09 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 21:39 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 

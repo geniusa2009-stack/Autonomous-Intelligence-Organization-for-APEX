@@ -586,7 +586,7 @@ def test_council_empty_output_is_not_measured(tmp_path):
             return SimpleNamespace(executed=True, text="", decision=SimpleNamespace(outcome=SimpleNamespace(value="OK")))
 
     data = run_council(Thinker(), ["m"], tmp_path, only=["reasoning"])
-    assert "reasoning" not in data["models"]["m"] and data["models"]["m"]["overall"] is None
+    assert "reasoning" not in data["models"]["m"] and "overall" not in data["models"]["m"]
     row = json.loads((tmp_path / "council_runs.jsonl").read_text().splitlines()[0])
     assert row["score"] is None and "NOT_MEASURED" in row["detail"]
 
@@ -1001,3 +1001,32 @@ def test_secondary_pairwise_judge_refuses_everything_it_was_not_calibrated_for(t
     assert rec["status"] == "NOT_MEASURED" and rec["role"] == SECONDARY_ROLE and rec["authority"] == "advisory"
     assert secondary_finalist_compare(NoCall(), [], a4, a4b, "Cover", deterministic_qa_passed=True)["status"] \
         == "NOT_MEASURED"
+
+
+def test_frozen_policy_never_routes_unmeasured_models_and_keeps_dates_deterministic(tmp_path, registry):
+    """Without measured evidence no model is PRIMARY for anything, however installed or licensed; dates and locked
+    facts are deterministic; release and brand need a human; absolute vision scores need a robust judge."""
+    from apex_one.lab.final_reports import policy_md, production_policy
+
+    pol = production_policy(registry, [], tmp_path)
+    by = {r["task"]: r for r in pol["rows"]}
+    assert by["critical date arithmetic (date.*)"]["decision"] == "DETERMINISTIC_ENGINE"
+    assert by["critical locked facts (deadline, eligibility, funding)"]["decision"] == "DETERMINISTIC_ENGINE"
+    assert by["release approval"]["decision"] == "HUMAN_REQUIRED"
+    assert by["visual quality scores (absolute council)"]["decision"] == "NO_QUALIFIED_MODEL"
+    model_tasks = [r for r in pol["rows"] if r["task"].startswith(("editorial.", "evidence.", "design.", "mission."))]
+    assert model_tasks and all(r["decision"] == "NO_QUALIFIED_MODEL" for r in model_tasks)
+    assert "global" not in " ".join(policy_md(pol)).lower().replace("no global best model", "")
+
+
+def test_final_matrix_never_shows_failed_samples_as_zero(tmp_path, registry):
+    from apex_one.lab.final_reports import _cell
+
+    rows = {("m", "egyptian_arabic"): {"score": None, "failure_kind": "MODEL_SERVER_CRASH", "max_tokens": 500},
+            ("m", "reasoning"): {"score": None, "detail": "empty output at max_tokens=900 (NOT_MEASURED)"},
+            ("m", "html_css"): {"score": 100.0, "max_tokens": 700}}
+    scores = {"m": {"html_css": 100.0}}
+    assert _cell("m", "egyptian_arabic", scores, rows) == "ERROR MODEL_SERVER_CRASH"
+    assert _cell("m", "reasoning", scores, rows) == "ERROR EMPTY_OUTPUT"
+    assert _cell("m", "long_context", scores, rows) == "NOT_MEASURED"
+    assert _cell("m", "html_css", scores, rows) == "100"            # 700 is html_css's own contract budget

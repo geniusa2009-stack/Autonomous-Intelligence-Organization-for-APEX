@@ -80,8 +80,10 @@ class State:
         return key in self.data["done"]
 
     def mark(self, key: str, info: object = None, failed: bool = False) -> None:
+        # the code commit that produced the result (frozen snapshot run; see NEXT_ACTIONS.md)
         (self.data["failed"] if failed else self.data["done"])[key] = {"at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                                                                       "info": info}
+                                                                       "info": info,
+                                                                       "commit": os.environ.get("APEX_RUN_COMMIT")}
         if not failed:
             self.data["failed"].pop(key, None)
         self.path.write_text(json.dumps(self.data, indent=2, default=str))

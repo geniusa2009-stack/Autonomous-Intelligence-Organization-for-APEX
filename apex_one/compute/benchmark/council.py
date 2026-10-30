@@ -320,8 +320,6 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
             log.flush()
             if score is not None:
                 entry[t.name] = score
-        measured = [v for k, v in entry.items() if k in {x.name for x in tasks(calib_dir)}]
-        entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
     scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return rescore(out_dir)     # one aggregation path (capabilities = min of their measured tasks)
 
@@ -357,8 +355,8 @@ def rescore(out_dir: Path) -> dict[str, Any]:
                     cap.setdefault(a, []).append(entry[name])
         for a, vals in cap.items():
             entry[a] = min(vals)
-        measured = [v for k, v in entry.items() if k in names]
-        entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
-        entry["measured_tasks"] = len(measured)
+        # no cross-task "overall" is stored: models are measured on different task sets and an average would
+        # hide a 0 (e.g. Egyptian Arabic) behind unrelated 100s
+        entry["measured_tasks"] = len([k for k in entry if k in names])
     scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return data

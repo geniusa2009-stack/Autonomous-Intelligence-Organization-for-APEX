@@ -1,0 +1,247 @@
+{
+  "drill": "fake model server fault injection",
+  "rows": [
+    {
+      "mode": "ok",
+      "state": "FAILED",
+      "failure_kind": null,
+      "score": 0.0,
+      "in_score_table": true,
+      "restarts": 0,
+      "server_starts": 1,
+      "events": [],
+      "expected": {
+        "state": "MEASURED",
+        "failure_kind": null,
+        "restart": false
+      },
+      "pass": true
+    },
+    {
+      "mode": "empty",
+      "state": "ERROR",
+      "failure_kind": "EMPTY_OUTPUT",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 0,
+      "server_starts": 1,
+      "events": [
+        "call_failed:EMPTY_OUTPUT"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "EMPTY_OUTPUT",
+        "restart": false
+      },
+      "pass": true
+    },
+    {
+      "mode": "hang",
+      "state": "ERROR",
+      "failure_kind": "MODEL_TIMEOUT",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 2,
+      "server_starts": 3,
+      "events": [
+        "call_failed:MODEL_TIMEOUT",
+        "restart",
+        "warmup_failed",
+        "restart",
+        "warmup_failed",
+        "restart_budget_exhausted"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "MODEL_TIMEOUT",
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "crash",
+      "state": "ERROR",
+      "failure_kind": "MODEL_SERVER_CRASH",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 2,
+      "server_starts": 3,
+      "events": [
+        "call_failed:MODEL_SERVER_CRASH",
+        "restart",
+        "warmup_failed",
+        "restart",
+        "warmup_failed",
+        "restart_budget_exhausted"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "MODEL_SERVER_CRASH",
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "oom",
+      "state": "ERROR",
+      "failure_kind": "OOM",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 2,
+      "server_starts": 3,
+      "events": [
+        "call_failed:OOM",
+        "restart",
+        "warmup_failed",
+        "restart",
+        "warmup_failed",
+        "restart_budget_exhausted"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "OOM",
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "malformed",
+      "state": "ERROR",
+      "failure_kind": "MALFORMED_RESPONSE",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 0,
+      "server_starts": 1,
+      "events": [
+        "call_failed:MALFORMED_RESPONSE"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "MALFORMED_RESPONSE",
+        "restart": false
+      },
+      "pass": true
+    },
+    {
+      "mode": "disconnect",
+      "state": "ERROR",
+      "failure_kind": "CONNECTION_DROPPED",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 0,
+      "server_starts": 1,
+      "events": [
+        "call_failed:CONNECTION_DROPPED",
+        "call_failed:CONNECTION_DROPPED"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "CONNECTION_DROPPED",
+        "restart": false
+      },
+      "pass": true
+    },
+    {
+      "mode": "unhealthy",
+      "state": "ERROR",
+      "failure_kind": "HEALTHCHECK_FAILED",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 2,
+      "server_starts": 3,
+      "events": [
+        "unhealthy_before_call:HEALTHCHECK_FAILED",
+        "restart",
+        "start_failed",
+        "restart",
+        "start_failed",
+        "restart_budget_exhausted"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "HEALTHCHECK_FAILED",
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "crash_once",
+      "state": "FAILED",
+      "failure_kind": null,
+      "score": 0.0,
+      "in_score_table": true,
+      "restarts": 1,
+      "server_starts": 2,
+      "events": [
+        "call_failed:MODEL_SERVER_CRASH",
+        "restart",
+        "recovered"
+      ],
+      "expected": {
+        "state": "MEASURED",
+        "failure_kind": null,
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "hang_once",
+      "state": "FAILED",
+      "failure_kind": null,
+      "score": 0.0,
+      "in_score_table": true,
+      "restarts": 1,
+      "server_starts": 2,
+      "events": [
+        "call_failed:MODEL_TIMEOUT",
+        "restart",
+        "recovered"
+      ],
+      "expected": {
+        "state": "MEASURED",
+        "failure_kind": null,
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "oom_once",
+      "state": "FAILED",
+      "failure_kind": null,
+      "score": 0.0,
+      "in_score_table": true,
+      "restarts": 1,
+      "server_starts": 2,
+      "events": [
+        "call_failed:OOM",
+        "restart",
+        "recovered"
+      ],
+      "expected": {
+        "state": "MEASURED",
+        "failure_kind": null,
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "disconnect_once",
+      "state": "FAILED",
+      "failure_kind": null,
+      "score": 0.0,
+      "in_score_table": true,
+      "restarts": 0,
+      "server_starts": 1,
+      "events": [
+        "call_failed:CONNECTION_DROPPED"
+      ],
+      "expected": {
+        "state": "MEASURED",
+        "failure_kind": null,
+        "restart": false
+      },
+      "pass": true
+    }
+  ],
+  "all_pass": true
+}

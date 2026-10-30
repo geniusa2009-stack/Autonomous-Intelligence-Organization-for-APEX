@@ -1,6 +1,6 @@
 # Production routing matrix
 
-_Generated 2026-10-30 21:09 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 21:39 UTC by `apex-one reports build` from measured artifacts._
 
 Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checker v2) and licence records. No global best model, no cross-task average. A task's score is the weakest of the capabilities it REQUIRES; a model measured below the floor (50, pre-registered) on any of them is rejected. **Primary / fallback must also be production-licensed and installed**; the best evaluation-only model is shown separately. Ties are broken by measured latency on the same evidence tasks (lower first).
 
@@ -27,9 +27,9 @@ Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checke
 
 | model | production licence | weights installed |
 |---|---|---|
-| gemma-multimodal | BLOCKED | yes |
-| gpt-oss-20b | BLOCKED | no |
-| nemotron-nano-omni | BLOCKED | yes |
+| gemma-multimodal | BLOCKED — DECLARED_BUT_UNVERIFIED | yes |
+| gpt-oss-20b | BLOCKED — UNKNOWN | no |
+| nemotron-nano-omni | BLOCKED — DECLARED_BUT_UNVERIFIED | yes |
 | qwen-vl-current | ALLOWED | yes |
 | qwen3-vl-8b | ALLOWED | yes |
 
@@ -64,3 +64,33 @@ Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checke
 
 Remote free-tier routes were never measured here (provider hosts are network-blocked from this environment), so they appear in no primary/fallback cell. They stay routable only through the runtime prior, below every measured model, and are reported as unmeasured.
 
+
+## Frozen production routing policy
+
+Frozen at commit `11d21c6` against evidence `council_scores.json`=af212f01bbae, `calibration_results.json`=c46d6a77ae09, `page_compare.json`=119855e92746, `vision_robustness/qwen3-vl-8b.json`=da9ee24665d7 (`docs/evidence/production_routing_policy.json`). Any change to that evidence requires regenerating and re-reviewing this table. A model is never routed to merely because it is installed.
+
+| task | decision | primary | fallback | why |
+|---|---|---|---|---|
+| critical date arithmetic (date.*) | **DETERMINISTIC_ENGINE** | apex_one.core.dates | — | permanently outside model reasoning; the $0 firewall refuses date.* for every model |
+| critical locked facts (deadline, eligibility, funding) | **DETERMINISTIC_ENGINE** | evidence system + fact locks | HUMAN_REQUIRED for single-source critical claims | models may phrase a locked fact, never change it |
+| editorial.write.egyptian_guide | **NO_QUALIFIED_MODEL** | APEX native engine | — | no production-licensed model passes editorial.write.egyptian_arabic, editorial.write.fact_preserving at the floor |
+| editorial.write.english | **PRIMARY** | qwen3-vl-8b (100) | — | requires editorial.write.general; production-licensed, installed, ≥ floor |
+| editorial.write.bilingual | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (67) | requires editorial.write.bilingual, editorial.write.fact_preserving; production-licensed, installed, ≥ floor |
+| editorial.write.checklist | **PRIMARY** | qwen3-vl-8b (100) | — | requires editorial.write.structured; production-licensed, installed, ≥ floor |
+| editorial.write | **NO_QUALIFIED_MODEL** | APEX native engine | — | no production-licensed model passes editorial.write.egyptian_arabic, editorial.write.fact_preserving at the floor |
+| editorial.critique | **NO_QUALIFIED_MODEL** | APEX native engine | — | no production-licensed model passes editorial.write.egyptian_arabic at the floor |
+| evidence.extract | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (100) | requires extract.structured_json; production-licensed, installed, ≥ floor |
+| live.structured | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (100) | requires extract.structured_json; production-licensed, installed, ≥ floor |
+| retrieval.long | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (100) | requires editorial.write.long_context; production-licensed, installed, ≥ floor |
+| mission.analyze | **NO_QUALIFIED_MODEL** | APEX native engine | — | no production-licensed model passes reasoning.general at the floor |
+| opportunity.model | **NO_QUALIFIED_MODEL** | APEX native engine | — | no production-licensed model passes reasoning.general at the floor |
+| design.html | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (100) | requires design.html_css; production-licensed, installed, ≥ floor |
+| design.reward | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (100) | requires design.criticism; production-licensed, installed, ≥ floor |
+| design.critique | **PRIMARY** | qwen-vl-current (100) | qwen3-vl-8b (100) | requires design.criticism; production-licensed, installed, ≥ floor |
+| visual finalist comparison (A/B) | **PRIMARY** | qwen3-vl-8b as SECONDARY_FINALIST_PAIRWISE_JUDGE (CANONICAL_640_ONLY) | deterministic tournament order | advisory only; canonical 640 px A4 renders of QA-passed finalists; never facts, dates, Arabic quality |
+| visual quality scores (absolute council) | **NO_QUALIFIED_MODEL** | — | — | needs absolute calibration ≥ 4/5 AND ROBUSTLY_CALIBRATED; otherwise Vision Quality = NOT_MEASURED |
+| SVG / vector assets | **NO_QUALIFIED_MODEL** | native SVG assets | — | specialist vector models (StarVector / OmniSVG) not activated: weights host egress-denied |
+| document layout | **DETERMINISTIC_ENGINE** | APEX native layout engine + tournament | — | specialist layout models not activated |
+| page design (HTML writing) | **DETERMINISTIC_ENGINE** | APEX native engine | — | no model page beat native without a safety loss |
+| release approval | **HUMAN_REQUIRED** | authenticated approver (token) | — | hash-chained approval ledger |
+| brand assets | **HUMAN_REQUIRED** | apex-one brand import | — | original APEX package; placeholders fail |

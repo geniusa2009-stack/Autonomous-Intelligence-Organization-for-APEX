@@ -1,6 +1,6 @@
 # APEX Design Bench (Phase 17)
 
-_Generated 2026-10-30 21:09 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 21:39 UTC by `apex-one reports build` from measured artifacts._
 
 Fifteen page types (every semantic page type of the Document AST), content from a real pipeline run (golden job AST + fact locks). Each system produces one page per type; all pages are rendered by the same Chromium and measured by the same deterministic page QA. **No single score is reported by design.**
 
@@ -131,3 +131,17 @@ Same content, same renderer, same checks. Means over the page types each system 
 | print_fidelity | pass:print | PASS | print.fidelity=100.0 |
 | screenshot_to_code_regression | not_measured:requires ScreenCoder/DCGen (not available on a  | NOT_MEASURED | requires ScreenCoder/DCGen (not available on a $0 licence-verified route) |
 | graphic_design_bench_gdb | not_measured:GDB runs separately (apex-one bench gdb): lica- | NOT_MEASURED | GDB runs separately (apex-one bench gdb): lica-gdb is installed, but the full da |
+
+## Native APEX engine vs best model candidate, per page type
+
+Best candidate = the model page with the fewest losses to native on these dimensions (ties: more wins). Stability: the native engine is deterministic (same inputs → byte-identical pages, `docs/evidence/golden_ultra_deterministic.json`); a model page is ONE sample, so its run-to-run stability is NOT_MEASURED and counts against promotion. Native stays primary unless the model wins without a loss.
+
+| page type | best model | reader comprehension | geometry: overflow issues | RTL | brand fit (APEX similarity) | editability | fact preservation | text fidelity | stability | decision |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ApexTake | llm:gemma-multimodal | — vs — | 0 vs 0 | 100 vs 100 | 75 vs 100 | 100 vs 100 | — vs — | 100 vs 100 | NOT_MEASURED vs deterministic | **KEEP NATIVE** |
+| Checklist | llm:gemma-multimodal | 100 vs 100 | 0 vs 0 | 100 vs 100 | 100 vs 100 | 100 vs 100 | 100 vs 100 | 96 vs 100 | NOT_MEASURED vs deterministic | **KEEP NATIVE** |
+| Cover | llm:nemotron-nano-omni | 100 vs 100 | 1 vs 0 | 100 vs 100 | 100 vs 100 | 100 vs 100 | 100 vs 100 | 100 vs 100 | NOT_MEASURED vs deterministic | **KEEP NATIVE** |
+| OpportunitySnapshot | llm:gemma-multimodal | 100 vs 100 | 0 vs 0 | 79 vs 100 | 100 vs 100 | 100 vs 100 | 100 vs 100 | 99 vs 84 | NOT_MEASURED vs deterministic | **KEEP NATIVE** |
+| Timeline | llm:gemma-multimodal | 100 vs 100 | 0 vs 0 | 95 vs 100 | 100 vs 100 | 100 vs 100 | 100 vs 100 | 100 vs 100 | NOT_MEASURED vs deterministic | **KEEP NATIVE** |
+
+Cells read `model vs native`. Page types without a model-written page are native by construction.

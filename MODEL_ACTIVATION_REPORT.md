@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-30 21:09 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 21:39 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -9,11 +9,12 @@ Real local inference: llama.cpp `llama-server` (built from source in this contai
 | key | registry model | source | size | vision | live structured test | licence state |
 |---|---|---|---|---|---|---|
 | gpt-oss-20b-mxfp4 | gpt-oss-20b | `ai/gpt-oss:latest` | NOT ACQUIRED | False | LIVE_TESTED (correct) | UNKNOWN (lic-gpt-oss) |
-| nemotron-3-nano-4b-q4km | nemotron-nano-omni | `ai/nemotron-3-nano:4b` | 2.90 GB | False | LIVE_TESTED (correct) | UNKNOWN (lic-nvidia-nemotron-nano) |
+| nemotron-3-nano-4b-q4km | nemotron-nano-omni | `ai/nemotron-3-nano:4b` | 2.90 GB | False | LIVE_TESTED (correct) | DECLARED_BUT_UNVERIFIED (lic-nvidia-nemotron-nano) |
 | qwen3-vl-4b-q4kxl | qwen-vl-current | `ai/qwen3-vl:4B-UD-Q4_K_XL` | 3.38 GB | True | LIVE_TESTED (correct) | PRODUCTION_ALLOWED (lic-qwen3-vl-apache); artifact ships `LICENSE` |
-| gemma3-4b-q4km | gemma-multimodal | `ai/gemma3:4b-q4_K_M` | 3.34 GB | True | LIVE_TESTED (correct) | UNKNOWN (lic-gemma) |
+| gemma3-4b-q4km | gemma-multimodal | `ai/gemma3:4b-q4_K_M` | 3.34 GB | True | LIVE_TESTED (correct) | DECLARED_BUT_UNVERIFIED (lic-gemma) |
 | qwen3-vl-8b-q4kxl | qwen3-vl-8b | `ai/qwen3-vl:8B-UD-Q4_K_XL` | 6.31 GB | True | LIVE_TESTED (correct) | PRODUCTION_ALLOWED (lic-qwen3-vl-8b); artifact ships `LICENSE` |
-| gemma3-12b-q4km | gemma3-12b | `ai/gemma3:12b-q4_K_M` | 8.15 GB | True | LIVE_TESTED (correct) | UNKNOWN (lic-gemma3-12b) |
+| qwen3-vl-8b-q8kxl | qwen3-vl-8b-q8 | `ai/qwen3-vl:8B-Q8_K_XL` | NOT ACQUIRED | True | PENDING | UNKNOWN (lic-qwen3-vl-8b-q8) |
+| gemma3-12b-q4km | gemma3-12b | `ai/gemma3:12b-q4_K_M` | 8.15 GB | True | LIVE_TESTED (correct) | DECLARED_BUT_UNVERIFIED (lic-gemma3-12b) |
 
 ## General council benchmark (Phase 15)
 

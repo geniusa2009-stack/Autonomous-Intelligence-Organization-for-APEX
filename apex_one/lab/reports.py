@@ -325,7 +325,7 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
                 bench / "apex_design" / "page_compare.json", bench / "queue_state.json",
                 bench / "apex_design" / "apex_design_bench.json", bench / "apex_design" / "apex_design_bench_rows.jsonl",
                 bench / "design" / "design_bench.json", art / "live" / "provider_live_report.json",
-                art / "live" / "local_live_results.json"):
+                art / "live" / "local_live_results.json", bench / "vision_robustness_search.json"):
         if src.exists():
             shutil.copy(src, evidence / src.name)
     gdb_runs: dict[str, Any] = {}
@@ -362,7 +362,19 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
     for f in robust_dir.glob("*.json") if robust_dir.exists() else []:
         shutil.copy(f, evidence / f"vision_robustness_{f.name}")
     files["VISION_JUDGE_ROBUSTNESS.md"] = robustness_md(robust_dir, bench / "vision_calibration")
-    files["PRODUCTION_ROUTING_MATRIX.md"] = routing_matrix_md(reg, runs)
+    from apex_one.lab.final_reports import (final_model_matrix_md, native_vs_model_md, policy_md,
+                                            production_policy, reliability_md)
+
+    policy = production_policy(reg, runs, bench)
+    (evidence / "production_routing_policy.json").write_text(json.dumps(policy, indent=2, ensure_ascii=False),
+                                                              encoding="utf-8")
+    files["PRODUCTION_ROUTING_MATRIX.md"] = routing_matrix_md(reg, runs) + "\n" + "\n".join(policy_md(policy))
+    files["APEX_DESIGN_BENCH.md"] += "\n" + "\n".join(native_vs_model_md(_load(bench / "apex_design" / "page_compare.json")))
+    files["FINAL_MODEL_MATRIX.md"] = final_model_matrix_md(bench, reg, specs)
+    for src in (bench / "server_reliability" / "fault_drill.json", bench / "server_reliability" / "events.jsonl"):
+        if src.exists():
+            shutil.copy(src, evidence / f"server_{src.name}")
+    files["MODEL_SERVER_RELIABILITY.md"] = reliability_md(bench)
     for name, text in files.items():
         (repo / name).write_text(text, encoding="utf-8")
     return {k: str(repo / k) for k in files}
@@ -738,6 +750,27 @@ def robustness_md(robust_dir: Path, calib_dir: Path) -> str:
                     "normalized input. It is not a general-purpose vision judge; at other resolutions its verdicts are "
                     "not trusted. Production uses it only for order-swapped finalist A/B judging at "
                     f"{CALIBRATED_MAX_W} px, and the deterministic DOM gates stay authoritative.", ""]
+    from apex_one.vision.pairwise import SECONDARY_ROLE
+
+    out += ["## Production role of a canonical-only judge", "",
+            f"`{SECONDARY_ROLE}` (`apex_one/vision/pairwise.py::secondary_finalist_compare`, the only production entry "
+            "point). Admitted only when ALL hold: canonical 640 px preprocessing with the calibrated preprocessing "
+            "version; the same model build (GGUF digest) as calibration; canonical legibility passed; both finalists "
+            "already passed deterministic QA; inputs are A4 page renders. The verdict is **advisory** (+5 fitness "
+            "between two QA-passed finalists), never the release authority. It refuses — before any model call — raw "
+            "or mobile screenshots, arbitrary resolutions, any width other than 640 px, and any request about facts, "
+            "dates or Egyptian-Arabic quality. Absolute Vision Council SCORES additionally need ROBUSTLY_CALIBRATED; "
+            "with no such judge, VisionCouncil.status = NOT_MEASURED.", ""]
+    search = _load(robust_dir.parent / "vision_robustness_search.json")
+    if search:
+        out += ["## Stronger-judge search (legal $0 routes only)", "", search["rule"] + ".", "",
+                "| route / candidate | state | detail |", "|---|---|---|"]
+        out += [f"| {r['route']} | {r['state']} | {r['detail']} |" for r in search["remote"]]
+        out += [f"| {r['candidate']} ({r['size_gb']} GB) | {r['state']} | {r['detail']} |" for r in search["local"]]
+        robust = [m for m in models if status(load(m, robust_dir) or {})[0] == "ROBUSTLY_CALIBRATED"]
+        out += ["", f"**ROBUSTLY_CALIBRATED judges found: {', '.join(robust) or 'none'}.** "
+                + ("" if robust else "Subjective visual quality stays NOT_MEASURED except the canonical 640 px "
+                   "secondary pairwise advice."), ""]
     return "\n".join(out) + "\n"
 
 
@@ -784,7 +817,7 @@ def routing_matrix_md(reg, runs: list[dict[str, Any]]) -> str:
                                                      is not None else "NOT_MEASURED" for m in measured) + " |")
     out += ["", "| model | production licence | weights installed |", "|---|---|---|"]
     for m in measured:
-        out.append(f"| {m.id} | {'ALLOWED' if reg.production_allowed(m) else 'BLOCKED'} | "
+        out.append(f"| {m.id} | {'ALLOWED' if reg.production_allowed(m) else 'BLOCKED — ' + reg.license_for(m).production_state.value} | "
                    f"{'yes' if m.id in installed else 'no'} |")
     out += ["", "## Per-task routing", "",
             "| task | requires (mandatory) | primary | fallback | best evaluation-only (licence-blocked) | rejected (below floor) | unmeasured |",

@@ -1,0 +1,86 @@
+{
+  "at": "2026-10-30T21:30Z",
+  "rule": "only legal $0 routes allowed by APEX policy; same calibration suite, pair-order inversion, repeats, legibility probes; thresholds unchanged",
+  "remote": [
+    {
+      "route": "Gemini free tier (generativelanguage.googleapis.com)",
+      "reachable": true,
+      "state": "BLOCKED_NO_KEY",
+      "detail": "host answers (HTTP 404 on /); GEMINI_API_KEY not set \u2014 a human must create a free-tier key; never billing"
+    },
+    {
+      "route": "NVIDIA NIM free endpoints incl. Nemotron multimodal (integrate.api.nvidia.com)",
+      "reachable": false,
+      "state": "EGRESS_DENIED",
+      "detail": "proxy CONNECT 403"
+    },
+    {
+      "route": "OpenRouter ':free' vision models (openrouter.ai)",
+      "reachable": false,
+      "state": "EGRESS_DENIED",
+      "detail": "proxy CONNECT 403"
+    },
+    {
+      "route": "Groq free tier vision (api.groq.com)",
+      "reachable": false,
+      "state": "EGRESS_DENIED",
+      "detail": "proxy CONNECT 403"
+    },
+    {
+      "route": "Cloudflare Workers AI free tier (api.cloudflare.com)",
+      "reachable": false,
+      "state": "EGRESS_DENIED",
+      "detail": "proxy CONNECT 403"
+    },
+    {
+      "route": "Hugging Face router / Hub weights (router.huggingface.co, huggingface.co)",
+      "reachable": false,
+      "state": "EGRESS_DENIED",
+      "detail": "proxy CONNECT 403"
+    },
+    {
+      "route": "Mistral / Together (api.mistral.ai, api.together.xyz)",
+      "reachable": false,
+      "state": "EGRESS_DENIED",
+      "detail": "proxy CONNECT 403; free-tier status not verifiable"
+    }
+  ],
+  "local": [
+    {
+      "candidate": "Qwen3-VL 32B (ai/qwen3-vl:32B-UD-Q4_K_XL)",
+      "size_gb": 21.3,
+      "state": "DOES_NOT_FIT",
+      "detail": "15 GB RAM machine"
+    },
+    {
+      "candidate": "Gemma 3 27B (ai/gemma3:27b-q4_K_M)",
+      "size_gb": 17.4,
+      "state": "DOES_NOT_FIT",
+      "detail": "15 GB RAM machine"
+    },
+    {
+      "candidate": "Qwen3-VL 235B-A22B",
+      "size_gb": 143.3,
+      "state": "DOES_NOT_FIT",
+      "detail": ""
+    },
+    {
+      "candidate": "Qwen3-VL 8B Q8_K_XL (ai/qwen3-vl:8B-Q8_K_XL)",
+      "size_gb": 12.0,
+      "state": "QUEUED",
+      "detail": "largest Qwen3-VL build that fits; Apache-2.0 declared; calibrated as its own build"
+    },
+    {
+      "candidate": "Gemma 3 12B Q4_K_M",
+      "size_gb": 8.2,
+      "state": "IN_EVALUATION",
+      "detail": "planned candidate; licence DECLARED_BUT_UNVERIFIED (evaluation only)"
+    },
+    {
+      "candidate": "Gemma 3n E4B, SmolVLM 500M",
+      "size_gb": 4.5,
+      "state": "NOT_PURSUED",
+      "detail": "smaller than the 8B that already failed every non-canonical width; parameter count is not evidence, but a smaller model is not a 'stronger judge' candidate"
+    }
+  ]
+}
