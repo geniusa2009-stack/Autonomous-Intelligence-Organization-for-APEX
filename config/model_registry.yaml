@@ -2027,6 +2027,31 @@ models:
   min_ram_gb: 9
   local_hint: 'apex-one local acquire qwen3-vl-8b-q4kxl'
   notes: Local route only (config/local_models.yaml); evaluation-only until its licence is verified.
+- id: qwen3-vl-8b-q8
+  family: qwen
+  version: Qwen3-VL 8B Instruct (GGUF Q8_K_XL)
+  category: general
+  description: Stronger-judge search candidate — the largest Qwen3-VL build that fits 15 GB RAM (32B needs 21 GB). Same weights as qwen3-vl-8b at 8-bit, so it is calibrated as its own build, never inheriting the Q4 result.
+  capabilities:
+    reasoning: medium
+    coding: medium
+    arabic: medium
+    egyptian_arabic: low
+    vision: true
+    structured_output: true
+    tool_use: false
+    design_roles: []
+  capability_source: prior-estimate
+  context: 32768
+  latency: slow
+  routes: []
+  license_ref: lic-qwen3-vl-8b-q8
+  integration_status: CONFIGURED_BUT_UNTESTED
+  adapter: openai_compatible
+  weights_size_gb: 12.0
+  min_ram_gb: 14
+  local_hint: 'apex-one local acquire qwen3-vl-8b-q8kxl'
+  notes: Local route only (config/local_models.yaml); vision-judge candidate; evaluation-only until its licence is verified.
 - id: gemma3-12b
   family: gemma
   version: Gemma 3 12B it (GGUF Q4_K_M)

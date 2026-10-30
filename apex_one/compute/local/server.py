@@ -26,6 +26,7 @@ class LocalServer:
         self.threads = threads or max(1, (os.cpu_count() or 2))
         self.pidfile = spec.dir / "server.pid"
         self.logfile = spec.dir / "server.log"
+        self.proc: subprocess.Popen | None = None
 
     @property
     def base_url(self) -> str:
@@ -61,6 +62,7 @@ class LocalServer:
             cmd += ["--mmproj", str(mmproj)]
         log = self.logfile.open("ab")
         proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        self.proc = proc
         self.pidfile.write_text(str(proc.pid))
         t0 = time.time()
         while time.time() - t0 < wait_s:
@@ -71,6 +73,41 @@ class LocalServer:
             time.sleep(1.0)
         raise TimeoutError(f"{self.spec.key} did not become healthy in {wait_s}s")
 
+    # ---- supervision (apex_one/compute/local/supervisor.py) ----
+    def alive(self) -> bool | None:
+        """True / False when known; None when this object did not start the process and has no pid."""
+        if self.proc is not None:
+            return self.proc.poll() is None
+        if not self.pidfile.exists():
+            return None
+        try:
+            os.kill(int(self.pidfile.read_text()), 0)
+            return True
+        except (ProcessLookupError, ValueError):
+            return False
+        except PermissionError:
+            return True
+
+    def exit_code(self) -> int | None:
+        return self.proc.poll() if self.proc is not None else None
+
+    def log_tail(self, chars: int = 2000) -> str:
+        if not self.logfile.exists():
+            return ""
+        with self.logfile.open("rb") as fh:
+            fh.seek(max(0, self.logfile.stat().st_size - chars))
+            return fh.read().decode("utf-8", "replace")
+
+    def warm_up(self, timeout: float = 120.0) -> bool:
+        """One tiny completion: the model is loaded and answering (not just the HTTP listener)."""
+        try:
+            r = httpx.post(f"{self.base_url}/chat/completions", timeout=timeout,
+                           json={"model": self.spec.key, "max_tokens": 1, "temperature": 0,
+                                 "messages": [{"role": "user", "content": "ok"}]})
+            return r.status_code == 200 and "choices" in r.json()
+        except (httpx.HTTPError, ValueError):
+            return False
+
     def stop(self) -> None:
         if self.pidfile.exists():
             try:
@@ -78,3 +115,12 @@ class LocalServer:
             except (ProcessLookupError, ValueError, PermissionError):
                 pass
             self.pidfile.unlink(missing_ok=True)
+        if self.proc is not None:
+            try:
+                self.proc.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(self.proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            self.proc = None

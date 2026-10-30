@@ -258,40 +258,62 @@ def _pairwise_hierarchy(broker, model_id: str, calib_dir: Path, ws=None) -> tupl
                                                 images_b64_png=[first, second])],
                               json_mode=True, max_tokens=60, temperature=0.0, timeout=900)
         if not res.executed:
-            return None, "no route"
+            fk = call_failure_kind(res)
+            return None, f"ERROR {fk}" if fk else "no route"
         w = str((_json(res.text or "") or {}).get("winner", "")).upper()[:1]
         answers.append(w == correct)
     return (100.0 if all(answers) else 50.0 if any(answers) else 0.0), f"order-swapped answers correct={answers}"
 
 
+def call_failure_kind(res) -> str | None:
+    """FailureKind of the last failed attempt of a broker call (None when no attempt was made)."""
+    calls = getattr(res, "calls", None) or []
+    return next((c.failure_kind or "UNKNOWN_FAILURE" for c in reversed(calls) if c.outcome != "ok"), None)
+
+
+def sample_state(score: float | None, failure_kind: str | None, floor: float) -> str:
+    """PASSED / FAILED only for a real measurement; a failed call is ERROR, a call never made is SKIPPED."""
+    if score is None:
+        return "ERROR" if failure_kind else "SKIPPED"
+    return "PASSED" if score >= floor else "FAILED"
+
+
 def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | None = None,
-                only: list[str] | None = None, max_tokens: int | None = None) -> dict[str, Any]:
+                only: list[str] | None = None, max_tokens: int | None = None, timeout: float = 900) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
     scores_path = out_dir / "council_scores.json"
     data = json.loads(scores_path.read_text(encoding="utf-8")) if scores_path.exists() else {"models": {}, "runs": []}
     log = (out_dir / "council_runs.jsonl").open("a", encoding="utf-8")
+    from apex_one.compute.router.capability import routing_config
+
+    floor = float(routing_config().get("default_min_score", 50))
     for mid in model_ids:
         entry = data["models"].setdefault(mid, {})
         for t in tasks(calib_dir):
             if only and t.name not in only:
                 continue
             t0 = time.perf_counter()
+            fk = None
             if t.vision:
                 score, detail = _pairwise_hierarchy(broker, mid, calib_dir)  # type: ignore[arg-type]
+                fk = detail.split(" ", 1)[1] if detail.startswith("ERROR ") else None
                 text = ""
             else:
                 req = CapabilityRequest(task=f"bench.{t.name}", purpose="evaluation", model_id=mid)
                 res = broker.complete(req, t.build(), json_mode=t.json_mode, max_tokens=max_tokens or t.max_tokens,
-                                      temperature=0.0, timeout=900)
+                                      temperature=0.0, timeout=timeout)
                 text = res.text or ""
                 if not res.executed:
-                    score, detail = None, f"not executed: {res.decision.outcome.value}"
+                    fk = call_failure_kind(res)
+                    score, detail = None, f"not executed: {res.decision.outcome.value}" + (f" ({fk})" if fk else "")
                 elif not text.strip():
                     # reasoning models can spend the whole budget on hidden reasoning: NOT a wrong answer
                     score, detail = None, f"empty output at max_tokens={max_tokens or t.max_tokens} (NOT_MEASURED)"
+                    fk = "EMPTY_OUTPUT"
                 else:
                     score, detail = t.score(text)
-            rec = {"model": mid, "task": t.name, "score": score, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
+            rec = {"model": mid, "task": t.name, "score": score, "state": sample_state(score, fk, floor),
+                   "failure_kind": fk, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
                    "max_tokens": None if t.vision else (max_tokens or t.max_tokens), "checker_version": CHECKER_VERSION,
                    "output": text[:STORED_OUTPUT_CHARS]}
             log.write(json.dumps(rec, ensure_ascii=False) + "\n")

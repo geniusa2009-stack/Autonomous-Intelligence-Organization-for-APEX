@@ -39,17 +39,32 @@ PLAN = [
     ("gpt-oss-20b-mxfp4", ["rerun", "pages"]),
     ("qwen3-vl-8b-q4kxl", ["acquire", "live", "calib", "pcalib", "invest", "council", "robust:640", "gdb", "vector",
                            *[f"robust:{w}" for w in ROBUST_WIDTHS if w != "640"]]),
-    ("gemma3-12b-q4km", ["acquire", "live", "calib", "pcalib", "invest", "council", "gdb"]),
+    # Gemma 3 12B: the SAME contracts as the 8B (calibration pages, prompts, checkers, 500-token council budget).
+    # robust:640 = pair-order + 3-repeat stability at the canonical input; the other widths run only if 640 passes
+    ("gemma3-12b-q4km", ["acquire", "live", "calib", "pcalib", "robust:640",
+                         *[f"robust:{w}" for w in ROBUST_WIDTHS if w != "640"],
+                         "invest", "council", "gdb", "pages"]),
     ("qwen3-vl-4b-q4kxl", ["vector"]),
     ("gemma3-4b-q4km", ["vector"]),
     ("nemotron-3-nano-4b-q4km", ["vector"]),
+    ("qwen3-vl-8b-q4kxl", ["pages"]),          # native-vs-model page comparison (+ RAM record)
+    # gpt-oss weights were freed for disk room: re-acquire (same digest) to measure the two writing tasks; a
+    # reasoning model that spends the 500-token budget on hidden reasoning gets the documented 4096 re-run
+    ("gpt-oss-20b-mxfp4", ["acquire", "vector", "rerun_vector"]),
+    # stronger-judge search (every free remote multimodal route is egress-blocked or keyless): the same
+    # calibration suite, pair-order inversion, repeats and legibility probes; thresholds unchanged
+    ("qwen3-vl-8b-q8kxl", ["acquire", "live", "calib", "pcalib", "robust:640",
+                           *[f"robust:{w}" for w in ROBUST_WIDTHS if w != "640"]]),
 ]
 VECTOR_TASKS = ("english_factual_writing", "structured_editorial")
 PAGE_TYPES = ["Cover", "OpportunitySnapshot", "Timeline", "ApexTake", "Checklist"]
 GOLDEN_JOB = os.environ.get("APEX_BENCH_JOB", "J-2da4830a2781")
 # weights that may be removed (re-acquirable, digest recorded) to make disk room for the larger candidates,
 # only after every step that needs them has finished
-FREEABLE = {"gpt-oss-20b-mxfp4"}
+# Licence-blocked (evaluation-only) weights, re-acquirable by digest, freed only after ALL their steps and only when
+# the next acquisition needs the room. Production-routed (Qwen3-VL 4B) and admitted-judge (Qwen3-VL 8B) weights are
+# never freed: the router and the judge digest check need them on disk.
+FREEABLE = {"gpt-oss-20b-mxfp4", "gemma3-12b-q4km", "gemma3-4b-q4km", "nemotron-3-nano-4b-q4km"}
 
 
 def log(msg: str) -> None:
@@ -84,6 +99,30 @@ def stamp_calibration(calib: Path, section: str, model_id: str, result: dict) ->
                    "pages_hash": stable_hash((calib / "calibration_pages.json").read_text(encoding="utf-8"))})
     data.setdefault(section, {})[model_id] = result
     path.write_text(json.dumps(data, indent=2))
+
+
+def server_memory(srv) -> dict[str, float] | None:
+    """Resident memory of the llama-server process (Linux /proc): current and peak (VmHWM), in GB."""
+    try:
+        pid = int(srv.pidfile.read_text())
+        st = {k: int(v.split()[0]) for k, v in (ln.split(":", 1) for ln in
+              Path(f"/proc/{pid}/status").read_text().splitlines() if ln.startswith(("VmRSS", "VmHWM")))}
+        return {"rss_gb": round(st["VmRSS"] / 1e6, 2), "peak_rss_gb": round(st["VmHWM"] / 1e6, 2)}
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def record_memory(state: "State", key: str, srv, when: str) -> None:
+    mem = server_memory(srv)
+    if mem is None:
+        return
+    rec = dict((state.data["done"].get(f"{key}:ram") or {}).get("info") or {})
+    if when == "loaded":
+        rec["loaded_rss_gb"] = mem["rss_gb"]
+    rec["peak_rss_gb"] = max(rec.get("peak_rss_gb", 0.0), mem["peak_rss_gb"])
+    rec.setdefault("peak_after_steps", []).append(when)
+    rec["method"] = "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step"
+    state.mark(f"{key}:ram", rec)
 
 
 def run_step(step: str, spec, bench: Path) -> object:
@@ -149,9 +188,13 @@ def run_step(step: str, spec, bench: Path) -> object:
         run_council(ComputeBroker(), [rid], bench, calib_dir=calib if spec.vision else None)
         return rescore(bench)["models"].get(rid)
     if step.startswith("robust:"):
-        from apex_one.lab.benchmarks.vision_robustness import run_width
+        from apex_one.lab.benchmarks.vision_robustness import CANONICAL, load, run_width, status
 
-        return run_width(rid, calib, step.split(":", 1)[1])
+        width = step.split(":", 1)[1]
+        if width != CANONICAL and status(load(rid))[0] == "UNQUALIFIED":
+            # pre-registered: a judge that fails the canonical input is UNQUALIFIED whatever other widths show
+            return {"not_run": f"canonical {CANONICAL} px failed: {status(load(rid))[1]}"}
+        return run_width(rid, calib, width)
     if step == "vector":
         from apex_one.compute.benchmark.council import rescore, run_council
 
@@ -160,6 +203,13 @@ def run_step(step: str, spec, bench: Path) -> object:
         if any(v is None for v in got.values()):
             raise RuntimeError(f"vector tasks not measured (call not executed or empty): {got}")
         return got
+    if step == "rerun_vector":
+        from apex_one.compute.benchmark.council import rescore, run_council
+
+        missing = [t for t in VECTOR_TASKS if rescore(bench)["models"].get(rid, {}).get(t) is None]
+        if missing:
+            run_council(ComputeBroker(), [rid], bench, only=missing, max_tokens=4096)
+        return {"rerun_tasks": missing, "scores": {t: rescore(bench)["models"].get(rid, {}).get(t) for t in VECTOR_TASKS}}
     if step == "rerun":
         from apex_one.compute.benchmark.council import rescore, run_council
 
@@ -185,6 +235,7 @@ def run_step(step: str, spec, bench: Path) -> object:
 def main(max_steps: int | None = None) -> None:
     """Run pending steps; with max_steps, stop (exit cleanly, state saved) after that many steps."""
     from apex_one.compute.local import LocalServer, acquire, load_catalogue
+    from apex_one.compute.local.supervisor import ServerSupervisor, register, unregister
 
     bench = get_settings().artifacts_dir / "bench"
     state = State(bench / "queue_state.json")
@@ -197,7 +248,7 @@ def main(max_steps: int | None = None) -> None:
         if "acquire" in todo:
             # make room: free re-acquirable weights whose every step is done
             for fk in FREEABLE:
-                fsteps = next(s for k, s in PLAN if k == fk)
+                fsteps = [s for k, ss in PLAN if k == fk for s in ss]
                 ggufs = list(specs[fk].dir.glob("*.gguf"))
                 if ggufs and all(state.done(f"{fk}:{s}") for s in fsteps) \
                         and shutil.disk_usage(spec.dir.parent).free / 1e9 < spec.approx_gb + 3:
@@ -229,6 +280,12 @@ def main(max_steps: int | None = None) -> None:
             log(f"{key}: server failed: {e}")
             state.mark(f"{key}:server", str(e)[:300], failed=True)
             continue
+        # every broker in this process now probes, restarts (bounded, with backoff + warm-up) and classifies
+        # failures of this server; incidents -> artifacts/bench/server_reliability/events.jsonl
+        sup = ServerSupervisor(key, srv, events_path=bench / "server_reliability" / "events.jsonl")
+        register(spec.registry_model, sup)
+        if srv.warm_up():
+            record_memory(state, key, srv, "loaded")
         try:
             for step in todo:
                 if max_steps is not None and max_steps <= 0:
@@ -236,19 +293,18 @@ def main(max_steps: int | None = None) -> None:
                     return
                 if max_steps is not None:
                     max_steps -= 1
-                if not srv.healthy():       # a dead server must fail the step, never yield empty "answers"
-                    log(f"{key}: server not healthy before {step}; restarting")
-                    srv.stop()
-                    srv.start(wait_s=1800)
                 log(f"{key}: {step} ...")
                 try:
+                    sup.before_call()       # a dead server must fail the step, never yield empty "answers"
                     info = run_step(step, spec, bench)
                     state.mark(f"{key}:{step}", info)
+                    record_memory(state, key, srv, step)
                     log(f"{key}: {step} done {json.dumps(info, default=str)[:400]}")
                 except Exception as e:  # noqa: BLE001
                     log(f"{key}: {step} FAILED {e}\n{traceback.format_exc()[-800:]}")
                     state.mark(f"{key}:{step}", str(e)[:300], failed=True)
         finally:
+            unregister(spec.registry_model)
             srv.stop()
     log("ALL DONE")
 

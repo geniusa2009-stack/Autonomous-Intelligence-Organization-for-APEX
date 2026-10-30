@@ -68,7 +68,10 @@ class APEXBrokerModel(BaseModel):
         # A call that did not run (server down, timeout, no route) or produced nothing is a FAILED sample, never an
         # empty prediction that GDB would score as a wrong answer (0) — raising makes GDB count it as a failure.
         if not res.executed:
-            raise RuntimeError(f"model call not executed: {res.decision.outcome.value}: {res.decision.reasons[:2]}")
+            from apex_one.compute.benchmark.council import call_failure_kind
+
+            raise RuntimeError(f"ERROR {call_failure_kind(res) or 'NOT_EXECUTED'}: model call not executed: "
+                               f"{res.decision.outcome.value}: {res.decision.reasons[:2]}")
         if not (res.text or "").strip():
-            raise RuntimeError("empty model output (NOT_MEASURED)")
+            raise RuntimeError("ERROR EMPTY_OUTPUT: empty model output (NOT_MEASURED)")
         return ModelOutput(text=res.text, raw={"model": res.model_id})

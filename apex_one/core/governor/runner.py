@@ -544,16 +544,19 @@ class JobRunner:
     def _pairwise_finalists(self, t, node, out) -> dict:
         """Phase 23: the two best locally-filtered finalists go to the calibrated pairwise council. A consistent
         majority adds a transparent +5 preference to the winner's fitness; ties leave the deterministic order."""
-        from apex_one.vision.pairwise import PairwiseJudge
+        from apex_one.vision.pairwise import secondary_finalist_compare
 
         a, b = out.top[0], out.top[1]
         if not (a.screenshot_path and b.screenshot_path):
             return {"status": "NOT_MEASURED", "reason": "finalist screenshots missing"}
         intent = f"{node.semantic_type.value}, reading mode {node.reading_mode.value}"
-        res = PairwiseJudge(self.broker, self._pairwise_judges(), workspace=self.ws).compare(
-            t.dir / a.screenshot_path, t.dir / b.screenshot_path, intent)
-        record = {"first": a.candidate_id, "second": b.candidate_id, **res.as_dict()}
-        if res.winner and res.measured:
+        # advisory SECONDARY_FINALIST_PAIRWISE_JUDGE: canonical 640 px A4 renders of QA-passed finalists only
+        rec = secondary_finalist_compare(self.broker, self._pairwise_judges(), t.dir / a.screenshot_path,
+                                         t.dir / b.screenshot_path, intent, workspace=self.ws,
+                                         deterministic_qa_passed=not (a.critical_failures or b.critical_failures))
+        res = rec.pop("_result", None)
+        record = {"first": a.candidate_id, "second": b.candidate_id, **rec}
+        if res is not None and res.winner and res.measured:
             win, lose = (a, b) if res.winner == "first" else (b, a)
             win.metrics["pairwise_preference"] = Metric.measured("pairwise_preference", 100, "order-swapped pairwise "
                                                                  "council (consistent majority)", evidence=[str(res.votes)])
@@ -563,7 +566,8 @@ class JobRunner:
             win.rationale = [*win.rationale, "pairwise council preferred (+5)"]
             out.top.sort(key=lambda c: -(c.fitness or -1e9))
             out.best = out.top[0]
-        self.ws.events.emit("pairwise", page=node.node_id, winner=res.winner, disagreements=res.disagreements)
+        self.ws.events.emit("pairwise", page=node.node_id, winner=res.winner if res else None,
+                            disagreements=res.disagreements if res else [], status=record.get("status"))
         return record
 
     def h_layout_tournament(self) -> S:

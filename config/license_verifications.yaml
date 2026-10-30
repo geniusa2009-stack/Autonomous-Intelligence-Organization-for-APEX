@@ -14,7 +14,7 @@ verifications:
       value: gemma
     license_name: gemma (declared; not verified)
     production_allowed: false
-    production_state: UNKNOWN
+    production_state: DECLARED_BUT_UNVERIFIED
     reasons_not_allowed:
     - custom / non-permissive licence declared (['gemma']); its text is not available
       locally
@@ -36,7 +36,7 @@ verifications:
       value: gemma
     license_name: gemma (declared; not verified)
     production_allowed: false
-    production_state: UNKNOWN
+    production_state: DECLARED_BUT_UNVERIFIED
     reasons_not_allowed:
     - custom / non-permissive licence declared (['gemma']); its text is not available
       locally
@@ -84,7 +84,7 @@ verifications:
       value: other
     license_name: nvidia-nemotron-open-model-license (declared; text not verified)
     production_allowed: false
-    production_state: UNKNOWN
+    production_state: DECLARED_BUT_UNVERIFIED
     reasons_not_allowed:
     - custom / non-permissive licence declared (['other:nvidia-nemotron-open-model-license']);
       its text is not available locally
@@ -115,7 +115,7 @@ verifications:
     research_use: 'yes'
     source_reference: registry-1.docker.io/ai/qwen3-vl:8B-UD-Q4_K_XL
     verification_method: 'local artifact evidence: gguf_metadata, licence_layer'
-    verified_at: '2026-10-30T21:08:15.705703+00:00'
+    verified_at: '2026-10-30T21:31:27.789667+00:00'
     verified_by: apex-one license verify-local (artifact evidence rule)
   lic-qwen3-vl-apache:
     artifacts:
@@ -137,5 +137,5 @@ verifications:
     research_use: 'yes'
     source_reference: registry-1.docker.io/ai/qwen3-vl:4B-UD-Q4_K_XL
     verification_method: 'local artifact evidence: gguf_metadata, licence_layer'
-    verified_at: '2026-10-30T21:07:57.628084+00:00'
+    verified_at: '2026-10-30T21:31:10.247335+00:00'
     verified_by: apex-one license verify-local (artifact evidence rule)

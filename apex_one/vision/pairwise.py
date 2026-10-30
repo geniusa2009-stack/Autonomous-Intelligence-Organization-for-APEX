@@ -131,3 +131,58 @@ def calibrate_pairwise(judge: PairwiseJudge, good: Path, broken: dict[str, Path]
                               "discrimination_rate": correct / len(valid) if valid else None,
                               "reliable": len(valid) == len(checks) and correct >= 4}
     return out
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Production role of a CANONICAL_640_ONLY judge (frozen policy, PRODUCTION_ROUTING_MATRIX.md):
+# SECONDARY_FINALIST_PAIRWISE_JUDGE — advisory A/B preference between two finalists that ALREADY passed
+# deterministic QA, on the canonical 640 px normalized input of an A4 page render, from the calibrated model build.
+# It is never the release authority and it never judges facts, dates or Egyptian-Arabic quality.
+SECONDARY_ROLE = "SECONDARY_FINALIST_PAIRWISE_JUDGE"
+ALLOWED_SCOPES = frozenset({"visual_design"})
+A4_RATIO = 1123 / 794                      # rendered A4 page (Renderer, device scale 1 = 794 x 1123)
+_FORBIDDEN_INTENT = re.compile(r"\bfact|\bdate|deadline|\bcorrect|accura|egyptian|dialect|translat|spelling|grammar"
+                               r"|تاريخ|موعد|مصري|عامية", re.I)
+
+
+class JudgeInputRejected(ValueError):
+    """The request is outside what the judge was calibrated for; the caller keeps the deterministic decision."""
+
+
+def admissibility(first: Path, second: Path, *, intent: str, scope: str, max_w: int,
+                  deterministic_qa_passed: bool) -> str | None:
+    """Why this request may NOT go to the secondary pairwise judge (None = admissible)."""
+    from PIL import Image
+
+    if scope not in ALLOWED_SCOPES:
+        return f"scope {scope!r} is not calibrated (allowed: {sorted(ALLOWED_SCOPES)})"
+    if _FORBIDDEN_INTENT.search(intent or ""):
+        return "intent asks about facts, dates or language quality — never a vision-judge decision"
+    if max_w != CALIBRATED_MAX_W:
+        return f"judge width {max_w} px is not the canonical {CALIBRATED_MAX_W} px input"
+    if not deterministic_qa_passed:
+        return "finalists have not passed deterministic QA"
+    for p in (first, second):
+        with Image.open(p) as im:
+            w, h = im.size
+        if abs(h / w - A4_RATIO) > 0.005:
+            return f"{p.name}: {w}x{h} is not an A4 page render (mobile or arbitrary screenshot)"
+        if w < CALIBRATED_MAX_W:
+            return f"{p.name}: {w} px wide — below the canonical width (would need upscaling)"
+    return None
+
+
+def secondary_finalist_compare(broker, judges: list[str], first: Path, second: Path, intent: str, *,
+                               deterministic_qa_passed: bool, workspace=None, scope: str = "visual_design",
+                               max_w: int = CALIBRATED_MAX_W) -> dict[str, Any]:
+    """The ONLY production entry point for a pairwise judge. Returns an advisory record; on any inadmissible
+    request (or no admitted judge) the result is NOT_MEASURED and the deterministic order stands."""
+    base = {"role": SECONDARY_ROLE, "authority": "advisory", "judges": judges}
+    if not judges:
+        return {**base, "status": "NOT_MEASURED", "reason": "no judge admitted for canonical pairwise use"}
+    why = admissibility(first, second, intent=intent, scope=scope, max_w=max_w,
+                        deterministic_qa_passed=deterministic_qa_passed)
+    if why:
+        return {**base, "status": "NOT_MEASURED", "reason": f"inadmissible: {why}"}
+    res = PairwiseJudge(broker, judges, workspace=workspace, max_w=max_w).compare(first, second, intent)
+    return {**base, **res.as_dict(), "_result": res}

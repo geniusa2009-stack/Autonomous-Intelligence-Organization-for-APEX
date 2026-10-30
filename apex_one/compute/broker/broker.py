@@ -11,6 +11,7 @@ import httpx
 from apex_one import PROMPT_TEMPLATE_VERSION
 from apex_one.compute.firewall.zero_cost import ZeroCostFirewall
 from apex_one.compute.health import HealthMonitor
+from apex_one.compute.local.supervisor import ServerSupervisor, SupervisorError, failure_kind_for
 from apex_one.compute.providers import ChatMessage, ProviderAdapter, ProviderError, build_adapter
 from apex_one.compute.quotas.tracker import QuotaTracker, RateLimitTracker
 from apex_one.compute.registry.loader import ArsenalRegistry, load_registry
@@ -47,7 +48,8 @@ class ComputeBroker:
 
     def __init__(self, registry: ArsenalRegistry | None = None, *, allow_mock: bool = False,
                  transport: httpx.BaseTransport | None = None, env: Mapping[str, str] | None = None,
-                 adapters: dict[str, ProviderAdapter] | None = None):
+                 adapters: dict[str, ProviderAdapter] | None = None,
+                 supervisors: dict[str, ServerSupervisor] | None = None):
         self.registry = registry or load_registry()
         self.firewall = ZeroCostFirewall(self.registry)
         self.health = HealthMonitor()
@@ -60,6 +62,15 @@ class ComputeBroker:
         }
         if adapters:
             self.adapters.update(adapters)
+        # model id -> supervisor of the local process serving it (health probe, restart, failure classification)
+        if supervisors is None:
+            from apex_one.compute.local.supervisor import active_supervisors, supervise_running_local_servers
+            from apex_one.settings import get_settings
+
+            supervisors = {**supervise_running_local_servers(
+                get_settings().artifacts_dir / "logs" / "model_server_events.jsonl"), **active_supervisors()}
+        self.supervisors: dict[str, ServerSupervisor] = dict(supervisors)
+        self.planner.supervised = set(self.supervisors)
         # mock and unprobed providers: mock is trivially available
         self.health.set_probe("mock", Availability.AVAILABLE, "mock", {"mock-llm"})
 
@@ -87,6 +98,7 @@ class ComputeBroker:
         exclude: set[tuple[str, str]] = set()
         calls: list[ModelCallRecord] = []
         decision: RoutingDecision | None = None
+        retried: set[tuple[str, str]] = set()
         for _ in range(self.MAX_ATTEMPTS):
             decision, cand, fw = self.planner.plan(req, exclude)
             if workspace:
@@ -101,13 +113,33 @@ class ComputeBroker:
                                      input_chars=sum(len(m.content) for m in messages), output_chars=0,
                                      estimated_cost_usd=fw.estimated_cost_usd if fw else 0.0,
                                      prompt_template_version=PROMPT_TEMPLATE_VERSION, purpose=req.purpose)
+            key = (cand.model.id, cand.route.provider)
+            sup = self.supervisors.get(cand.model.id)
+            if sup is not None:
+                try:
+                    sup.before_call()
+                except SupervisorError as e:
+                    record.outcome, record.error, record.failure_kind = "error:unhealthy", str(e)[:300], e.kind.value
+                    calls.append(record)
+                    self._log_call(record, workspace)
+                    exclude.add(key)
+                    continue
             try:
                 res = adapter.chat(fw, cand.route, messages, max_tokens=max_tokens, temperature=temperature,
                                    json_mode=json_mode, timeout=timeout)
             except ProviderError as e:
                 record.outcome, record.error = f"error:{e.kind}", redact_text(str(e))[:300]
+                if sup is not None:
+                    kind, safe_retry = sup.after_failure(e.kind)
+                else:
+                    kind, safe_retry = failure_kind_for(e.kind), False
+                record.failure_kind = kind.value if kind else None
                 calls.append(record)
                 self._log_call(record, workspace)
+                if safe_retry and key not in retried:
+                    # a completion is side-effect free: after a verified recovery the SAME request may run once more
+                    retried.add(key)
+                    continue
                 if e.kind in ("rate_limited", "quota_exhausted"):
                     # not excluded: the cooldown makes the planner report WAIT/QUEUE with retry-after
                     self.rate_limits.on_rate_limited(cand.route.provider, e.retry_after)
@@ -118,8 +150,9 @@ class ComputeBroker:
                     # A provider asking for payment is removed for the session: never pay.
                     self.health.set_probe(cand.route.provider, Availability.NO_FREE_ROUTE, "HTTP 402 payment required")
                 else:
-                    exclude.add((cand.model.id, cand.route.provider))
-                    self.health.record_failure(cand.route.provider)
+                    exclude.add(key)
+                    if e.kind != "empty_output":    # the model said nothing; the provider itself worked
+                        self.health.record_failure(cand.route.provider)
                 continue
             self.health.record_success(cand.route.provider)
             record.latency_ms, record.output_chars = res.latency_ms, len(res.text)

@@ -302,20 +302,28 @@ def test_council_uses_only_calibrated_reliable_judges(tmp_path, monkeypatch):
     from apex_one.vision.council import page_budget, reliable_judges, select_pages
 
     assert reliable_judges(tmp_path / "none.json")[0] == []
-    p = tmp_path / "cal.json"
+    (tmp_path / "calib").mkdir()
+    p = tmp_path / "calib" / "cal.json"     # robustness records live in <p.parent.parent>/vision_robustness
     from datetime import UTC, datetime, timedelta
 
     now = datetime.now(UTC).isoformat()
     full = {k: True for k in ("low_contrast", "card_overuse", "gradient", "cramped", "no_hierarchy")}
     ok = {"reliable": True, "checks": full, "valid_checks": 5, "at": now, "model_digest": None}
     p.write_text(json.dumps({"models": {
-        "a": ok, "b": {**ok, "reliable": False}, "c": ok,
+        "a": ok, "b": {**ok, "reliable": False}, "c": ok, "canon-only": ok,
         "unstamped": {"reliable": True, "checks": full, "valid_checks": 5},
         "partial": {**ok, "valid_checks": 1},
         "old": {**ok, "at": (datetime.now(UTC) - timedelta(days=90)).isoformat()},
         "other-build": {**ok, "model_digest": "sha256:deadbeef"}}}))
+    robust = tmp_path / "vision_robustness"
+    every = {w: [5, 5, 5] for w in ("320", "480", "640", "768", "native", "1024")}
+    for m in ("a", "c"):
+        _write_robustness(robust, m, every)
+    _write_robustness(robust, "canon-only", {**every, "1024": [3, 3, 3]})
     judges, info = reliable_judges(p)
+    # absolute SCORES need absolute calibration AND robustness across widths: canonical-only is not enough
     assert judges == ["a", "c"]
+    assert info["canon-only"]["rejected"].startswith("absolute scoring needs ROBUSTLY_CALIBRATED")
     assert {info[m]["rejected"].split()[0] for m in ("unstamped", "partial", "old", "other-build")} == {
         "calibration", "incomplete", "calibrated"}
     assert page_budget("draft") == 0 and page_budget("ultra") > page_budget("standard")
@@ -682,9 +690,13 @@ def test_calibration_bar_is_four_of_five_even_if_a_stored_flag_says_reliable(tmp
     three = {"a": True, "b": True, "c": True, "d": False, "e": False}     # 3/5 (Qwen3-VL 8B absolute run)
     four = {**three, "d": True}
     stamp = {"valid_checks": 5, "at": datetime.now(UTC).isoformat(), "model_digest": None}
-    p = tmp_path / "cal.json"
+    (tmp_path / "calib").mkdir()
+    p = tmp_path / "calib" / "cal.json"
     p.write_text(json.dumps({"models": {"three": {"reliable": True, "checks": three, **stamp},
                                         "four": {"reliable": True, "checks": four, **stamp}}}))
+    for m in ("three", "four"):    # robustness is not what this test is about: both are robust
+        _write_robustness(tmp_path / "vision_robustness", m,
+                          {w: [5, 5, 5] for w in ("320", "480", "640", "768", "native", "1024")})
     judges, info = reliable_judges(p)
     assert judges == ["four"] and "below the calibration bar" in info["three"]["rejected"]
 
@@ -954,3 +966,38 @@ def test_failed_gdb_calls_are_failures_never_zero_scores(monkeypatch):
     ok = {"results": {"svg-1": {"m": {"count": 2, "success_count": 2, "failure_count": 0, "scores": {"accuracy": 0.5}}}}}
     bad = {"results": {"svg-1": {"m": {"count": 2, "success_count": 0, "failure_count": 2, "scores": {"accuracy": 0.0}}}}}
     assert gdb_report_valid(ok) and not gdb_report_valid(bad)
+
+
+def test_secondary_pairwise_judge_refuses_everything_it_was_not_calibrated_for(tmp_path):
+    """Qwen3-VL 8B is CANONICAL_640_ONLY: advisory finalist A/B on canonical 640 px A4 renders of QA-passed
+    finalists, never mobile / arbitrary screenshots, other widths, facts, dates or Egyptian-Arabic quality."""
+    from PIL import Image
+
+    from apex_one.vision.pairwise import SECONDARY_ROLE, admissibility, secondary_finalist_compare
+
+    def img(name, size):
+        Image.new("RGB", size, "white").save(tmp_path / name)
+        return tmp_path / name
+
+    a4, a4b = img("a.png", (794, 1123)), img("b.png", (794, 1124))
+    mobile, wide, tiny = img("m.png", (390, 844)), img("w.png", (1920, 1080)), img("t.png", (397, 561))
+    ok = {"intent": "Cover, reading mode scan", "scope": "visual_design", "max_w": 640, "deterministic_qa_passed": True}
+    assert admissibility(a4, a4b, **ok) is None
+    assert "A4" in admissibility(a4, mobile, **ok)
+    assert "A4" in admissibility(wide, a4, **ok)
+    assert "upscaling" in admissibility(tiny, a4, **ok)
+    assert "canonical" in admissibility(a4, a4b, **{**ok, "max_w": 794})
+    assert "deterministic QA" in admissibility(a4, a4b, **{**ok, "deterministic_qa_passed": False})
+    for scope in ("facts", "dates", "egyptian_arabic"):
+        assert "not calibrated" in admissibility(a4, a4b, **{**ok, "scope": scope})
+    for intent in ("is the deadline date correct?", "which has better Egyptian dialect", "check facts"):
+        assert "never a vision-judge decision" in admissibility(a4, a4b, **{**ok, "intent": intent})
+
+    class NoCall:
+        def complete(self, *a, **k):
+            raise AssertionError("an inadmissible request must never reach a model")
+
+    rec = secondary_finalist_compare(NoCall(), ["qwen3-vl-8b"], a4, mobile, "Cover", deterministic_qa_passed=True)
+    assert rec["status"] == "NOT_MEASURED" and rec["role"] == SECONDARY_ROLE and rec["authority"] == "advisory"
+    assert secondary_finalist_compare(NoCall(), [], a4, a4b, "Cover", deterministic_qa_passed=True)["status"] \
+        == "NOT_MEASURED"

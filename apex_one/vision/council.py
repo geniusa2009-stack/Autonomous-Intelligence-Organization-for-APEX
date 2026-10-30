@@ -259,6 +259,12 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
             why = "calibrated a different model build (digest mismatch)"
         elif mode == "pairwise":
             why = _robustness_block(m, path.parent.parent / "vision_robustness")
+        else:
+            # absolute SCORES are only trusted from a judge that is robust across input resolutions; a
+            # canonical-width-only judge may give advisory pairwise preferences, never subjective scores
+            st, swhy = judge_status(m, path.parent.parent / "vision_robustness")
+            if st != "ROBUSTLY_CALIBRATED":
+                why = f"absolute scoring needs ROBUSTLY_CALIBRATED; robustness {st} ({swhy})"
         if why:
             r["rejected"] = why
         else:

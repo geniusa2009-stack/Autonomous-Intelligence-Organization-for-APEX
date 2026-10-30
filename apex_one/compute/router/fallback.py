@@ -58,6 +58,9 @@ class FallbackPlanner:
                  quotas: QuotaTracker, rate_limits: RateLimitTracker):
         self.router, self.firewall, self.health = router, firewall, health
         self.quotas, self.rate_limits = quotas, rate_limits
+        # models whose local process is supervised: the supervisor probes, restarts and classifies, so the planner
+        # must not pre-reject them on a (cached) failed /health — that would turn a recoverable crash into SKIPPED
+        self.supervised: set[str] = set()
 
     def plan(self, req: CapabilityRequest, exclude: set[tuple[str, str]] | None = None
              ) -> tuple[RoutingDecision, Candidate | None, FirewallDecision | None]:
@@ -73,7 +76,9 @@ class FallbackPlanner:
             if fw.verdict == FirewallVerdict.BLOCK:
                 considered.append({**entry, "rejected": "firewall", "reasons": fw.reasons})
                 continue
-            if cand.route.base_url and self.router.registry.providers[cand.route.provider].kind == "local":
+            if cand.model.id in self.supervised:
+                ok, why = True, ""
+            elif cand.route.base_url and self.router.registry.providers[cand.route.provider].kind == "local":
                 ok, why = local_endpoint_ok(cand.route.base_url)
             else:
                 ok, why = self.health.usable(cand.route.provider)

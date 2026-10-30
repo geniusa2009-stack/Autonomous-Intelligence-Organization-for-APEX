@@ -121,7 +121,7 @@ def decide(evidence: dict[str, Any], reported_license: str = "") -> dict[str, An
         or ("; ".join(sorted(ids)) + " (declared; not verified)" if ids else "UNKNOWN"))
     terms = PERMISSIVE.get(agreed or "", {}) if allowed else {}
     return {"license_name": name,
-            "production_state": "PRODUCTION_ALLOWED" if allowed else "UNKNOWN",
+            "production_state": "PRODUCTION_ALLOWED" if allowed else "DECLARED_BUT_UNVERIFIED" if decl else "UNKNOWN",
             "production_allowed": allowed,
             "commercial_use": terms.get("commercial_use", "unknown"),
             "derivative_use": terms.get("derivative_use", "unknown"),

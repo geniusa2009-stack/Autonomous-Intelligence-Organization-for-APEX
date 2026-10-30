@@ -77,18 +77,31 @@ class OpenAICompatibleAdapter(ProviderAdapter):
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
         t0 = time.perf_counter()
+        # transport failures are classified, never collapsed into "network" (see compute/local/supervisor.py)
         try:
             with self.client(timeout) as c:
                 resp = c.post(f"{self._root(route)}/chat/completions", json=payload, headers=self._headers())
+        except httpx.TimeoutException as e:
+            raise ProviderError("timeout", f"{type(e).__name__} after {timeout}s") from e
+        except httpx.ConnectError as e:
+            raise ProviderError("connection_refused", f"{type(e).__name__}: {e}") from e
+        except (httpx.RemoteProtocolError, httpx.ReadError) as e:
+            raise ProviderError("disconnected", f"{type(e).__name__}: {e}") from e
         except httpx.HTTPError as e:
             raise ProviderError("network", f"{type(e).__name__}: {e}") from e
         self.last_headers = {k: v for k, v in resp.headers.items() if "ratelimit" in k.lower() or k.lower() == "retry-after"}
         raise_for_status(resp)
-        data = resp.json()
         try:
+            data = resp.json()
             text = data["choices"][0]["message"]["content"] or ""
-        except (KeyError, IndexError, TypeError) as e:
-            raise ProviderError("http", f"unexpected response shape: {str(data)[:200]}") from e
+        except (ValueError, KeyError, IndexError, TypeError) as e:
+            raise ProviderError("malformed_response", f"not an OpenAI chat response: {resp.text[:200]!r}") from e
+        if not isinstance(text, str):
+            raise ProviderError("malformed_response", f"content is {type(text).__name__}, not text")
+        if not text.strip():
+            # an empty completion is an ERROR (EMPTY_OUTPUT), never an answer a checker could score as 0
+            finish = (data["choices"][0].get("finish_reason") if isinstance(data["choices"][0], dict) else None)
+            raise ProviderError("empty_output", f"empty completion (finish_reason={finish}, max_tokens={max_tokens})")
         return ChatResult(text=text, latency_ms=(time.perf_counter() - t0) * 1000, usage=data.get("usage") or {},
                           raw={"id": data.get("id"), "model": data.get("model")})
 

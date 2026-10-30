@@ -38,7 +38,8 @@ class ProductionState(StrEnum):
     RESEARCH_ONLY = "RESEARCH_ONLY"
     NON_COMMERCIAL = "NON_COMMERCIAL"
     UNKNOWN = "UNKNOWN"
-    BLOCKED = "BLOCKED"
+    DECLARED_BUT_UNVERIFIED = "DECLARED_BUT_UNVERIFIED"   # the artifact declares a licence; the verification
+    BLOCKED = "BLOCKED"                                   # rule is not met -> evaluation only, never production
 
 
 class Level(StrEnum):
@@ -234,6 +235,7 @@ class ModelCallRecord(ApexModel):
     output_chars: int
     estimated_cost_usd: float
     error: str | None = None
+    failure_kind: str | None = None     # FailureKind (compute/local/supervisor.py) when the call failed
     prompt_template_version: str = ""
     purpose: str = "production"
     at: datetime = Field(default_factory=utcnow)
