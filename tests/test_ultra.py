@@ -813,3 +813,58 @@ def test_capability_score_is_the_weakest_measured_task_never_the_best(tmp_path):
     m = rescore(tmp_path)["models"]["m"]
     assert m["egyptian_arabic"] == 0.0 and m["fact_preservation"] == 100.0
     assert m["editorial.write"] == 0.0                     # was 100 under max-aggregation
+
+
+def _scored(registry, **scores):
+    base = next(iter(registry.models.values()))
+    return base.model_copy(update={"benchmark_scores": {k: float(v) for k, v in scores.items()}})
+
+
+def test_weak_egyptian_arabic_does_not_block_factual_english_writing(registry):
+    from apex_one.compute.router.capability import rejection, task_evidence_score
+
+    m = _scored(registry, egyptian_arabic=0, english_factual_writing=100, fact_preservation=100)
+    assert task_evidence_score(m, "editorial.write.english") == 100.0 and rejection(m, "editorial.write.english") is None
+
+
+def test_weak_date_reasoning_does_not_reduce_unrelated_writing(registry):
+    from apex_one.compute.router.capability import capability_score, task_evidence_score
+
+    m = _scored(registry, reasoning=0, english_factual_writing=80, structured_editorial=90)
+    assert capability_score(m, "editorial.write.general") == 80.0
+    assert task_evidence_score(m, "editorial.write.english") == 80.0
+    assert task_evidence_score(m, "editorial.write.checklist") == 90.0
+
+
+def test_strong_structured_json_does_not_inflate_prose_writing(registry):
+    from apex_one.compute.router.capability import capability_score, task_evidence_score
+
+    only_json = _scored(registry, structured_json=100)
+    assert task_evidence_score(only_json, "editorial.write.english") is None          # unmeasured, not 100
+    weak_prose = _scored(registry, structured_json=100, english_factual_writing=40)
+    assert capability_score(weak_prose, "editorial.write.general") == 40.0
+    assert task_evidence_score(weak_prose, "evidence.extract") == 100.0
+
+
+def test_task_requiring_egyptian_arabic_rejects_a_model_scoring_zero(registry):
+    from apex_one.compute.router.capability import CapabilityRouter, rejection
+    from apex_one.core.schemas.compute import CapabilityRequest
+
+    m = _scored(registry, egyptian_arabic=0, fact_preservation=100, english_factual_writing=100)
+    assert "egyptian_arabic" in rejection(m, "editorial.write.egyptian_guide")
+    registry.models[m.id] = m
+    routed = CapabilityRouter(registry, allow_mock=True).candidates(CapabilityRequest(task="editorial.write.egyptian_guide"))
+    assert m.id not in {c.model.id for c in routed}
+    english = CapabilityRouter(registry, allow_mock=True).candidates(CapabilityRequest(task="editorial.write.english"))
+    assert m.routes and m.id in {c.model.id for c in english}          # same model, English task: allowed
+
+
+def test_task_with_several_mandatory_capabilities_uses_the_weakest(registry):
+    from apex_one.compute.router.capability import rejection, required_scores, task_evidence_score
+
+    m = _scored(registry, egyptian_arabic=75, fact_preservation=100, en_ar_mixing=60, english_factual_writing=100)
+    assert required_scores(m, "editorial.write.egyptian_guide") == {"editorial.write.egyptian_arabic": 75.0,
+                                                                     "editorial.write.fact_preserving": 100.0}
+    assert task_evidence_score(m, "editorial.write.egyptian_guide") == 75.0
+    assert task_evidence_score(m, "editorial.write.bilingual") == 60.0
+    assert rejection(m, "editorial.write.egyptian_guide") is None

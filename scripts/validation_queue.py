@@ -11,6 +11,8 @@ steps. Steps per model, in order (only steps that apply to the model run):
   council   general council benchmark (new models only)
   rerun     council tasks whose output was empty, at a 4096-token budget
   pages     model writes APEX pages under the DOM contract (5 decision-critical page types)
+  vector    council tasks added for the capability vector (English factual writing, structured editorial),
+            same 500-token task budget as the other prose tasks
 
 Usage: python scripts/validation_queue.py
 """
@@ -28,14 +30,20 @@ from pathlib import Path
 
 from apex_one.settings import get_settings
 
+ROBUST_WIDTHS = ("640", "320", "480", "768", "native", "1024")   # canonical first, then the sweep
 PLAN = [
     ("qwen3-vl-4b-q4kxl", ["gdb", "calib", "pcalib", "invest", "pages"]),
     ("gemma3-4b-q4km", ["gdb", "calib", "pcalib", "invest", "pages"]),
     ("nemotron-3-nano-4b-q4km", ["rerun", "pages"]),
     ("gpt-oss-20b-mxfp4", ["rerun", "pages"]),
-    ("qwen3-vl-8b-q4kxl", ["acquire", "live", "calib", "pcalib", "invest", "council", "gdb"]),
+    ("qwen3-vl-8b-q4kxl", ["acquire", "live", "calib", "pcalib", "invest", "council", "gdb", "vector",
+                           *[f"robust:{w}" for w in ROBUST_WIDTHS]]),
     ("gemma3-12b-q4km", ["acquire", "live", "calib", "pcalib", "invest", "council", "gdb"]),
+    ("qwen3-vl-4b-q4kxl", ["vector"]),
+    ("gemma3-4b-q4km", ["vector"]),
+    ("nemotron-3-nano-4b-q4km", ["vector"]),
 ]
+VECTOR_TASKS = ("english_factual_writing", "structured_editorial")
 PAGE_TYPES = ["Cover", "OpportunitySnapshot", "Timeline", "ApexTake", "Checklist"]
 GOLDEN_JOB = os.environ.get("APEX_BENCH_JOB", "J-2da4830a2781")
 # weights that may be removed (re-acquirable, digest recorded) to make disk room for the larger candidates,
@@ -128,6 +136,11 @@ def run_step(step: str, spec, bench: Path) -> object:
 
         run_council(ComputeBroker(), [rid], bench, calib_dir=calib if spec.vision else None)
         return rescore(bench)["models"].get(rid)
+    if step == "vector":
+        from apex_one.compute.benchmark.council import rescore, run_council
+
+        run_council(ComputeBroker(), [rid], bench, only=list(VECTOR_TASKS))
+        return {t: rescore(bench)["models"].get(rid, {}).get(t) for t in VECTOR_TASKS}
     if step == "rerun":
         from apex_one.compute.benchmark.council import rescore, run_council
 

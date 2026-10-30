@@ -324,7 +324,8 @@ class APEXEgyptianWriter:
                 if b.role != "paragraph" or any(r.kind == "fact" for r in b.runs):
                     continue
                 original = runs_text(b.runs)
-                req = CapabilityRequest(task="editorial.write", min_egyptian_arabic=Level.MEDIUM, purpose=purpose)
+                req = CapabilityRequest(task="editorial.write.egyptian_guide", min_egyptian_arabic=Level.MEDIUM,
+                                       purpose=purpose)
                 res = self.broker.complete(req, [
                     ChatMessage("system", "أعد صياغة الجملة بالعامية المصرية الطبيعية، بدون أرقام جديدة وبدون مبالغة. "
                                           "اكتب الجملة فقط."),

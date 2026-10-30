@@ -25,7 +25,8 @@ def _lv(v: Level | str) -> int:
 _ROUTING: dict | None = None
 
 
-def task_routing() -> dict:
+def routing_config() -> dict:
+    """config/task_routing.yaml (schema 2): capability vector, task rules, pre-registered floor."""
     global _ROUTING
     if _ROUTING is None:
         import yaml
@@ -33,8 +34,12 @@ def task_routing() -> dict:
         from apex_one.settings import get_settings
 
         p = get_settings().config_dir / "task_routing.yaml"
-        _ROUTING = (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("tasks", {}) if p.exists() else {}
+        _ROUTING = (yaml.safe_load(p.read_text(encoding="utf-8")) or {}) if p.exists() else {}
     return _ROUTING
+
+
+def task_routing() -> dict:
+    return routing_config().get("tasks", {})
 
 
 def routing_rule(task: str) -> dict:
@@ -44,14 +49,36 @@ def routing_rule(task: str) -> dict:
     return rules[max(hits, key=len)] if hits else {}
 
 
-def task_evidence_score(m: ModelEntry, task: str) -> float | None:
-    """The model's MEASURED score on the evidence this task is routed by — never the cross-task "overall"."""
+def capability_score(m: ModelEntry, capability: str) -> float | None:
+    """The model's measured score on the ONE council task that evidences this capability (None = unmeasured)."""
+    evidence = routing_config().get("capabilities", {}).get(capability, capability)
+    return m.benchmark_scores.get(evidence)
+
+
+def required_scores(m: ModelEntry, task: str) -> dict[str, float | None]:
     rule = routing_rule(task)
-    keys = rule.get("evidence") or [task]
-    vals = [m.benchmark_scores.get(k) for k in keys]
-    if any(v is None for v in vals):
+    if "requires" in rule:
+        return {c: capability_score(m, c) for c in rule["requires"]}
+    return {k: m.benchmark_scores.get(k) for k in (rule.get("evidence") or [task])}   # schema-1 rules / no rule
+
+
+def task_evidence_score(m: ModelEntry, task: str) -> float | None:
+    """The model's MEASURED score for this exact routing decision: the weakest of its mandatory capabilities —
+    never the cross-task "overall", never a capability the task does not need. None if any is unmeasured."""
+    vals = list(required_scores(m, task).values())
+    if not vals or any(v is None for v in vals):
         return None
-    return min(vals) if rule.get("combine", "min") == "min" else sum(vals) / len(vals)
+    return min(vals) if routing_rule(task).get("combine", "min") == "min" else sum(vals) / len(vals)
+
+
+def rejection(m: ModelEntry, task: str) -> str | None:
+    """Why a model may not take this task: measured below the floor on a mandatory capability (None = allowed)."""
+    rule = routing_rule(task)
+    if not rule:
+        return None
+    floor = rule.get("min_score", routing_config().get("default_min_score", 50))
+    low = {c: v for c, v in required_scores(m, task).items() if v is not None and v < floor}
+    return f"measured below floor {floor} on {low}" if low else None
 
 
 class CapabilityRouter:
@@ -80,6 +107,8 @@ class CapabilityRouter:
             if req.model_id and m.id != req.model_id:
                 continue
             if not self.satisfies(m, req):
+                continue
+            if rejection(m, req.task):
                 continue
             measured = task_evidence_score(m, req.task)
             base = measured if measured is not None else (

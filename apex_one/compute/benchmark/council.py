@@ -160,6 +160,43 @@ def s_long(text: str) -> tuple[float, str]:
     return (100.0 if str(d.get("date")) == "2027-01-20" else 0.0), f"got {d.get('date')}"
 
 
+def _facts(text: str) -> tuple[set[str], set[tuple[str, float]], list[str]]:
+    from apex_one.research.evidence.normalize import find_dates, find_money, to_ascii_digits
+
+    t = to_ascii_digits(text)
+    return ({d.isoformat() for d, *_ in find_dates(t)}, {(c, a) for a, c, *_ in find_money(t)},
+            re.findall(r"\d+(?:\.\d+)?", t))
+
+
+def s_english_writing(text: str) -> tuple[float, str]:
+    """Plain-English factual rewrite: both facts kept exactly, no invented numbers, English, short (5 checks)."""
+    dates, money, nums = _facts(text)
+    latin = len(re.findall(r"[A-Za-z]", text))
+    arabic = len(re.findall(r"[\u0600-\u06FF]", text))
+    sentences = [x for x in re.split(r"(?<=[.!?])\s+", text.strip()) if x.strip()]
+    checks = {"date_kept": "2026-11-01" in dates and dates <= {"2026-11-01"},
+              "amount_kept": ("USD", 50.0) in money and money <= {("USD", 50.0)},
+              "no_new_numbers": set(nums) <= {"1", "2026", "50", "50.00", "16"},
+              "english": latin > 0 and arabic == 0,
+              "short": 1 <= len(sentences) <= 3}
+    if not checks["english"]:          # the wrong language fails the task outright, whatever else is right
+        return 0.0, json.dumps(checks)
+    return 100.0 * sum(checks.values()) / len(checks), json.dumps(checks)
+
+
+def s_structured_editorial(text: str) -> tuple[float, str]:
+    """Structured editorial writing: exactly three Markdown bullets carrying the three facts, nothing else (5 checks)."""
+    lines = [x.strip() for x in text.strip().strip("`").splitlines() if x.strip() and x.strip() != "markdown"]
+    bullets = [x for x in lines if re.match(r"^[-*] \S", x)]
+    dates, money, nums = _facts(text)
+    checks = {"three_bullets": len(bullets) == 3,
+              "only_bullets": len(lines) == len(bullets),
+              "date_kept": "2026-11-01" in dates and dates <= {"2026-11-01"},
+              "amount_kept": ("USD", 50.0) in money and money <= {("USD", 50.0)},
+              "ielts_kept_no_new_numbers": "6.5" in nums and set(nums) <= {"1", "2026", "50", "6.5"}}
+    return 100.0 * sum(checks.values()) / len(checks), json.dumps(checks)
+
+
 def tasks(calib_dir: Path | None = None) -> list[CouncilTask]:
     out = [
         CouncilTask("reasoning", ["mission.analyze", "opportunity.model"], lambda: [ChatMessage("user",
@@ -179,6 +216,16 @@ def tasks(calib_dir: Path | None = None) -> list[CouncilTask]:
         CouncilTask("fact_preservation", ["editorial.write"], lambda: [ChatMessage("user",
             "أعد صياغة الفقرة دي بالعامية المصرية بأسلوب أخف، وحافظ على التاريخ والمبلغ زي ما هما بالظبط ومتضيفش أي أرقام "
             "جديدة: 'آخر موعد للتقديم هو 1 نوفمبر 2026، ورسوم تأكيد المكان $50.'")], s_fact_preservation),
+        CouncilTask("english_factual_writing", [], lambda: [ChatMessage("user",
+            "Rewrite this for a 16-year-old student in plain, friendly English, in at most two sentences. Keep the date "
+            "and the amount exactly and add no new numbers: 'Applicants are hereby notified that the application "
+            "deadline is 1 November 2026 and that an enrolment deposit of USD 50 is payable.' Return only the "
+            "rewritten text.")], s_english_writing),
+        CouncilTask("structured_editorial", [], lambda: [ChatMessage("user",
+            "Write a checklist for a student as exactly three Markdown bullet items ('- '), one short imperative "
+            "sentence each, in English: submit the application before 1 November 2026; pay the USD 50 deposit; take "
+            "IELTS and score at least 6.5. Keep the numbers exactly and add no others. Return only the list.")],
+            s_structured_editorial),
         CouncilTask("html_css", ["design.html"], lambda: [ChatMessage("user",
             "Write ONE HTML <section> (no <script>, no gradients) for an Arabic right-to-left guide page: dir=\"rtl\", "
             "an <h2> heading, one <p> paragraph in Arabic, and wrap the English word deadline in <bdi dir=\"ltr\">. "

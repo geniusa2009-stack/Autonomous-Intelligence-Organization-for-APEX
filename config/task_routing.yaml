@@ -1,25 +1,62 @@
-# Task-specific, EMPIRICAL routing. Each pipeline task is ranked ONLY on the measured council evidence named here
-# (artifacts/bench/council_scores.json via the registry overlay). There is no "overall" fallback: a model is never
-# the brain because an average looks high. Unmeasured models fall back to their prior capability estimate and rank
-# below any model MEASURED >= the prior on this task's evidence.
-#   combine: min  -> every listed skill must hold (e.g. writing must be Egyptian AND fact-preserving)
-#   deterministic -> no model may compute this task (enforced by the $0 firewall); code does it
-#   calibrated_only -> only calibration-reliable vision judges (Vision Council / pairwise)
-schema_version: 1
+# Task-specific, EMPIRICAL routing (schema 2).
+#
+# 1. CAPABILITY VECTOR. Every capability below is backed by exactly ONE measured council task
+#    (artifacts/bench/council_scores.json, overlaid on the registry). A capability is never inferred from a
+#    different skill: strong structured JSON says nothing about prose, weak Egyptian Arabic says nothing about
+#    English writing, weak date reasoning says nothing about writing at all.
+#
+# 2. TASK RULES. A pipeline task names the capabilities it REQUIRES. Every listed capability is MANDATORY for that
+#    exact routing decision, so the task score is the weakest of them (min). A rule lists several capabilities
+#    only when the decision genuinely needs all of them.
+#
+# 3. FLOOR. A model MEASURED below `min_score` on any required capability is REJECTED for the task (not merely
+#    ranked lower). The floor was fixed before any new results were observed and is never tuned to admit a model.
+#    Unmeasured models fall back to their prior capability estimate, rank below every model that passed the floor,
+#    and are labelled unmeasured in reports.
+#
+# 4. NO OVERALL. There is no cross-task average anywhere in routing.
+#
+#    deterministic   -> no model may compute this task (enforced by the $0 firewall); code does it
+#    calibrated_only -> only judges that passed calibration in that mode (see VISION_JUDGE_ROBUSTNESS.md)
+#
+# Legacy aliases (backward compatibility only): council_scores.json still carries the old pipeline-task keys
+# (editorial.write, editorial.critique, mission.analyze, ...). Each is the MIN of the measured tasks whose
+# `maps_to` lists it (apex_one/compute/benchmark/council.py::rescore). The router never reads them for a task that
+# has a rule here; they exist so older callers and reports keep working.
+schema_version: 2
+default_min_score: 50
+
+capabilities:
+  editorial.write.general:          english_factual_writing   # plain-English factual rewrite
+  editorial.write.egyptian_arabic:  egyptian_arabic           # MSA -> natural Egyptian Arabic
+  editorial.write.fact_preserving:  fact_preservation         # dates/amounts kept exactly, nothing invented
+  editorial.write.bilingual:        en_ar_mixing              # Egyptian Arabic with English terms in Latin script
+  editorial.write.structured:       structured_editorial      # exact Markdown checklist carrying the facts
+  editorial.write.long_context:     long_context              # answer from a long source document
+  extract.structured_json:          structured_json           # facts -> exact JSON fields
+  design.html_css:                  html_css                  # RTL HTML/CSS under constraints
+  design.criticism:                 design_criticism          # names the real design defects
+  reasoning.general:                reasoning                 # NON-critical reasoning only (dates are deterministic)
+
 tasks:
-  evidence.extract:   {evidence: [structured_json]}
-  live.structured:    {evidence: [structured_json]}
-  editorial.write:    {evidence: [egyptian_arabic, fact_preservation], combine: min}
-  editorial.critique: {evidence: [egyptian_arabic]}
-  mission.analyze:    {evidence: [reasoning]}
-  opportunity.model:  {evidence: [reasoning]}
-  design.html:        {evidence: [html_css]}
-  design.reward:      {evidence: [design_criticism]}
-  design.critique:    {evidence: [design_criticism]}
-  retrieval.long:     {evidence: [long_context]}
-  date.:              {deterministic: apex_one.core.dates}
-  vision.council:     {calibrated_only: absolute}
-  vision.pairwise:    {calibrated_only: pairwise}
-  layout.:            {native: apex-native-layout}
-  svg.:               {specialist: vector (StarVector / OmniSVG when reachable), else native SVG assets}
-  repair.:            {native: apex-native repair_genes (failure-specific)}
+  # APEX guide paraphrase (Opening / APEX Take / Closing): must be Egyptian Arabic AND keep every fact
+  editorial.write.egyptian_guide:   {requires: [editorial.write.egyptian_arabic, editorial.write.fact_preserving]}
+  editorial.write.english:          {requires: [editorial.write.general]}
+  editorial.write.bilingual:        {requires: [editorial.write.bilingual, editorial.write.fact_preserving]}
+  editorial.write.checklist:        {requires: [editorial.write.structured]}
+  editorial.write:                  {requires: [editorial.write.egyptian_arabic, editorial.write.fact_preserving]}  # legacy name of egyptian_guide
+  editorial.critique:               {requires: [editorial.write.egyptian_arabic]}
+  evidence.extract:                 {requires: [extract.structured_json]}
+  live.structured:                  {requires: [extract.structured_json]}
+  retrieval.long:                   {requires: [editorial.write.long_context]}
+  mission.analyze:                  {requires: [reasoning.general]}
+  opportunity.model:                {requires: [reasoning.general]}
+  design.html:                      {requires: [design.html_css]}
+  design.reward:                    {requires: [design.criticism]}
+  design.critique:                  {requires: [design.criticism]}
+  date.:                            {deterministic: apex_one.core.dates}   # models may EXPLAIN a date, never compute it
+  vision.council:                   {calibrated_only: absolute}
+  vision.pairwise:                  {calibrated_only: pairwise}
+  layout.:                          {native: apex-native-layout}
+  svg.:                             {specialist: vector (StarVector / OmniSVG when reachable), else native SVG assets}
+  repair.:                          {native: apex-native repair_genes (failure-specific)}

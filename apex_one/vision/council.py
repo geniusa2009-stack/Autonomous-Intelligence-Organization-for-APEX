@@ -56,12 +56,29 @@ def _prompt(intent: str) -> str:
     )
 
 
-def encode_png(path: Path, max_w: int = 768) -> str:
+# Judge-input contract (VISION_JUDGE_ROBUSTNESS.md): every page a judge sees — calibration and production alike —
+# goes through normalize_for_judge(). It is WIDTH-BOUND (each page scaled to the same target width, aspect ratio
+# preserved, never capped by height, so two candidates of different heights get the same scale) and never
+# upscales: widths above the native render come from a re-render at a higher device scale, not from resampling.
+PREPROCESS_VERSION = "width-bound-thumbnail-bicubic-v1"
+
+
+def normalize_for_judge(path: Path, width: int) -> bytes:
     im = Image.open(path).convert("RGB")
-    im.thumbnail((max_w, int(max_w * 1.42)))
+    im.thumbnail((width, 10**6))            # Pillow default resampling (bicubic), aspect ratio preserved
     buf = io.BytesIO()
     im.save(buf, "PNG")
-    return base64.b64encode(buf.getvalue()).decode()
+    return buf.getvalue()
+
+
+def preprocess_hash(path: Path, width: int) -> str:
+    import hashlib
+
+    return hashlib.sha256(PREPROCESS_VERSION.encode() + normalize_for_judge(path, width)).hexdigest()
+
+
+def encode_png(path: Path, max_w: int = 768) -> str:
+    return base64.b64encode(normalize_for_judge(path, max_w)).decode()
 
 
 def parse_review(text: str) -> dict[str, dict[str, Any]]:

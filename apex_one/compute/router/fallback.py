@@ -23,6 +23,14 @@ NATIVE_FALLBACK_TASKS = {
     "editorial.critique", "design.layout", "design.html", "design.svg", "design.reward", "design.repair",
     "reader.simulate", "research.query_plan",
 }
+
+
+def has_native_fallback(task: str) -> bool:
+    """Exact task or any parent (editorial.write.egyptian_guide -> editorial.write)."""
+    parts = task.split(".")
+    return any(".".join(parts[:i]) in NATIVE_FALLBACK_TASKS for i in range(len(parts), 1, -1))
+
+
 WAIT_THRESHOLD_SECONDS = 60.0
 _LOCAL_CACHE: dict[str, tuple[float, bool]] = {}
 
@@ -96,7 +104,7 @@ class FallbackPlanner:
                     cand, fw)
 
         reasons = [f"no executable $0 route among {len(considered)} candidates"]
-        if req.task in NATIVE_FALLBACK_TASKS:
+        if has_native_fallback(req.task):
             outcome = RouteOutcome.LOCAL_FALLBACK
             reasons.append("APEX native deterministic engine will perform the task")
         elif min_wait is not None and min_wait <= WAIT_THRESHOLD_SECONDS:
