@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-30 11:28 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 11:58 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -36,7 +36,7 @@ Parser/execution errors: none
 | cramped | first | second | False |
 | no_hierarchy | first | second | False |
 
-**E2 pairwise 1024 px:** 0/5 order-consistent wins; position-biased cases: 5
+**E2 pairwise native 794 px (labelled 1024; never upscaled):** 0/5 order-consistent wins; position-biased cases: 5
 
 | case | good shown as A → pick | good shown as B → pick | pass |
 |---|---|---|---|
@@ -92,7 +92,7 @@ Parser/execution errors: none
 | cramped | first | second | False |
 | no_hierarchy | first | second | False |
 
-**E2 pairwise 1024 px:** 2/5 order-consistent wins; position-biased cases: 3
+**E2 pairwise native 794 px (labelled 1024; never upscaled):** 2/5 order-consistent wins; position-biased cases: 3
 
 | case | good shown as A → pick | good shown as B → pick | pass |
 |---|---|---|---|
@@ -148,7 +148,7 @@ Parser/execution errors: none
 | cramped | second | second | False |
 | no_hierarchy | first | first | True |
 
-**E2 pairwise 1024 px:** 3/5 order-consistent wins; position-biased cases: 1
+**E2 pairwise native 794 px (labelled 1024; never upscaled):** 3/5 order-consistent wins; position-biased cases: 1
 
 | case | good shown as A → pick | good shown as B → pick | pass |
 |---|---|---|---|
@@ -189,7 +189,7 @@ Stability: 5/5 cases gave identical scores on repeat.
 | gemma-multimodal | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | gemma-multimodal | rubric overload (six roles in one call) | six-role 1/5 vs single-role 1/5 | **RULED OUT** |
 | gemma-multimodal | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
-| gemma-multimodal | image scaling | pairwise 640 px 0/5 vs 1024 px 0/5 | **RULED OUT** |
+| gemma-multimodal | image scaling | pairwise 640 px 0/5 vs native 794 px 0/5 | **RULED OUT** |
 | gemma-multimodal | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | gemma-multimodal | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | gemma-multimodal | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 1/5 | **NO — stays out of every gate** |
@@ -198,7 +198,7 @@ Stability: 5/5 cases gave identical scores on repeat.
 | qwen-vl-current | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | qwen-vl-current | rubric overload (six roles in one call) | six-role 1/5 vs single-role 3/5 | **CONFIRMED (partial)** |
 | qwen-vl-current | pair-order sensitivity / position bias | 5/5 cases picked the same POSITION in both orders | **CONFIRMED** |
-| qwen-vl-current | image scaling | pairwise 640 px 0/5 vs 1024 px 2/5 | **CONFIRMED (helps)** |
+| qwen-vl-current | image scaling | pairwise 640 px 0/5 vs native 794 px 2/5 | **CONFIRMED (helps)** |
 | qwen-vl-current | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen-vl-current | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | qwen-vl-current | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 3/5 | **NO — stays out of every gate** |
@@ -207,7 +207,7 @@ Stability: 5/5 cases gave identical scores on repeat.
 | qwen3-vl-8b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
 | qwen3-vl-8b | rubric overload (six roles in one call) | six-role 3/5 vs single-role 3/5 | **RULED OUT** |
 | qwen3-vl-8b | pair-order sensitivity / position bias | 0/5 cases picked the same POSITION in both orders | **RULED OUT** |
-| qwen3-vl-8b | image scaling | pairwise 640 px 4/5 vs 1024 px 3/5 | **RULED OUT** |
+| qwen3-vl-8b | image scaling | pairwise 640 px 4/5 vs native 794 px 3/5 | **RULED OUT** |
 | qwen3-vl-8b | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen3-vl-8b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | qwen3-vl-8b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 4/5 | **YES** |
@@ -217,7 +217,7 @@ Stability: 5/5 cases gave identical scores on repeat.
 | different prompting / role-rubric overload | E0 (six roles, one call) vs E3 (only the targeted role) |
 | pair order sensitivity / position bias | E1 good-as-A vs good-as-B answers |
 | scoring schema (absolute scores tie) | E0 ties_on_target, distinct_scores |
-| image scaling | E1 (640 px) vs E2 (1024 px) |
+| image scaling | E1 (640 px) vs E2 (native 794 px; requested 1024, never upscaled) |
 | model instability | E3 vs E4 (identical prompts, temperature 0) |
 | output parser | E0 reviews: parse errors / dropped roles vs raw text |
 | context truncation | E0 raw text ends mid-JSON / missing roles |
@@ -235,5 +235,5 @@ Stability: 5/5 cases gave identical scores on repeat.
 ## What the gates may use (re-checked: bar, timestamp, model digest)
 
 * six-role scoring council (absolute): none → **Vision Quality scores = NOT_MEASURED**
-* finalist A/B judging (pairwise, both orders): qwen3-vl-8b → pairwise finalist votes ACTIVE (a vote counts only when both orders agree)
+* finalist A/B judging (pairwise, both orders): none → pairwise judging NOT_MEASURED
 * a pass in one mode never qualifies the other; deterministic DOM gates remain authoritative

@@ -5,7 +5,9 @@ Experiments on the SAME calibration pages (good + five broken variants), each is
 * E0 absolute  — the production council protocol (six roles in one call); raw scores + raw text kept, so ties,
                  inversions, parser drops and truncation can be told apart.
 * E1 pairwise  — order-swapped A/B on every case at 640 px (the production pairwise protocol).
-* E2 pairwise  — the same at 1024 px (image-scaling sensitivity).
+* E2 pairwise  — the same with max width 1024 px. The calibration pages are 794 px wide and the judge input is
+                 never upscaled, so E2 actually ran at the NATIVE 794 px (see VISION_JUDGE_ROBUSTNESS.md for a
+                 real 1024 px re-render).
 * E3 single    — absolute score for ONLY the targeted role (rubric-overload / schema hypothesis).
 * E4 repeat    — E3 repeated (temperature 0 instability).
 

@@ -57,7 +57,8 @@ class PairwiseResult:
                 "preprocess": self.preprocess}
 
 
-# production judges at the width they were calibrated at: Qwen3-VL 8B is 4/5 at 640 px but 3/5 at 1024 px
+# canonical judge-input width (VISION_JUDGE_ROBUSTNESS.md): Qwen3-VL 8B was 4/5 here but 3/5 at its native 794 px,
+# so it is calibrated for THIS normalized input only — see the robustness sweep before trusting any other width
 CALIBRATED_MAX_W = 640
 
 

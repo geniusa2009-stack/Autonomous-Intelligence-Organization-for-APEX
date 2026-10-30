@@ -354,6 +354,11 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
     inv = {p.stem: _load(p) for p in sorted(inv_dir.glob("*.json"))} if inv_dir.exists() else {}
     files["VISION_CALIBRATION_ANALYSIS.md"] = vision_analysis_md(
         inv, _load(bench / "vision_calibration" / "calibration_results.json"), runs)
+    robust_dir = bench / "vision_robustness"
+    for f in robust_dir.glob("*.json") if robust_dir.exists() else []:
+        shutil.copy(f, evidence / f"vision_robustness_{f.name}")
+    files["VISION_JUDGE_ROBUSTNESS.md"] = robustness_md(robust_dir, bench / "vision_calibration")
+    files["PRODUCTION_ROUTING_MATRIX.md"] = routing_matrix_md(reg, runs)
     for name, text in files.items():
         (repo / name).write_text(text, encoding="utf-8")
     return {k: str(repo / k) for k in files}
@@ -450,7 +455,7 @@ HYPOTHESES = [
     ("different prompting / role-rubric overload", "E0 (six roles, one call) vs E3 (only the targeted role)"),
     ("pair order sensitivity / position bias", "E1 good-as-A vs good-as-B answers"),
     ("scoring schema (absolute scores tie)", "E0 ties_on_target, distinct_scores"),
-    ("image scaling", "E1 (640 px) vs E2 (1024 px)"),
+    ("image scaling", "E1 (640 px) vs E2 (native 794 px; requested 1024, never upscaled)"),
     ("model instability", "E3 vs E4 (identical prompts, temperature 0)"),
     ("output parser", "E0 reviews: parse errors / dropped roles vs raw text"),
     ("context truncation", "E0 raw text ends mid-JSON / missing roles"),
@@ -484,7 +489,7 @@ def hypothesis_verdicts(rep: dict[str, Any]) -> list[tuple[str, str, str]]:
         rows.append(("pair-order sensitivity / position bias", f"{bias}/5 cases picked the same POSITION in both orders",
                      "CONFIRMED" if bias >= 3 else "minor" if bias else "RULED OUT"))
         if rep.get("E2"):
-            rows.append(("image scaling", f"pairwise 640 px {ok('E1')}/5 vs 1024 px {ok('E2')}/5",
+            rows.append(("image scaling", f"pairwise 640 px {ok('E1')}/5 vs native 794 px {ok('E2')}/5",
                          "CONFIRMED (helps)" if ok("E2") > ok("E1") else "RULED OUT"))
     if rep.get("E3") and rep.get("E4"):
         same = sum(1 for k in rep["E3"]["cases"] if rep["E3"]["cases"][k]["good"]["score"] ==
@@ -531,7 +536,7 @@ def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, An
                 out.append(f"| {k} | {v['role']} | {_fmt(v['good'], 0)} | {_fmt(v['broken'], 0)} | {res['checks'][k]} |")
             parse_errors = {p: r.get("errors") for p, r in e0.get("reviews", {}).items() if r.get("errors")}
             out += ["", f"Parser/execution errors: {parse_errors or 'none'}", ""]
-        for key, label in (("E1", "pairwise 640 px"), ("E2", "pairwise 1024 px")):
+        for key, label in (("E1", "pairwise 640 px"), ("E2", "pairwise native 794 px (labelled 1024; never upscaled)")):
             e = rep.get(key)
             if e:
                 bias = sum(1 for d in e["detail"].values() if d["position_bias"])
@@ -613,3 +618,165 @@ def gdb_md(gdb_dir: Path) -> list[str]:
                 out.append(f"| {name} | {task} | {r.get('count')} | {r.get('success_count')} | {r.get('failure_count')} | "
                            f"{sc} | {meta.get('runtime_s', '—')} s total |")
     return out + [""]
+
+
+# ---------------------------------------------------------------- VISION_JUDGE_ROBUSTNESS
+
+def robustness_md(robust_dir: Path, calib_dir: Path) -> str:
+    from apex_one.lab.benchmarks.vision_robustness import REPEATS, WIDTHS, load, status, summarize_width
+    from apex_one.vision.council import PREPROCESS_VERSION
+    from apex_one.vision.pairwise import CALIBRATED_MAX_W
+
+    try:
+        from apex_one.lab.benchmarks.vision_robustness import min_font_px, native_width
+
+        native, min_font = native_width(calib_dir), min_font_px(calib_dir)
+    except Exception:  # noqa: BLE001
+        native, min_font = 794, None
+    out = ["# Vision judge robustness", "", _stamp(),
+           "Does a pairwise judge's calibration survive a change of input resolution? Same five calibration cases "
+           f"(good page vs each deliberately broken variant), both orders, {REPEATS} repeats per width.", "",
+           "## Judge-input contract (canonical normalized input)", "",
+           f"* **canonical judge width: {CALIBRATED_MAX_W} px** — `PairwiseJudge` default (`CALIBRATED_MAX_W`); "
+           "production finalist judging and calibration call the SAME `PairwiseJudge.compare` → `encode_png` → "
+           "`normalize_for_judge` path",
+           f"* preprocessing `{PREPROCESS_VERSION}`: width-bound (every candidate scaled to the same width, so two "
+           "pages of different heights share one scale), aspect ratio preserved, never capped by height, Pillow "
+           "default bicubic resampling; each input's sha256 is stored with every result",
+           f"* native render: {native} px wide (A4 at device scale 1). Widths above native are RE-RENDERED at "
+           "device scale width/native — never upscaled",
+           f"* smallest text on the calibration page: {_fmt(min_font, 0)} CSS px → effective "
+           + ", ".join(f"{w} px: {min_font * w / native:.1f} px" for w in (320, 480, 640, 768) if min_font)
+           + " (legibility is measured directly by the probe below, not assumed)",
+           "* confidence = consistency across the 2 × repeats answers per case, |2p − 1| (the judge is not asked to "
+           "self-report confidence, so the calibrated prompt is unchanged)",
+           "* correction: the earlier investigation experiment labelled “E2 1024 px” actually ran at the native "
+           f"{native} px — `thumbnail()` never upscales. The sweep below renders a real 1024 px input.", "",
+           "Pre-registered rules (`apex_one/lab/benchmarks/vision_robustness.py`, fixed before results): reliable at a "
+           "width = every repeat all-valid and ≥ 4/5; legible = both probe facts read exactly; ROBUSTLY_CALIBRATED = "
+           "reliable at every legible width and legible at canonical, native and 1024; CANONICAL_640_ONLY = reliable "
+           "and legible at 640 only; UNQUALIFIED = not reliable or not legible at 640.", ""]
+    models = sorted(p.stem for p in robust_dir.glob("*.json")) if robust_dir.exists() else []
+    if not models:
+        out += ["_No robustness results yet._", ""]
+    for mid in models:
+        data = load(mid, robust_dir) or {}
+        st, why = status(data)
+        out += [f"## {mid} — **{st}**", "", f"{why}. Model digest `{(data.get('model_digest') or '—')[:19]}…`.", "",
+                "| width | input | repeats | correct per repeat | accuracy | order sensitivity | run variance | "
+                "cases flipping | confidence | median call latency | legible (deadline / tuition) | reliable | input hash (good) |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for wkey in WIDTHS:
+            w = data.get("widths", {}).get(wkey)
+            if not w:
+                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — |")
+                continue
+            s = summarize_width(w)
+            if not s.get("repeats"):
+                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — |")
+                continue
+            rd = s.get("legibility_read") or {}
+            leg = "—" if s["legible"] is None else (f"{'yes' if s['legible'] else 'NO'} "
+                                                   f"({rd.get('application_deadline')} / {rd.get('tuition_coverage')})")
+            out.append(f"| {wkey} ({s['width']} px) | {s['inputs']} | {s['repeats']} | {s['correct_per_repeat']} | "
+                       f"{s['accuracy']:.2f} | {s['order_sensitivity']:.2f} ({s['position_bias_cases']} case-runs) | "
+                       f"{s['run_variance']} | {', '.join(s['cases_flipping_across_repeats']) or '—'} | "
+                       f"{_fmt(s['confidence_mean'], 2)} | {_fmt(s['median_call_latency_s'])} s | {leg} | "
+                       f"{'yes' if s['reliable_all_repeats'] else 'NO'} | `{(s['input_hash_good'] or '')[:12]}` |")
+        out += ["", "Raw answers, per-call latency and every input hash: `docs/evidence/vision_robustness_"
+                f"{mid}.json`.", ""]
+        if st == "CANONICAL_640_ONLY":
+            out += [f"**Limitation (stays visible):** {mid} is calibrated ONLY for the canonical {CALIBRATED_MAX_W} px "
+                    "normalized input. It is not a general-purpose vision judge; at other resolutions its verdicts are "
+                    "not trusted. Production uses it only for order-swapped finalist A/B judging at "
+                    f"{CALIBRATED_MAX_W} px, and the deterministic DOM gates stay authoritative.", ""]
+    return "\n".join(out) + "\n"
+
+
+# ---------------------------------------------------------------- PRODUCTION_ROUTING_MATRIX
+
+def routing_matrix_md(reg, runs: list[dict[str, Any]]) -> str:
+    from apex_one.compute.local import load_catalogue
+    from apex_one.compute.router.capability import (
+        rejection,
+        required_scores,
+        routing_config,
+        task_evidence_score,
+    )
+    from apex_one.vision.council import judge_status, reliable_judges
+
+    cfg = routing_config()
+    caps, rules = cfg.get("capabilities", {}), cfg.get("tasks", {})
+    floor = cfg.get("default_min_score", 50)
+    measured = sorted((m for m in reg.models.values() if m.benchmark_scores), key=lambda m: m.id)
+    _, specs = load_catalogue()
+    installed = {s.registry_model for s in specs.values() if (s.dir / "apex_manifest.json").exists()}
+    lat: dict[tuple[str, str], float] = {}
+    for r in runs:
+        if r.get("latency_s") is not None:
+            lat[(r["model"], r["task"])] = r["latency_s"]
+    out = ["# Production routing matrix", "", _stamp(),
+           "Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checker v2) and licence records. "
+           "No global best model, no cross-task average. A task's score is the weakest of the capabilities it "
+           f"REQUIRES; a model measured below the floor ({floor}, pre-registered) on any of them is rejected. "
+           "**Primary / fallback must also be production-licensed and installed**; the best evaluation-only model is "
+           "shown separately. Ties are broken by measured latency on the same evidence tasks (lower first).", "",
+           "## Rules", "",
+           "* **date arithmetic: DETERMINISTIC ENGINE ONLY** (`apex_one/core/dates.py`). The $0 firewall refuses "
+           "every `date.*` task for every model. A model may EXPLAIN a date that code computed; it never computes "
+           "one. Regression case: latest Saturday before a 1 Nov 2026 deadline with 10-day results = 2026-10-17.",
+           "* layout: APEX native engines; repair: native failure-specific repair; SVG: vector specialist when "
+           "reachable, else native SVG assets",
+           "* vision: only judges that passed calibration in that mode (see below)", "",
+           "## Capability vector (measured, per model — bad results stay visible)", "",
+           "| capability | evidence task | " + " | ".join(m.id for m in measured) + " |",
+           "|---|---|" + "---|" * len(measured)]
+    for cap, ev in caps.items():
+        out.append(f"| {cap} | {ev} | " + " | ".join(_fmt(m.benchmark_scores.get(ev), 0) if m.benchmark_scores.get(ev)
+                                                     is not None else "NOT_MEASURED" for m in measured) + " |")
+    out += ["", "| model | production licence | weights installed |", "|---|---|---|"]
+    for m in measured:
+        out.append(f"| {m.id} | {'ALLOWED' if reg.production_allowed(m) else 'BLOCKED'} | "
+                   f"{'yes' if m.id in installed else 'no'} |")
+    out += ["", "## Per-task routing", "",
+            "| task | requires (mandatory) | primary | fallback | best evaluation-only (licence-blocked) | rejected (below floor) | unmeasured |",
+            "|---|---|---|---|---|---|---|"]
+    for task, rule in rules.items():
+        if "requires" not in rule:
+            continue
+        scored, rejected, unmeasured = [], [], []
+        for m in measured:
+            sc = task_evidence_score(m, task)
+            if rejection(m, task):
+                low = {c: v for c, v in required_scores(m, task).items() if v is not None and v < floor}
+                rejected.append(f"{m.id} ({', '.join(f'{caps.get(c, c)}={_fmt(v, 0)}' for c, v in low.items())})")
+            elif sc is None:
+                unmeasured.append(m.id)
+            else:
+                t = sum(lat.get((m.id, caps.get(c, c)), 0.0) for c in rule["requires"])
+                scored.append((sc, t, m))
+        scored.sort(key=lambda x: (-x[0], x[1], x[2].id))
+        prod = [x for x in scored if reg.production_allowed(x[2]) and x[2].id in installed]
+        evalonly = [x for x in scored if x not in prod]
+        cell = lambda x: f"{x[2].id} ({_fmt(x[0], 0)}, {x[1]:.0f} s)" if x else "—"  # noqa: E731
+        from apex_one.compute.router.fallback import has_native_fallback
+
+        none = "NONE passes → APEX native engine" if has_native_fallback(task) else "NONE passes → task blocked"
+        out.append(f"| {task} | {', '.join(rule['requires'])} | {cell(prod[0]) if prod else none} | "
+                   f"{cell(prod[1] if len(prod) > 1 else None)} | {cell(evalonly[0] if evalonly else None)} | "
+                   f"{'; '.join(rejected) or '—'} | {', '.join(unmeasured) or '—'} |")
+    pw = reliable_judges(mode="pairwise")
+    ab = reliable_judges()[0]
+    out += ["", "## Vision", "",
+            f"* scoring council (absolute): {', '.join(ab) or 'none qualified'} → "
+            + ("ACTIVE" if ab else "**Vision Quality scores = NOT_MEASURED**"),
+            f"* finalist A/B (pairwise, canonical input only): {', '.join(pw[0]) or 'none admitted'}"]
+    for mid, r in (pw[1] or {}).items():
+        st, why = judge_status(mid)
+        out.append(f"  * {mid}: robustness **{st}** ({why}); "
+                   + ("ADMITTED" if mid in pw[0] else f"not admitted — {r.get('rejected', 'calibration not reliable')}"))
+    out += ["", "## Remote models", "",
+            "Remote free-tier routes were never measured here (provider hosts are network-blocked from this "
+            "environment), so they appear in no primary/fallback cell. They stay routable only through the runtime "
+            "prior, below every measured model, and are reported as unmeasured.", ""]
+    return "\n".join(out) + "\n"
