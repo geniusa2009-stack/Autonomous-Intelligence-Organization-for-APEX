@@ -728,7 +728,9 @@ def robustness_md(robust_dir: Path, calib_dir: Path) -> str:
         for wkey in WIDTHS:
             w = data.get("widths", {}).get(wkey)
             if not w:
-                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |")
+                why_not = ("NOT_RUN — canonical 640 px failed (pre-registered: UNQUALIFIED whatever other widths show)"
+                           if st == "UNQUALIFIED" else "NOT_MEASURED yet")
+                out.append(f"| {wkey} | — | 0 | {why_not} | — | — | — | — | — | — | — | — | — | — |")
                 continue
             s = summarize_width(w)
             if not s.get("repeats"):
