@@ -102,20 +102,20 @@ def model_activation_md(catalogue: dict[str, Any], scores: dict[str, Any] | None
             "Arabic register, EN/AR term mixing, structured JSON extraction (exact fields), fact preservation through "
             "rewriting, RTL HTML/CSS contract, design criticism coverage, long-context needle, and (vision models) "
             "order-swapped pairwise visual hierarchy.", ""]
-    tasks = ["reasoning", "egyptian_arabic", "en_ar_mixing", "structured_json", "fact_preservation", "html_css",
-             "design_criticism", "long_context", "visual_hierarchy"]
+    tasks = ["reasoning", "egyptian_arabic", "en_ar_mixing", "english_factual_writing", "structured_editorial",
+             "structured_json", "fact_preservation", "html_css", "design_criticism", "long_context", "visual_hierarchy"]
     if not scores or not scores.get("models"):
         out.append("PENDING: the council benchmark has not produced scores yet.")
     else:
-        out += ["| model | " + " | ".join(tasks) + " | overall (mean of measured) | measured tasks |",
-                "|---|" + "---|" * (len(tasks) + 2)]
+        out += ["| model | " + " | ".join(tasks) + " | measured tasks |", "|---|" + "---|" * (len(tasks) + 1)]
         for mid, e in scores["models"].items():
-            n = e.get("measured_tasks", sum(1 for t in tasks if e.get(t) is not None))
-            out.append(f"| {mid} | " + " | ".join(_fmt(e.get(t), 0) for t in tasks)
-                       + f" | {_fmt(e.get('overall'))} | {n}/{len(tasks)} |")
+            n = sum(1 for t in tasks if e.get(t) is not None)
+            out.append(f"| {mid} | " + " | ".join(_fmt(e.get(t), 0) for t in tasks) + f" | {n}/{len(tasks)} |")
         out += ["", "`—` = NOT_MEASURED (not run, not applicable, or empty output because a reasoning model spent its "
-                "token budget on hidden reasoning; re-run with a larger budget). Overall means are over different task "
-                "counts and are not directly comparable across rows. "
+                "token budget on hidden reasoning; re-run with a larger budget). **No overall mean is shown**: the "
+                "rows cover different task sets, and an average would hide a 0 (e.g. Egyptian Arabic or date "
+                "reasoning) behind unrelated 100s. Compare per task; routing uses the capability vector in "
+                "PRODUCTION_ROUTING_MATRIX.md. "
                 + (f"Checker version {scores.get('checker_version')}: scores recomputed from stored outputs."
                    if scores.get("checker_version") else "")]
         out += ["", "These measured scores overwrite the registry's prior estimates (`capability_source: "

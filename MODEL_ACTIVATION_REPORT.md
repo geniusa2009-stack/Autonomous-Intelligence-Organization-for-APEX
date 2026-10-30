@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-30 11:58 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 11:59 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -19,15 +19,15 @@ Real local inference: llama.cpp `llama-server` (built from source in this contai
 
 Tasks are scored by deterministic checkers (no model grades another model): date reasoning, Egyptian Arabic register, EN/AR term mixing, structured JSON extraction (exact fields), fact preservation through rewriting, RTL HTML/CSS contract, design criticism coverage, long-context needle, and (vision models) order-swapped pairwise visual hierarchy.
 
-| model | reasoning | egyptian_arabic | en_ar_mixing | structured_json | fact_preservation | html_css | design_criticism | long_context | visual_hierarchy | overall (mean of measured) | measured tasks |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| gemma-multimodal | 0 | 75 | 100 | 100 | 50 | 100 | 100 | 100 | 50 | 78.1 | 8/9 |
-| nemotron-nano-omni | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | — | 75.0 | 8/9 |
-| qwen-vl-current | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 75.0 | 8/9 |
-| gpt-oss-20b | 100 | 50 | 100 | 100 | 100 | 100 | 100 | 100 | — | 93.8 | 8/9 |
-| qwen3-vl-8b | 0 | 0 | 67 | 100 | 100 | 100 | 100 | 100 | 100 | 70.8 | 8/9 |
+| model | reasoning | egyptian_arabic | en_ar_mixing | english_factual_writing | structured_editorial | structured_json | fact_preservation | html_css | design_criticism | long_context | visual_hierarchy | measured tasks |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| gemma-multimodal | 0 | 75 | 100 | — | — | 100 | 50 | 100 | 100 | 100 | 50 | 9/11 |
+| nemotron-nano-omni | 0 | 0 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | — | 8/11 |
+| qwen-vl-current | 0 | 0 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | 100 | 9/11 |
+| gpt-oss-20b | 100 | 50 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | — | 8/11 |
+| qwen3-vl-8b | 0 | 0 | 67 | — | — | 100 | 100 | 100 | 100 | 100 | 100 | 9/11 |
 
-`—` = NOT_MEASURED (not run, not applicable, or empty output because a reasoning model spent its token budget on hidden reasoning; re-run with a larger budget). Overall means are over different task counts and are not directly comparable across rows. Checker version 2: scores recomputed from stored outputs.
+`—` = NOT_MEASURED (not run, not applicable, or empty output because a reasoning model spent its token budget on hidden reasoning; re-run with a larger budget). **No overall mean is shown**: the rows cover different task sets, and an average would hide a 0 (e.g. Egyptian Arabic or date reasoning) behind unrelated 100s. Compare per task; routing uses the capability vector in PRODUCTION_ROUTING_MATRIX.md. Checker version 2: scores recomputed from stored outputs.
 
 These measured scores overwrite the registry's prior estimates (`capability_source: apex-benchmark`), so the CapabilityRouter now ranks local models by what they actually did here.
 
