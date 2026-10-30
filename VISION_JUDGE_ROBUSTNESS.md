@@ -1,6 +1,6 @@
 # Vision judge robustness
 
-_Generated 2026-10-30 17:16 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 21:09 UTC by `apex-one reports build` from measured artifacts._
 
 Does a pairwise judge's calibration survive a change of input resolution? Same five calibration cases (good page vs each deliberately broken variant), both orders, 3 repeats per width.
 
@@ -18,16 +18,16 @@ Pre-registered rules (`apex_one/lab/benchmarks/vision_robustness.py`, fixed befo
 
 ## qwen3-vl-8b — **CANONICAL_640_ONLY**
 
-not yet measured: 320, 480, 768, native, 1024. Model digest `sha256:e3d1a6e87c5c…`.
+unreliable at 320, 768, native, 1024; illegible (so not counted) at 480. Model digest `sha256:e3d1a6e87c5c…`.
 
 | width | input | repeats | correct per repeat | accuracy | order sensitivity | run variance | cases flipping | always wrong | confidence | median call latency | legible (deadline / tuition) | reliable | input hash (good) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 320 | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |
-| 480 | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |
+| 320 (320 px) | calibration render, downscaled by the judge-input contract | 3 | [3, 3, 3] | 0.60 | 0.20 (3 case-runs) | 0 | — | low_contrast, cramped | 0.80 | 16.9 s | yes (True / True) | NO | `40cdd048df84` |
+| 480 (480 px) | calibration render, downscaled by the judge-input contract | 3 | [3, 3, 3] | 0.60 | 0.20 (3 case-runs) | 0 | — | low_contrast, cramped | 0.80 | 34.0 s | NO (False / True) | NO | `b0621d68f733` |
 | 640 (640 px) | calibration render, downscaled by the judge-input contract | 3 | [4, 4, 4] | 0.80 | 0.00 (0 case-runs) | 0 | — | cramped | 1.00 | 62.8 s | yes (True / True) | yes | `c694ad322e2c` |
-| 768 | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |
-| native | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |
-| 1024 | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |
+| 768 (768 px) | calibration render, downscaled by the judge-input contract | 3 | [3, 3, 3] | 0.60 | 0.20 (3 case-runs) | 0 | — | low_contrast, cramped | 0.80 | 87.6 s | yes (True / True) | NO | `4b4cb9fa22fd` |
+| native (794 px) | calibration render at native size (no resampling) | 3 | [3, 3, 3] | 0.60 | 0.20 (3 case-runs) | 0 | — | low_contrast, cramped | 0.80 | 99.0 s | yes (True / True) | NO | `429cc64e71b8` |
+| 1024 (1024 px) | re-rendered at device scale 1.290 (no upscaling) | 3 | [3, 3, 3] | 0.60 | 0.20 (3 case-runs) | 0 | — | low_contrast, cramped | 0.80 | 181.1 s | yes (True / True) | NO | `9ec2d47a3d7b` |
 
 Raw answers, per-call latency and every input hash: `docs/evidence/vision_robustness_qwen3-vl-8b.json`.
 

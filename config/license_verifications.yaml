@@ -25,6 +25,28 @@ verifications:
     verification_method: 'local artifact evidence: oci_descriptor'
     verified_at: null
     verified_by: null
+  lic-gemma3-12b:
+    artifacts:
+    - gemma3-12b-q4km
+    commercial_use: unknown
+    derivative_use: unknown
+    evidence:
+    - source: oci_descriptor
+      spdx: gemma
+      value: gemma
+    license_name: gemma (declared; not verified)
+    production_allowed: false
+    production_state: UNKNOWN
+    reasons_not_allowed:
+    - custom / non-permissive licence declared (['gemma']); its text is not available
+      locally
+    - only 1 independent declaration source(s); 2 required
+    redistribution: unknown
+    research_use: 'yes'
+    source_reference: registry-1.docker.io/ai/gemma3:12b-q4_K_M
+    verification_method: 'local artifact evidence: oci_descriptor'
+    verified_at: null
+    verified_by: null
   lic-gpt-oss:
     artifacts:
     - gpt-oss-20b-mxfp4
@@ -93,7 +115,7 @@ verifications:
     research_use: 'yes'
     source_reference: registry-1.docker.io/ai/qwen3-vl:8B-UD-Q4_K_XL
     verification_method: 'local artifact evidence: gguf_metadata, licence_layer'
-    verified_at: '2026-10-26T22:54:27.102538+00:00'
+    verified_at: '2026-10-30T21:08:15.705703+00:00'
     verified_by: apex-one license verify-local (artifact evidence rule)
   lic-qwen3-vl-apache:
     artifacts:
@@ -115,5 +137,5 @@ verifications:
     research_use: 'yes'
     source_reference: registry-1.docker.io/ai/qwen3-vl:4B-UD-Q4_K_XL
     verification_method: 'local artifact evidence: gguf_metadata, licence_layer'
-    verified_at: '2026-10-26T22:53:56.193407+00:00'
+    verified_at: '2026-10-30T21:07:57.628084+00:00'
     verified_by: apex-one license verify-local (artifact evidence rule)

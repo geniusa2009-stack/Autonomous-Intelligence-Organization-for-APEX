@@ -522,6 +522,187 @@
         "english_factual_writing": 100.0,
         "structured_editorial": 100.0
       }
+    },
+    "qwen3-vl-8b-q4kxl:robust:320": {
+      "at": "2026-10-30T17:25:29",
+      "info": {
+        "width": 320,
+        "inputs": "calibration render, downscaled by the judge-input contract",
+        "repeats": 3,
+        "correct_per_repeat": [
+          3,
+          3,
+          3
+        ],
+        "accuracy": 0.6,
+        "min_correct": 3,
+        "all_valid": true,
+        "reliable_all_repeats": false,
+        "order_sensitivity": 0.2,
+        "position_bias_cases": 3,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "cases_failed_every_repeat": [
+          "low_contrast",
+          "cramped"
+        ],
+        "confidence_mean": 0.8,
+        "median_call_latency_s": 16.9,
+        "legible": true,
+        "legibility_read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "40cdd048df848399b3c9ee5d7681d880957d92611a9d470f68184ebe7a77d248"
+      }
+    },
+    "qwen3-vl-8b-q4kxl:robust:480": {
+      "at": "2026-10-30T17:41:22",
+      "info": {
+        "width": 480,
+        "inputs": "calibration render, downscaled by the judge-input contract",
+        "repeats": 3,
+        "correct_per_repeat": [
+          3,
+          3,
+          3
+        ],
+        "accuracy": 0.6,
+        "min_correct": 3,
+        "all_valid": true,
+        "reliable_all_repeats": false,
+        "order_sensitivity": 0.2,
+        "position_bias_cases": 3,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "cases_failed_every_repeat": [
+          "low_contrast",
+          "cramped"
+        ],
+        "confidence_mean": 0.8,
+        "median_call_latency_s": 33.95,
+        "legible": false,
+        "legibility_read": {
+          "application_deadline": false,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "b0621d68f733e7e4a46028c214d34cf5ecfcfa915a79c871a7f30c263b791ded"
+      }
+    },
+    "qwen3-vl-8b-q4kxl:robust:768": {
+      "at": "2026-10-30T18:19:34",
+      "info": {
+        "width": 768,
+        "inputs": "calibration render, downscaled by the judge-input contract",
+        "repeats": 3,
+        "correct_per_repeat": [
+          3,
+          3,
+          3
+        ],
+        "accuracy": 0.6,
+        "min_correct": 3,
+        "all_valid": true,
+        "reliable_all_repeats": false,
+        "order_sensitivity": 0.2,
+        "position_bias_cases": 3,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "cases_failed_every_repeat": [
+          "low_contrast",
+          "cramped"
+        ],
+        "confidence_mean": 0.8,
+        "median_call_latency_s": 87.6,
+        "legible": true,
+        "legibility_read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "4b4cb9fa22fdb3f961a5266ade6db8c664c376c3254bd627bc881740c6e0b6cc"
+      }
+    },
+    "qwen3-vl-8b-q4kxl:robust:native": {
+      "at": "2026-10-30T19:10:43",
+      "info": {
+        "width": 794,
+        "inputs": "calibration render at native size (no resampling)",
+        "repeats": 3,
+        "correct_per_repeat": [
+          3,
+          3,
+          3
+        ],
+        "accuracy": 0.6,
+        "min_correct": 3,
+        "all_valid": true,
+        "reliable_all_repeats": false,
+        "order_sensitivity": 0.2,
+        "position_bias_cases": 3,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "cases_failed_every_repeat": [
+          "low_contrast",
+          "cramped"
+        ],
+        "confidence_mean": 0.8,
+        "median_call_latency_s": 99.0,
+        "legible": true,
+        "legibility_read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "429cc64e71b8d55a6412416aee8f2560386ad1189f9398fc0e49f886244bea8f"
+      }
+    },
+    "qwen3-vl-8b-q4kxl:robust:1024": {
+      "at": "2026-10-30T20:47:52",
+      "info": {
+        "width": 1024,
+        "inputs": "re-rendered at device scale 1.290 (no upscaling)",
+        "repeats": 3,
+        "correct_per_repeat": [
+          3,
+          3,
+          3
+        ],
+        "accuracy": 0.6,
+        "min_correct": 3,
+        "all_valid": true,
+        "reliable_all_repeats": false,
+        "order_sensitivity": 0.2,
+        "position_bias_cases": 3,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "cases_failed_every_repeat": [
+          "low_contrast",
+          "cramped"
+        ],
+        "confidence_mean": 0.8,
+        "median_call_latency_s": 181.1,
+        "legible": true,
+        "legibility_read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "9ec2d47a3d7b15215e68f22d28b6eeb7c5f8f23b47f677de9a8227a5407f95dd"
+      }
+    },
+    "gemma3-12b-q4km:acquire": {
+      "at": "2026-10-30T21:07:12",
+      "info": null
+    },
+    "gemma3-12b-q4km:live": {
+      "at": "2026-10-30T21:09:05",
+      "info": {
+        "status": "LIVE_TESTED",
+        "correct": true
+      }
     }
   },
   "failed": {

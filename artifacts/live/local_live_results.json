@@ -173,5 +173,40 @@
     "quota_headers": {},
     "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
     "status": "LIVE_TESTED"
+  },
+  "gemma3-12b-q4km": {
+    "provider": "llamacpp_local",
+    "model": "gemma3-12b",
+    "provider_model_id": "gemma3-12b-q4km",
+    "kind": "local",
+    "at": "2026-10-30T21:08:51.431323+00:00",
+    "network": "local",
+    "firewall": {
+      "verdict": "ALLOW",
+      "reasons": [],
+      "estimated_cost_usd": 0.0
+    },
+    "health_ms": 38.9,
+    "health": {
+      "availability": "AVAILABLE",
+      "detail": "1 model(s) served"
+    },
+    "listed_model_ids": [
+      "gemma3-12b-q4km"
+    ],
+    "structured_ms": 14463.1,
+    "structured_output": "{\"deadline\": \"2027-01-15\", \"fee_usd\": 65}",
+    "structured_correct": true,
+    "usage": {
+      "completion_tokens": 30,
+      "prompt_tokens": 60,
+      "total_tokens": 90,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "quota_headers": {},
+    "cost_basis": "local llama-server process on 127.0.0.1 — no billing surface",
+    "status": "LIVE_TESTED"
   }
 }
