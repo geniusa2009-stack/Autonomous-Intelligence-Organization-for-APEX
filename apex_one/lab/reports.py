@@ -821,6 +821,8 @@ def routing_matrix_md(reg, runs: list[dict[str, Any]]) -> str:
             f"* finalist A/B (pairwise, canonical input only): {', '.join(pw[0]) or 'none admitted'}"]
     for mid, r in (pw[1] or {}).items():
         st, why = judge_status(mid)
+        if not r.get("reliable"):   # the sweep runs only for a judge that first passed canonical calibration
+            st, why = "NOT_RUN", f"failed canonical pairwise calibration ({r.get('correct', 0)}/{r.get('valid_checks', 5)})"
         out.append(f"  * {mid}: robustness **{st}** ({why}); "
                    + ("ADMITTED" if mid in pw[0] else f"not admitted — {r.get('rejected', 'calibration not reliable')}"))
     out += ["", "## Remote models", "",

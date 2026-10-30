@@ -236,6 +236,8 @@ def status(data: dict[str, Any] | None) -> tuple[str, str]:
         return "ROBUSTLY_CALIBRATED", "reliable at every legible width"
     why = [f"unreliable at {', '.join(unreliable)}"] if unreliable else []
     why += [f"illegible at {', '.join(illegible_required)}"] if illegible_required else []
+    other_illegible = [k for k, v in done.items() if not v["legible"] and k not in must_be_legible]
+    why += [f"illegible (so not counted) at {', '.join(other_illegible)}"] if other_illegible else []
     why += [f"not yet measured: {', '.join(missing)}"] if missing else []
     return "CANONICAL_640_ONLY", "; ".join(why)
 
