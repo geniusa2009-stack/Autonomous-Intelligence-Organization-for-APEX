@@ -46,19 +46,27 @@ def check_structured(text: str) -> tuple[bool, str]:
     return ok, json.dumps(data)[:200]
 
 
-def network_check(url: str, timeout: float = 8.0) -> tuple[bool, str]:
-    """Distinguish an egress-policy denial (proxy CONNECT 403) from a reachable host."""
+def network_check(url: str, timeout: float = 8.0, force: bool = False) -> tuple[bool, str]:
+    """Distinguish an egress-policy denial (proxy CONNECT 403) from a reachable host. Cached with a TTL
+    (compute/health_cache.py): a denied host is re-probed every few hours, not on every report or task."""
+    from apex_one.compute import health_cache
+
     host = urlparse(url)
     root = f"{host.scheme}://{host.netloc}"
     if host.hostname in ("127.0.0.1", "localhost"):
         return True, "local"
+    hit = None if force else health_cache.get(f"net:{host.netloc}")
+    if hit:
+        return hit["ok"], hit["detail"] + " (cached)"
     try:
         r = httpx.get(root, timeout=timeout, follow_redirects=False)
-        return True, f"reachable (HTTP {r.status_code} unauthenticated)"
+        ok, why = True, f"reachable (HTTP {r.status_code} unauthenticated)"
     except httpx.ProxyError as e:
-        return False, f"egress proxy denied CONNECT to {host.netloc} ({str(e)[:80]})"
+        ok, why = False, f"egress proxy denied CONNECT to {host.netloc} ({str(e)[:80]})"
     except httpx.HTTPError as e:
-        return False, f"{type(e).__name__}: {str(e)[:100]}"
+        ok, why = False, f"{type(e).__name__}: {str(e)[:100]}"
+    health_cache.put(f"net:{host.netloc}", ok, why)
+    return ok, why
 
 
 def _allow_for_local(registry: ArsenalRegistry, model: ModelEntry, route: ProviderRoute):

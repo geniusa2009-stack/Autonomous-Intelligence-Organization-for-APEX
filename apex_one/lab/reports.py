@@ -375,6 +375,12 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
         if src.exists():
             shutil.copy(src, evidence / f"server_{src.name}")
     files["MODEL_SERVER_RELIABILITY.md"] = reliability_md(bench)
+    from apex_one.lab.final_reports import resource_matrix_md
+
+    files["LOCAL_MODEL_RESOURCE_MATRIX.md"] = resource_matrix_md(bench, reg, specs, policy)
+    for src in (bench / "server_reliability" / "resources.jsonl",):
+        if src.exists():
+            shutil.copy(src, evidence / f"server_{src.name}")
     for name, text in files.items():
         (repo / name).write_text(text, encoding="utf-8")
     return {k: str(repo / k) for k in files}
@@ -479,7 +485,7 @@ HYPOTHESES = [
 ]
 
 
-def hypothesis_verdicts(rep: dict[str, Any]) -> list[tuple[str, str, str]]:
+def hypothesis_verdicts(rep: dict[str, Any], legible: bool | None = None) -> list[tuple[str, str, str]]:
     """Each suspected cause, judged only from the experiments that isolate it (absent experiment -> NOT TESTED)."""
     def ok(k: str) -> int | None:
         e = rep.get(k)
@@ -501,9 +507,25 @@ def hypothesis_verdicts(rep: dict[str, Any]) -> list[tuple[str, str, str]]:
             rows.append(("rubric overload (six roles in one call)", f"six-role {a0}/5 vs single-role {ok('E3')}/5",
                          "CONFIRMED (partial)" if ok("E3") > a0 else "RULED OUT"))
     if rep.get("E1"):
-        bias = sum(1 for d in rep["E1"]["detail"].values() if d["position_bias"])
+        det = rep["E1"]["detail"]
+        bias = sum(1 for d in det.values() if d["position_bias"])
         rows.append(("pair-order sensitivity / position bias", f"{bias}/5 cases picked the same POSITION in both orders",
                      "CONFIRMED" if bias >= 3 else "minor" if bias else "RULED OUT"))
+        # which LETTER did it answer? good_as_A == "first" means it said "A"; good_as_B == "second" means "A" again
+        said_a = sum((d["good_as_A"] == "first") + (d["good_as_B"] == "second") for d in det.values())
+        n = 2 * len(det)
+        rows.append(("prompt interpretation: answers the slot, not the page", f"answered \"A\" in {said_a}/{n} calls; "
+                     "reasons are near-identical templates whichever page is in slot A",
+                     "CONFIRMED" if said_a >= n - 1 else "RULED OUT" if said_a <= n // 2 + 1 else "partial"))
+        rows.append(("output parsing (pairwise)", f"{rep['E1'].get('valid_checks')}/5 cases parsed in both orders",
+                     "RULED OUT" if rep["E1"].get("valid_checks") == 5 else "CONTRIBUTES"))
+        rows.append(("inability to discriminate the visual defects", f"pairwise {ok('E1')}/5"
+                     + (f", absolute {sum(1 for v in e0['result']['checks'].values() if v)}/5" if e0 else ""),
+                     "CONFIRMED" if (ok("E1") or 0) <= 1 else "partial" if (ok("E1") or 0) < 4 else "RULED OUT"))
+    if legible is not None:
+        rows.append(("multimodal perception (can it read the page at 640 px?)",
+                     f"legibility probe: deadline and tuition read {'correctly' if legible else 'WRONG'}",
+                     "RULED OUT — perception works; the failure is judgement" if legible else "CONTRIBUTES"))
         if rep.get("E2"):
             rows.append(("image scaling", f"pairwise 640 px {ok('E1')}/5 vs native 794 px {ok('E2')}/5",
                          "CONFIRMED (helps)" if ok("E2") > ok("E1") else "RULED OUT"))
@@ -576,9 +598,14 @@ def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, An
                        rep["E4"]["cases"][k]["broken"]["score"])
             out += [f"Stability: {same}/5 cases gave identical scores on repeat.", ""]
     out += ["## Hypotheses — verdicts derived from the experiments", "",
+            "An investigation EXPLAINS a calibration failure; it never overrides it. The calibration result and the "
+            "pre-registered robustness status stay authoritative whatever an experiment shows.", "",
             "| model | hypothesis | evidence | verdict |", "|---|---|---|---|"]
     for mid, rep in inv.items():
-        for row in hypothesis_verdicts(rep):
+        from apex_one.lab.benchmarks.vision_robustness import load as _rload, summarize_width as _sw
+
+        _w = ((_rload(mid) or {}).get("widths") or {}).get("640")
+        for row in hypothesis_verdicts(rep, _sw(_w).get("legible") if _w else None):
             out.append(f"| {mid} | {row[0]} | {row[1]} | **{row[2]}** |")
     out += ["", "| hypothesis | evidence used |", "|---|---|"]
     out += [f"| {h} | {e} |" for h, e in HYPOTHESES]

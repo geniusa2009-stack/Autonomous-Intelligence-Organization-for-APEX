@@ -48,13 +48,14 @@ PLAN = [
     ("gemma3-4b-q4km", ["vector"]),
     ("nemotron-3-nano-4b-q4km", ["vector"]),
     ("qwen3-vl-8b-q4kxl", ["pages"]),          # native-vs-model page comparison (+ RAM record)
+    # quantization question (every free remote multimodal route is egress-blocked or keyless): the SAME five cases,
+    # canonical preprocessing, pair order, prompt and checker; widths beyond 640 only behind the pre-registered
+    # material-improvement gate (material_improvement_gate). No absolute calibration: the question is pairwise.
+    ("qwen3-vl-8b-q8kxl", ["acquire", "live", "pcalib", "robust:640", "robust:native",
+                           *[f"robust:{w}" for w in ROBUST_WIDTHS if w not in ("640", "native")]]),
     # gpt-oss weights were freed for disk room: re-acquire (same digest) to measure the two writing tasks; a
     # reasoning model that spends the 500-token budget on hidden reasoning gets the documented 4096 re-run
     ("gpt-oss-20b-mxfp4", ["acquire", "vector", "rerun_vector"]),
-    # stronger-judge search (every free remote multimodal route is egress-blocked or keyless): the same
-    # calibration suite, pair-order inversion, repeats and legibility probes; thresholds unchanged
-    ("qwen3-vl-8b-q8kxl", ["acquire", "live", "calib", "pcalib", "robust:640",
-                           *[f"robust:{w}" for w in ROBUST_WIDTHS if w != "640"]]),
 ]
 VECTOR_TASKS = ("english_factual_writing", "structured_editorial")
 PAGE_TYPES = ["Cover", "OpportunitySnapshot", "Timeline", "ApexTake", "Checklist"]
@@ -64,7 +65,7 @@ GOLDEN_JOB = os.environ.get("APEX_BENCH_JOB", "J-2da4830a2781")
 # Licence-blocked (evaluation-only) weights, re-acquirable by digest, freed only after ALL their steps and only when
 # the next acquisition needs the room. Production-routed (Qwen3-VL 4B) and admitted-judge (Qwen3-VL 8B) weights are
 # never freed: the router and the judge digest check need them on disk.
-FREEABLE = {"gpt-oss-20b-mxfp4", "gemma3-12b-q4km", "gemma3-4b-q4km", "nemotron-3-nano-4b-q4km"}
+FREEABLE = {"gpt-oss-20b-mxfp4", "gemma3-12b-q4km", "gemma3-4b-q4km", "nemotron-3-nano-4b-q4km", "qwen3-vl-8b-q8kxl"}
 
 
 def log(msg: str) -> None:
@@ -78,6 +79,13 @@ class State:
 
     def done(self, key: str) -> bool:
         return key in self.data["done"]
+
+    def terminal(self, key: str) -> bool:
+        """done, or refused by the resource scheduler (re-loading a model only to be refused again is waste;
+        APEX_RETRY_BLOCKED=1 retries, e.g. on a machine with more RAM)."""
+        f = (self.data["failed"].get(key) or {}).get("info")
+        return self.done(key) or (isinstance(f, str) and f.startswith("RESOURCE_BLOCKED")
+                                  and os.environ.get("APEX_RETRY_BLOCKED") != "1")
 
     def mark(self, key: str, info: object = None, failed: bool = False) -> None:
         # the code commit that produced the result (frozen snapshot run; see NEXT_ACTIONS.md)
@@ -114,17 +122,47 @@ def server_memory(srv) -> dict[str, float] | None:
         return None
 
 
-def record_memory(state: "State", key: str, srv, when: str) -> None:
+def record_memory(state: "State", key: str, srv, when: str, extra: dict | None = None) -> None:
     mem = server_memory(srv)
-    if mem is None:
-        return
     rec = dict((state.data["done"].get(f"{key}:ram") or {}).get("info") or {})
-    if when == "loaded":
-        rec["loaded_rss_gb"] = mem["rss_gb"]
-    rec["peak_rss_gb"] = max(rec.get("peak_rss_gb", 0.0), mem["peak_rss_gb"])
-    rec.setdefault("peak_after_steps", []).append(when)
-    rec["method"] = "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step"
+    if mem is not None:
+        if when == "loaded":
+            rec["loaded_rss_gb"] = mem["rss_gb"]
+        rec["peak_rss_gb"] = max(rec.get("peak_rss_gb", 0.0), mem["peak_rss_gb"])
+        rec.setdefault("peak_after_steps", []).append(when)
+    if extra:     # scheduler accounting of the latest load/unload cycle
+        rec["last_cycle"] = extra
+        rec.setdefault("cycles", []).append(extra)
+    rec["method"] = "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable"
     state.mark(f"{key}:ram", rec)
+
+
+# A higher-precision build of an already-measured judge exists to answer ONE question: is the baseline's
+# order/resolution failure caused by quantization? Pre-registered decision (fixed before the candidate ran):
+# continue past the canonical width only if the candidate is MATERIALLY better there than the baseline — strictly
+# more correct cases in every repeat (e.g. 5/5 vs 4/5) with position bias no worse; then the native width; the other
+# widths only if native is also reliable. Otherwise stop: no full sweep.
+BASELINE_OF = {"qwen3-vl-8b-q8": "qwen3-vl-8b"}
+
+
+def material_improvement_gate(rid: str, width: str) -> str | None:
+    from apex_one.lab.benchmarks.vision_robustness import CANONICAL, load, summarize_width
+
+    base = BASELINE_OF.get(rid)
+    if base is None:
+        return None
+    mine, theirs = (load(rid) or {}).get("widths", {}), (load(base) or {}).get("widths", {})
+    c, b = summarize_width(mine.get(CANONICAL, {})), summarize_width(theirs.get(CANONICAL, {}))
+    if not (c.get("min_correct", 0) > b.get("min_correct", 5)
+            and c.get("order_sensitivity", 1.0) <= b.get("order_sensitivity", 0.0)):
+        return (f"no material improvement over {base} at {CANONICAL} px (candidate {c.get('correct_per_repeat')}, "
+                f"bias {c.get('order_sensitivity')}; baseline {b.get('correct_per_repeat')}, bias "
+                f"{b.get('order_sensitivity')}) — sweep stopped (pre-registered)")
+    if width != "native":
+        n = summarize_width(mine.get("native", {}))
+        if not n.get("reliable_all_repeats"):
+            return f"native width not reliable for {rid} ({n.get('correct_per_repeat')}) — sweep stopped"
+    return None
 
 
 def run_step(step: str, spec, bench: Path) -> object:
@@ -196,6 +234,9 @@ def run_step(step: str, spec, bench: Path) -> object:
         if width != CANONICAL and status(load(rid))[0] == "UNQUALIFIED":
             # pre-registered: a judge that fails the canonical input is UNQUALIFIED whatever other widths show
             return {"not_run": f"canonical {CANONICAL} px failed: {status(load(rid))[1]}"}
+        gate = material_improvement_gate(rid, width)
+        if gate:
+            return {"not_run": gate}
         return run_width(rid, calib, width)
     if step == "vector":
         from apex_one.compute.benchmark.council import rescore, run_council
@@ -237,6 +278,7 @@ def run_step(step: str, spec, bench: Path) -> object:
 def main(max_steps: int | None = None) -> None:
     """Run pending steps; with max_steps, stop (exit cleanly, state saved) after that many steps."""
     from apex_one.compute.local import LocalServer, acquire, load_catalogue
+    from apex_one.compute.local.resources import ResourceBlocked, ScheduledServer, SchedulerViolation
     from apex_one.compute.local.supervisor import ServerSupervisor, register, unregister
 
     bench = get_settings().artifacts_dir / "bench"
@@ -244,7 +286,7 @@ def main(max_steps: int | None = None) -> None:
     _, specs = load_catalogue()
     for key, steps in PLAN:
         spec = specs[key]
-        todo = [s for s in steps if not state.done(f"{key}:{s}")]
+        todo = [s for s in steps if not state.terminal(f"{key}:{s}")]
         if not todo:
             continue
         if "acquire" in todo:
@@ -252,7 +294,7 @@ def main(max_steps: int | None = None) -> None:
             for fk in FREEABLE:
                 fsteps = [s for k, ss in PLAN if k == fk for s in ss]
                 ggufs = list(specs[fk].dir.glob("*.gguf"))
-                if ggufs and all(state.done(f"{fk}:{s}") for s in fsteps) \
+                if ggufs and all(state.terminal(f"{fk}:{s}") for s in fsteps) \
                         and shutil.disk_usage(spec.dir.parent).free / 1e9 < spec.approx_gb + 3:
                     for g in ggufs:
                         log(f"freeing {g} ({g.stat().st_size / 1e9:.1f} GB; re-acquirable, digest kept)")
@@ -276,18 +318,27 @@ def main(max_steps: int | None = None) -> None:
             if other.key != key:
                 LocalServer(other).stop()
         srv = LocalServer(spec)
+        # resource scheduler: admission BEFORE loading (RESOURCE_BLOCKED instead of an OOM), one large model at a
+        # time, unload confirmed (process gone, memory back, stable) before the next model may load
+        sched = ScheduledServer(srv, qstate=state.data, log_path=bench / "server_reliability" / "resources.jsonl")
         try:
-            srv.start(wait_s=1200)
+            dec = sched.load(stage=todo[0], wait_s=1200)
+            log(f"{key}: admitted — {dec.reason}")
+        except ResourceBlocked as e:
+            log(f"{key}: {e}")
+            for step in todo:
+                state.mark(f"{key}:{step}", f"RESOURCE_BLOCKED: {e.decision.reason}", failed=True)
+            continue
         except Exception as e:  # noqa: BLE001
             log(f"{key}: server failed: {e}")
             state.mark(f"{key}:server", str(e)[:300], failed=True)
+            sched.unload()
             continue
         # every broker in this process now probes, restarts (bounded, with backoff + warm-up) and classifies
         # failures of this server; incidents -> artifacts/bench/server_reliability/events.jsonl
         sup = ServerSupervisor(key, srv, events_path=bench / "server_reliability" / "events.jsonl")
         register(spec.registry_model, sup)
-        if srv.warm_up():
-            record_memory(state, key, srv, "loaded")
+        record_memory(state, key, srv, "loaded")
         try:
             for step in todo:
                 if max_steps is not None and max_steps <= 0:
@@ -295,6 +346,11 @@ def main(max_steps: int | None = None) -> None:
                     return
                 if max_steps is not None:
                     max_steps -= 1
+                stage_ok = sched.admit_stage(step)
+                if not stage_ok.admitted:
+                    log(f"{key}: {step} RESOURCE_BLOCKED — {stage_ok.reason}")
+                    state.mark(f"{key}:{step}", f"RESOURCE_BLOCKED: {stage_ok.reason}", failed=True)
+                    continue
                 log(f"{key}: {step} ...")
                 try:
                     sup.before_call()       # a dead server must fail the step, never yield empty "answers"
@@ -307,7 +363,14 @@ def main(max_steps: int | None = None) -> None:
                     state.mark(f"{key}:{step}", str(e)[:300], failed=True)
         finally:
             unregister(spec.registry_model)
-            srv.stop()
+            try:
+                cycle = sched.unload()          # raises SchedulerViolation if the server still holds memory
+                record_memory(state, key, srv, "unloaded", extra=cycle)
+                log(f"{key}: unloaded {json.dumps(cycle)}")
+            except SchedulerViolation as e:
+                log(f"{key}: SCHEDULER VIOLATION {e}")
+                state.mark(f"{key}:unload", str(e)[:300], failed=True)
+                raise
     log("ALL DONE")
 
 

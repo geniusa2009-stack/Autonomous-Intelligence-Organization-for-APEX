@@ -60,6 +60,7 @@ class PairwiseResult:
 # canonical judge-input width (VISION_JUDGE_ROBUSTNESS.md): Qwen3-VL 8B was 4/5 here but 3/5 at its native 794 px,
 # so it is calibrated for THIS normalized input only — see the robustness sweep before trusting any other width
 CALIBRATED_MAX_W = 640
+POSITION_BIAS_MAX = 0.2      # pre-registered (VISION_JUDGE_ROBUSTNESS.md): at most one of five cases may flip with order
 
 
 class PairwiseJudge:
@@ -127,9 +128,14 @@ def calibrate_pairwise(judge: PairwiseJudge, good: Path, broken: dict[str, Path]
                          "preprocess": res.preprocess}
         valid = [v for v in checks.values() if v is not None]
         correct = sum(valid)
+        biased = [d["position_bias"] for d in detail.values() if d["position_bias"] is not None]
+        # PAIRWISE_POSITION_BIAS: share of cases where the judge followed the SLOT, not the page
+        bias_rate = round(sum(biased) / len(biased), 3) if biased else None
         out["models"][mid] = {"checks": checks, "detail": detail, "valid_checks": len(valid), "correct": correct,
                               "discrimination_rate": correct / len(valid) if valid else None,
-                              "reliable": len(valid) == len(checks) and correct >= 4}
+                              "position_bias_rate": bias_rate,
+                              "reliable": len(valid) == len(checks) and correct >= 4
+                              and bias_rate is not None and bias_rate <= POSITION_BIAS_MAX}
     return out
 
 

@@ -9,7 +9,7 @@ score of 0). This module:
   exponential backoff, warm-up request after every restart) and logs every incident as a JSON line;
 * allows a retry ONLY for idempotent work: a chat completion at a fixed prompt is side-effect free, so the broker may
   repeat it once after a successful recovery. The supervisor never re-runs a pipeline stage or a job, so a recovery
-  can never duplicate a side effect. Deterministic failures (EMPTY_OUTPUT, MALFORMED_RESPONSE) are not retried —
+  can never duplicate a side effect. Deterministic failures (EMPTY_OUTPUT, MALFORMED_OUTPUT) are not retried —
   at temperature 0 they would only repeat.
 """
 
@@ -26,14 +26,26 @@ from typing import Protocol
 
 
 class FailureKind(StrEnum):
+    """INFRASTRUCTURE failures. None of them is model-quality evidence; none may ever become a score of 0."""
     MODEL_SERVER_CRASH = "MODEL_SERVER_CRASH"     # process died during / before the call
     MODEL_TIMEOUT = "MODEL_TIMEOUT"               # no response within the call timeout (process alive: hung or slow)
     EMPTY_OUTPUT = "EMPTY_OUTPUT"                 # HTTP 200, well-formed, but no text
-    HEALTHCHECK_FAILED = "HEALTHCHECK_FAILED"     # server unreachable or /health not OK and recovery failed
+    MALFORMED_OUTPUT = "MALFORMED_OUTPUT"         # response body is not an OpenAI chat response (protocol garbage);
+                                                  # a well-formed answer with wrong/invalid CONTENT is QUALITY, not this
+    HEALTHCHECK_FAILED = "HEALTHCHECK_FAILED"     # /health not OK and the restart budget is spent
     OOM = "OOM"                                   # process killed for memory (SIGKILL / allocator failure in log)
-    MALFORMED_RESPONSE = "MALFORMED_RESPONSE"     # body is not the OpenAI response shape (protocol garbage)
-    CONNECTION_DROPPED = "CONNECTION_DROPPED"     # connection closed mid-response while the process stayed alive
+    CONNECTION_REFUSED = "CONNECTION_REFUSED"     # nothing listening on the port (server not running)
+    STREAM_INTERRUPTED = "STREAM_INTERRUPTED"     # connection closed mid-response while the process stayed alive
+    RESOURCE_BLOCKED = "RESOURCE_BLOCKED"         # the resource scheduler refused to load the model (not enough RAM)
     UNKNOWN_FAILURE = "UNKNOWN_FAILURE"
+
+
+class OutcomeClass(StrEnum):
+    """Persisted separately and never collapsed: a wrong answer, a broken server and an unrun task are different."""
+    MEASURED = "MEASURED"                         # the model answered and the checker scored it > 0
+    QUALITY_ZERO = "QUALITY_ZERO"                 # the model answered and the answer scored 0 (wrong)
+    INFRASTRUCTURE_ERROR = "INFRASTRUCTURE_ERROR" # a FailureKind: no answer to judge
+    NOT_MEASURED = "NOT_MEASURED"                 # unsupported, skipped, or never run
 
 
 class ResultState(StrEnum):
@@ -49,9 +61,9 @@ class ResultState(StrEnum):
 _BY_PROVIDER_KIND = {
     "timeout": FailureKind.MODEL_TIMEOUT,
     "empty_output": FailureKind.EMPTY_OUTPUT,
-    "malformed_response": FailureKind.MALFORMED_RESPONSE,
-    "disconnected": FailureKind.CONNECTION_DROPPED,
-    "connection_refused": FailureKind.HEALTHCHECK_FAILED,
+    "malformed_response": FailureKind.MALFORMED_OUTPUT,
+    "disconnected": FailureKind.STREAM_INTERRUPTED,
+    "connection_refused": FailureKind.CONNECTION_REFUSED,
     "http": FailureKind.UNKNOWN_FAILURE,
     "network": FailureKind.UNKNOWN_FAILURE,
 }
@@ -59,9 +71,15 @@ _BY_PROVIDER_KIND = {
 NOT_SERVER_FAILURES = {"rate_limited", "quota_exhausted", "auth", "payment_required", "config"}
 OOM_MARKERS = ("out of memory", "failed to allocate", "bad_alloc", "cannot allocate memory", "oom-kill")
 RESTART_ON = {FailureKind.MODEL_SERVER_CRASH, FailureKind.OOM, FailureKind.MODEL_TIMEOUT,
-              FailureKind.HEALTHCHECK_FAILED}
+              FailureKind.HEALTHCHECK_FAILED, FailureKind.CONNECTION_REFUSED}
 RETRY_AFTER_RECOVERY = {FailureKind.MODEL_SERVER_CRASH, FailureKind.OOM, FailureKind.MODEL_TIMEOUT,
-                        FailureKind.CONNECTION_DROPPED}
+                        FailureKind.STREAM_INTERRUPTED, FailureKind.CONNECTION_REFUSED}
+
+
+def outcome_class(score: float | None, failure_kind: str | None) -> OutcomeClass:
+    if score is None:
+        return OutcomeClass.INFRASTRUCTURE_ERROR if failure_kind else OutcomeClass.NOT_MEASURED
+    return OutcomeClass.QUALITY_ZERO if score == 0 else OutcomeClass.MEASURED
 
 
 def failure_kind_for(provider_error_kind: str | None) -> FailureKind | None:
@@ -136,8 +154,7 @@ class ServerSupervisor:
         while True:
             if self.restarts >= self.policy.max_restarts:
                 self._event("restart_budget_exhausted", reason=reason.value, restarts=self.restarts)
-                raise SupervisorError(FailureKind.HEALTHCHECK_FAILED,
-                                      f"{self.name}: restart budget ({self.policy.max_restarts}) exhausted after {reason}")
+                raise SupervisorError(reason, f"{self.name}: restart budget ({self.policy.max_restarts}) exhausted")
             delay = self.policy.backoff_s[min(self.restarts, len(self.policy.backoff_s) - 1)]
             self.restarts += 1
             self._event("restart", reason=reason.value, attempt=self.restarts, backoff_s=delay)
@@ -150,15 +167,24 @@ class ServerSupervisor:
                     return
                 self._event("warmup_failed", attempt=self.restarts)
             except Exception as e:  # noqa: BLE001 — a failed start is one spent attempt, never a crash of the caller
+                from apex_one.compute.local.resources import ResourceBlocked
+
                 self._event("start_failed", attempt=self.restarts, error=str(e)[:300])
+                if isinstance(e, ResourceBlocked):     # waiting does not create RAM: stop now, record why
+                    raise SupervisorError(FailureKind.RESOURCE_BLOCKED, str(e)) from e
 
     def before_call(self) -> None:
         """Pre-call health probe; recover a dead or unhealthy server before sending the request."""
         if self.server.healthy(timeout=self.policy.health_timeout_s):
             return
         alive = self.server.alive()
-        kind = classify("connection_refused", alive=alive, exit_code=self.server.exit_code(),
-                        log_tail=self.server.log_tail()) if alive is False else FailureKind.HEALTHCHECK_FAILED
+        if alive is False:          # it died: crash or OOM
+            kind = classify("connection_refused", alive=alive, exit_code=self.server.exit_code(),
+                            log_tail=self.server.log_tail())
+        elif alive is None:         # nothing we started is there: the port is closed
+            kind = FailureKind.CONNECTION_REFUSED
+        else:                       # running but not ready / not answering /health
+            kind = FailureKind.HEALTHCHECK_FAILED
         self._event("unhealthy_before_call", kind=kind.value, alive=alive, exit_code=self.server.exit_code())
         self.restart(kind)
 
@@ -176,12 +202,12 @@ class ServerSupervisor:
         self._event("call_failed", kind=kind.value, provider_error=provider_error_kind, alive=alive,
                     exit_code=self.server.exit_code(), log_tail=self.server.log_tail(400)[-400:])
         recovered = True
-        if kind in RESTART_ON or (kind == FailureKind.CONNECTION_DROPPED and alive is False):
+        if kind in RESTART_ON:
             try:
                 self.restart(kind)
             except SupervisorError:
                 recovered = False
-        elif kind == FailureKind.CONNECTION_DROPPED:
+        elif kind == FailureKind.STREAM_INTERRUPTED:
             recovered = self.server.healthy(timeout=self.policy.health_timeout_s)
         return kind, recovered and kind in RETRY_AFTER_RECOVERY
 

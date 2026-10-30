@@ -1026,7 +1026,9 @@ def test_final_matrix_never_shows_failed_samples_as_zero(tmp_path, registry):
             ("m", "reasoning"): {"score": None, "detail": "empty output at max_tokens=900 (NOT_MEASURED)"},
             ("m", "html_css"): {"score": 100.0, "max_tokens": 700}}
     scores = {"m": {"html_css": 100.0}}
-    assert _cell("m", "egyptian_arabic", scores, rows) == "ERROR MODEL_SERVER_CRASH"
-    assert _cell("m", "reasoning", scores, rows) == "ERROR EMPTY_OUTPUT"
+    assert _cell("m", "egyptian_arabic", scores, rows) == "INFRASTRUCTURE_ERROR MODEL_SERVER_CRASH"
+    assert _cell("m", "reasoning", scores, rows) == "INFRASTRUCTURE_ERROR EMPTY_OUTPUT"
+    rows[("m", "fact_preservation")] = {"score": 0.0, "max_tokens": 500}
+    assert _cell("m", "fact_preservation", {"m": {"fact_preservation": 0.0}}, rows) == "0 QUALITY_ZERO"
     assert _cell("m", "long_context", scores, rows) == "NOT_MEASURED"
     assert _cell("m", "html_css", scores, rows) == "100"            # 700 is html_css's own contract budget

@@ -19,9 +19,11 @@ EXPECTED: dict[str, tuple[str, str | None, bool]] = {
     "hang": ("ERROR", "MODEL_TIMEOUT", True),
     "crash": ("ERROR", "MODEL_SERVER_CRASH", True),
     "oom": ("ERROR", "OOM", True),
-    "malformed": ("ERROR", "MALFORMED_RESPONSE", False),
-    "disconnect": ("ERROR", "CONNECTION_DROPPED", False),
+    "malformed": ("ERROR", "MALFORMED_OUTPUT", False),
+    "disconnect": ("ERROR", "STREAM_INTERRUPTED", False),
     "unhealthy": ("ERROR", "HEALTHCHECK_FAILED", True),
+    "refused": ("ERROR", "CONNECTION_REFUSED", True),
+    "resource_blocked": ("ERROR", "RESOURCE_BLOCKED", True),
     "crash_once": ("MEASURED", None, True),
     "hang_once": ("MEASURED", None, True),
     "oom_once": ("MEASURED", None, True),
@@ -51,8 +53,8 @@ def run_mode(mode: str, workdir: Path, call_timeout: float = 2.0) -> dict[str, A
     fake = FakeServerProcess(port, mode, mdir)
     try:
         fake.start(wait_s=3.0)
-    except TimeoutError:
-        pass                                   # "unhealthy": the process runs but never becomes ready
+    except Exception:  # noqa: BLE001 — unhealthy / refused / resource_blocked: the call must classify it
+        pass
     reg = load_registry(with_db_overlay=False)
     reg.models[DRILL_MODEL].routes = [ProviderRoute(
         provider="llamacpp_local", provider_model_id="fake", model_id_verified=True, base_url=fake.base_url,
@@ -72,9 +74,11 @@ def run_mode(mode: str, workdir: Path, call_timeout: float = 2.0) -> dict[str, A
     state = row["state"] if row["state"] == "ERROR" else "MEASURED"
     exp_state, exp_kind, exp_restart = EXPECTED[mode]
     restarts = sum(1 for e in sup.events if e["event"] == "restart")
-    ok = (state == exp_state and row["failure_kind"] == exp_kind and (restarts > 0) == exp_restart
+    ok = (row.get("outcome_class") == ("INFRASTRUCTURE_ERROR" if exp_state == "ERROR" else row.get("outcome_class"))
+          and state == exp_state and row["failure_kind"] == exp_kind and (restarts > 0) == exp_restart
           and (DRILL_TASK in scores) == (exp_state == "MEASURED"))   # an ERROR never lands in the score table
-    return {"mode": mode, "state": row["state"], "failure_kind": row["failure_kind"], "score": row["score"],
+    return {"mode": mode, "state": row["state"], "outcome_class": row.get("outcome_class"),
+            "failure_kind": row["failure_kind"], "score": row["score"],
             "in_score_table": DRILL_TASK in scores, "restarts": restarts, "server_starts": fake.starts,
             "events": [e["event"] + (f":{e['kind']}" if "kind" in e else "") for e in sup.events],
             "expected": {"state": exp_state, "failure_kind": exp_kind, "restart": exp_restart}, "pass": ok}

@@ -703,6 +703,123 @@
         "status": "LIVE_TESTED",
         "correct": true
       }
+    },
+    "gemma3-12b-q4km:calib": {
+      "at": "2026-10-30T22:11:52",
+      "info": {
+        "ties_on_target": 3,
+        "inversions_on_target": 1,
+        "distinct_scores": [
+          65.0,
+          70.0,
+          75.0,
+          80.0,
+          85.0,
+          90.0,
+          95.0
+        ]
+      }
+    },
+    "gemma3-12b-q4km:ram": {
+      "at": "2026-10-30T23:10:49",
+      "info": {
+        "loaded_rss_gb": 13.61,
+        "peak_rss_gb": 13.86,
+        "peak_after_steps": [
+          "loaded",
+          "pcalib",
+          "robust:640",
+          "loaded",
+          "robust:320",
+          "robust:480",
+          "robust:768",
+          "robust:native",
+          "robust:1024"
+        ],
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step"
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:pcalib": {
+      "at": "2026-10-30T22:26:33",
+      "info": {
+        "correct": 0,
+        "valid": 5
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:robust:640": {
+      "at": "2026-10-30T23:10:17",
+      "info": {
+        "width": 640,
+        "inputs": "calibration render, downscaled by the judge-input contract",
+        "repeats": 3,
+        "correct_per_repeat": [
+          0,
+          0,
+          0
+        ],
+        "accuracy": 0.0,
+        "min_correct": 0,
+        "all_valid": true,
+        "reliable_all_repeats": false,
+        "order_sensitivity": 1.0,
+        "position_bias_cases": 15,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "cases_failed_every_repeat": [
+          "low_contrast",
+          "card_overuse",
+          "gradient",
+          "cramped",
+          "no_hierarchy"
+        ],
+        "confidence_mean": 0.0,
+        "median_call_latency_s": 83.7,
+        "legible": true,
+        "legibility_read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27"
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:robust:320": {
+      "at": "2026-10-30T23:10:49",
+      "info": {
+        "not_run": "canonical 640 px failed: canonical 640 px: correct per repeat [0, 0, 0], legible=True"
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:robust:480": {
+      "at": "2026-10-30T23:10:49",
+      "info": {
+        "not_run": "canonical 640 px failed: canonical 640 px: correct per repeat [0, 0, 0], legible=True"
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:robust:768": {
+      "at": "2026-10-30T23:10:49",
+      "info": {
+        "not_run": "canonical 640 px failed: canonical 640 px: correct per repeat [0, 0, 0], legible=True"
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:robust:native": {
+      "at": "2026-10-30T23:10:49",
+      "info": {
+        "not_run": "canonical 640 px failed: canonical 640 px: correct per repeat [0, 0, 0], legible=True"
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:robust:1024": {
+      "at": "2026-10-30T23:10:49",
+      "info": {
+        "not_run": "canonical 640 px failed: canonical 640 px: correct per repeat [0, 0, 0], legible=True"
+      },
+      "commit": "0463a23"
     }
   },
   "failed": {

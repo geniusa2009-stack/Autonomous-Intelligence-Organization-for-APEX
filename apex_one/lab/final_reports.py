@@ -70,13 +70,14 @@ def _cell(mid: str, task: str, scores: dict[str, Any], rows: dict[tuple[str, str
     r = rows.get((mid, task))
     if v is not None:
         budget = r.get("max_tokens") if r else None    # flag only a budget OTHER than the task's contract budget
-        return f"{v:.0f}" + (f" (re-run budget {budget})" if budget and budget != _task_budget(task) else "")
+        return (f"{v:.0f}" + (" QUALITY_ZERO" if v == 0 else "")
+                + (f" (re-run budget {budget})" if budget and budget != _task_budget(task) else ""))
     if r is None:
         return "NOT_MEASURED"
     if r.get("failure_kind"):
-        return f"ERROR {r['failure_kind']}"
+        return f"INFRASTRUCTURE_ERROR {r['failure_kind']}"
     if "empty output" in (r.get("detail") or ""):
-        return "ERROR EMPTY_OUTPUT"
+        return "INFRASTRUCTURE_ERROR EMPTY_OUTPUT"
     return "NOT_MEASURED"
 
 
@@ -188,6 +189,7 @@ def final_model_matrix_md(bench: Path, reg, specs: dict[str, Any]) -> str:
         out.append(f"| {name} | {spec.tag if spec else '—'} | `{(model_digest(mid) or 'weights not on disk')[:19]}` | "
                    f"{', '.join(map(str, budgets)) or '—'} | {done}/{len(mine)} tasks scored | "
                    f"{', '.join(f'{k}×{n}' for k, n in kinds.items()) or 'none'} | {', '.join(commits) or 'before commit tracking'} |")
+    out += [""] + cycles_md(qstate)
     out += ["", "## Gemma 3 12B — full results", ""]
     out += model_detail(bench, "gemma3-12b", "gemma3-12b-q4km", rows, scores, calib, qstate, reg)
     for mid, name, key in JUDGE_CANDIDATES:
@@ -288,21 +290,39 @@ def reliability_md(bench: Path) -> str:
            f"* the SAME request is retried once, only after a verified recovery, only for: "
            f"{', '.join(sorted(k.value for k in RETRY_AFTER_RECOVERY))} — a chat completion is side-effect free; "
            "pipeline stages and jobs are never re-run by the supervisor, so no side effect can be duplicated",
-           "* EMPTY_OUTPUT and MALFORMED_RESPONSE are never retried (at temperature 0 they would only repeat)",
+           "* EMPTY_OUTPUT and MALFORMED_OUTPUT are never retried (at temperature 0 they would only repeat); "
+           "RESOURCE_BLOCKED is never retried (waiting does not create RAM)",
            "* every incident is a JSON line: `artifacts/bench/server_reliability/events.jsonl` (benchmarks), "
            "`artifacts/logs/model_server_events.jsonl` (production)",
            "* production brokers supervise only servers that are already running; supervision recovers a crash, "
            "it never starts a model nobody asked for", "",
-           "## Failure kinds", "",
+           "## Failure kinds (infrastructure — never a quality score)", "",
            "| kind | detected from |", "|---|---|",
            f"| {FailureKind.MODEL_SERVER_CRASH} | process no longer alive after the failed call (any transport symptom) |",
            f"| {FailureKind.OOM} | process dead by SIGKILL, or an allocator failure in the server log |",
            f"| {FailureKind.MODEL_TIMEOUT} | no response within the call timeout, process alive |",
            f"| {FailureKind.EMPTY_OUTPUT} | HTTP 200, valid shape, empty / whitespace content |",
-           f"| {FailureKind.MALFORMED_RESPONSE} | body is not an OpenAI chat response |",
-           f"| {FailureKind.CONNECTION_DROPPED} | connection closed mid-response, process alive |",
-           f"| {FailureKind.HEALTHCHECK_FAILED} | `/health` not OK and the restart budget is spent |",
+           f"| {FailureKind.MALFORMED_OUTPUT} | the response body is not an OpenAI chat response (a well-formed answer "
+           "with wrong content is QUALITY, scored by the checker) |",
+           f"| {FailureKind.CONNECTION_REFUSED} | nothing listening on the port and restarts did not bring it up |",
+           f"| {FailureKind.STREAM_INTERRUPTED} | connection closed mid-response, process alive |",
+           f"| {FailureKind.HEALTHCHECK_FAILED} | process running but `/health` not OK and the restart budget is spent |",
+           f"| {FailureKind.RESOURCE_BLOCKED} | the resource scheduler refused the load (expected peak + reserves > available) |",
            f"| {FailureKind.UNKNOWN_FAILURE} | anything else (e.g. HTTP 500) |", "",
+           "## Outcome classes (persisted separately on every council sample, never collapsed)", "",
+           "| class | meaning | example |", "|---|---|---|",
+           "| MEASURED | the model answered; the checker scored it > 0 | Qwen3-VL 8B English writing = 100 |",
+           "| QUALITY_ZERO | the model answered; the answer is wrong (score 0) | Qwen3-VL 8B Egyptian Arabic = 0 |",
+           "| INFRASTRUCTURE_ERROR | a failure kind above: there was no answer to judge | server crash mid-GDB |",
+           "| NOT_MEASURED | unsupported, skipped or never run | GDB image-generation tasks |", "",
+           "## Resource scheduler", "",
+           "Before a model loads: expected peak (measured, else weights + KV + compute) + reserves must fit in "
+           "MemAvailable, or the load is refused with RESOURCE_BLOCKED. While loaded, each stage is admitted again "
+           "(a stage that starts Chromium needs 0.8 GB more). After every model: stop the server, confirm the "
+           "process exited, wait until MemAvailable is stable, assert no llama-server still holds ≥ 1 GB (a model "
+           "marked finished while its server holds memory is a scheduler bug and stops the queue), and only then "
+           "load the next model. The scheduler never kills a process it did not start. Full matrix: "
+           "LOCAL_MODEL_RESOURCE_MATRIX.md.", "",
            "## Fault-injection drill (fake model server, real broker + council path)", ""]
     if drill:
         out += [f"Result: **{'ALL PASS' if drill['all_pass'] else 'FAILURES'}** — "
@@ -314,7 +334,8 @@ def reliability_md(bench: Path) -> str:
             out.append(f"| {r['mode']} | {r['state']} | {r['failure_kind'] or '—'} | {'yes' if r['in_score_table'] else 'no'} | "
                        f"{r['restarts']} | {', '.join(r['events']) or '—'} | {e['state']}/{e['failure_kind'] or '—'} | "
                        f"{'PASS' if r['pass'] else 'FAIL'} |")
-        out += ["", "`ok` and the `*_once` modes are real measurements of the fake server's fixed answer (the checker "
+        out += ["", "Every row also carries its outcome class: persistent faults are INFRASTRUCTURE_ERROR. "
+                "`ok` and the `*_once` modes are real measurements of the fake server's fixed answer (the checker "
                 "scores it FAILED because the fake answer is not the task's answer) — the point is that they were "
                 "MEASURED after recovery, while every persistent fault is ERROR and never enters the score table.", ""]
     else:
@@ -327,6 +348,8 @@ def reliability_md(bench: Path) -> str:
         out += ["| server | event | count |", "|---|---|---|"] + [f"| {s} | {ev} | {n} |" for (s, ev), n in sorted(c.items())]
     else:
         out.append("none recorded")
+    qstate = _load(bench / "queue_state.json") or {}
+    out += [""] + cycles_md(qstate)
     tests = "tests/test_server_reliability.py"
     out += ["", f"Regression tests: `{tests}` (classification, bounded restart with backoff, the full drill, GDB "
             "failures carry their kind).", ""]
@@ -464,3 +487,123 @@ def native_vs_model_md(cmp_: dict[str, Any] | None, golden_deterministic: Path |
         decision = "KEEP NATIVE" if losses or not best.get("produced") else "model wins, review for promotion"
         out.append(f"| {ptype} | {best_s} | " + " | ".join(cells) + f" | NOT_MEASURED vs deterministic | **{decision}** |")
     return out + ["", "Cells read `model vs native`. Page types without a model-written page are native by construction.", ""]
+
+
+# ---------------------------------------------------------------- LOCAL_MODEL_RESOURCE_MATRIX
+
+def _ram(key: str, qstate: dict[str, Any]) -> dict[str, Any]:
+    return ((qstate.get("done") or {}).get(f"{key}:ram") or {}).get("info") or {}
+
+
+def _disk_gb(spec) -> str:
+    man = spec.dir / "apex_manifest.json"
+    if man.exists():
+        files = json.loads(man.read_text(encoding="utf-8")).get("files", [])
+        tot = sum(f.get("size", 0) for f in files)
+        if tot:
+            return f"{tot / 1e9:.1f}"
+    freed = spec.dir / "apex_manifest.freed.json"
+    if freed.exists():
+        files = json.loads(freed.read_text(encoding="utf-8")).get("files", [])
+        return f"{sum(f.get('size', 0) for f in files) / 1e9:.1f} (weights freed)"
+    return f"~{spec.approx_gb} (registry)"
+
+
+def _roles(mid: str, policy: dict[str, Any]) -> list[str]:
+    out = []
+    for r in policy["rows"]:
+        if r["primary"] and r["primary"].startswith(mid + " "):
+            out.append(f"PRIMARY {r['task']}")
+        elif r["fallback"] and r["fallback"].startswith(mid + " "):
+            out.append(f"FALLBACK {r['task']}")
+    return out
+
+
+def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str, Any]) -> str:
+    from apex_one.compute.local.resources import (RENDERER_RESERVE_GB, RESERVES_GB, SAFETY_MARGIN_GB, admit,
+                                                  meminfo)
+    from apex_one.compute.router.capability import routing_config
+
+    qstate = _load(bench / "queue_state.json") or {}
+    runs_p = bench / "council_runs.jsonl"
+    runs = [json.loads(x) for x in runs_p.read_text(encoding="utf-8").splitlines() if x.strip()] if runs_p.exists() else []
+    rows = latest_rows(runs)
+    scores = (_load(bench / "council_scores.json") or {}).get("models", {})
+    calib = _load(bench / "vision_calibration" / "calibration_results.json")
+    floor = float(routing_config().get("default_min_score", 50))
+    total = meminfo().get("MemTotal", 0.0)
+    cycles = [c for v in (qstate.get("done") or {}).values() if isinstance(v, dict)
+              for c in ((v.get("info") or {}).get("cycles") or []) if isinstance(v.get("info"), dict)]
+    measured_idle = max((c.get("available_before_load_gb", 0.0) for c in cycles), default=0.0)
+    idle = measured_idle or round(total * 0.95, 1)
+    idle_src = ("highest MemAvailable recorded before a load" if measured_idle
+                else "ESTIMATE 95% of MemTotal — no load recorded under the scheduler yet")
+    out = ["# Local model resource matrix", "", _stamp(), "",
+           f"Machine: {total:.1f} GB RAM, no swap, 4 CPU threads, no GPU. Memory available with no model loaded: "
+           f"**{idle:.1f} GB** ({idle_src}). On this machine compute scheduling is "
+           "part of correctness: the resource scheduler (`apex_one/compute/local/resources.py`) refuses a load "
+           "with RESOURCE_BLOCKED when `expected_peak + reserves > available`, never runs two large models at once, "
+           "and asserts after every unload that the server process is gone and its memory has returned.", "",
+           "Reserves (headroom beside the model, GB): " + ", ".join(f"{k} {v}" for k, v in RESERVES_GB.items())
+           + f", safety margin {SAFETY_MARGIN_GB}; + renderer {RENDERER_RESERVE_GB} for stages that start Chromium "
+           "(model-written pages, golden runs). Expected peak = the MEASURED peak RSS of the artifact when it has run "
+           "before, else weights + KV cache (from GGUF metadata, configured context) + 0.6 GB compute.", "",
+           "| model | quantization | disk GB | loaded RAM GB | peak RAM GB | load time | unload time | median inference "
+           "latency | vision capability | text capability (≥ floor) | production status | recommended role | safe "
+           "concurrent services |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for mid, name, key in COMPARED + JUDGE_CANDIDATES:
+        spec = specs.get(key)
+        if spec is None:
+            continue
+        r = _ram(key, qstate)
+        cyc = r.get("last_cycle") or {}
+        lats = [rows[(mid, t)]["latency_s"] for _, t in MATRIX_TASKS if (mid, t) in rows and rows[(mid, t)].get("score") is not None]
+        good = [c for c, t in MATRIX_TASKS if (scores.get(mid) or {}).get(t) is not None and scores[mid][t] >= floor]
+        bad = [c for c, t in MATRIX_TASKS if (scores.get(mid) or {}).get(t) is not None and scores[mid][t] < floor]
+        roles = _roles(mid, policy)
+        lic = licence_cell(reg, mid)
+        vis = vision_cell(mid, calib, getattr(spec, "vision", True))
+        if "CANONICAL_640_ONLY" in vis and any("visual finalist" in x for x in roles):
+            roles = [x for x in roles if "visual finalist" not in x] + ["SECONDARY_FINALIST_PAIRWISE_JUDGE (640 px only)"]
+        if not roles:
+            roles = (["research / evaluation only (licence " + lic + ")"] if "ALLOWED" not in lic
+                     else ["no production role (no task where it is the best qualified)"])
+        peak = r.get("peak_rss_gb")
+        if peak:
+            renderer = admit(spec, "pages", qstate, available=idle, others=[]).admitted
+            safe = f"Chromium renderer: {'yes' if renderer else 'NO (RESOURCE_BLOCKED)'}; second model: never"
+        else:
+            safe = "NOT_MEASURED (no recorded peak)"
+        out.append(f"| {name} | {spec.tag} | {_disk_gb(spec)} | {r.get('loaded_rss_gb', 'NOT_MEASURED')} | "
+                   f"{peak or 'NOT_MEASURED'} | {str(cyc.get('load_time_s', '—')) + ' s' if cyc else '—'} | "
+                   f"{str(cyc.get('unload_time_s', '—')) + ' s' if cyc else '—'} | "
+                   f"{f'{statistics.median(lats):.0f} s' if lats else 'NOT_MEASURED'} | {vis} | "
+                   f"strong: {', '.join(good) or '—'}; weak: {', '.join(bad) or '—'} | {lic} | {'; '.join(roles)} | {safe} |")
+    out += ["", "Median inference latency = median wall time of the model's measured council calls (CPU only, "
+            "one request at a time). Loaded / peak RAM = llama-server resident memory after the warm-up request and "
+            "its high-water mark; recorded from 2026-10-30 — models measured earlier show NOT_MEASURED until they "
+            "run again. A model may legitimately end with no production role: that is a benchmark result, not a "
+            "failure of the benchmark.", ""]
+    out += cycles_md(qstate)
+    return "\n".join(out) + "\n"
+
+
+def cycles_md(qstate: dict[str, Any]) -> list[str]:
+    """Scheduler accounting of every recorded load/unload cycle + every RESOURCE_BLOCKED decision."""
+    out = ["## Load / unload cycles (resource scheduler accounting)", "",
+           "| model | rss before load (system) | rss after warm-up (server) | peak rss (server) | rss after unload "
+           "(system) | swap used | load time | unload time |", "|---|---|---|---|---|---|---|---|"]
+    n = 0
+    for mid, name, key in COMPARED + JUDGE_CANDIDATES:
+        for c in _ram(key, qstate).get("cycles", []):
+            n += 1
+            out.append(f"| {name} | {c.get('rss_before_load_gb')} GB | {c.get('rss_after_warmup_gb', '—')} GB | "
+                       f"{c.get('peak_rss_gb', '—')} GB | {c.get('rss_after_unload_gb')} GB | {c.get('swap_used_gb')} GB | "
+                       f"{c.get('load_time_s')} s | {c.get('unload_time_s')} s |")
+    if not n:
+        out.append("| — | no cycle recorded yet under the scheduler | | | | | | |")
+    blocked = [(k, v.get("info")) for k, v in (qstate.get("failed") or {}).items()
+               if str(v.get("info", "")).startswith("RESOURCE_BLOCKED")]
+    out += ["", "**RESOURCE_BLOCKED decisions** (a refusal is recorded, never an OOM):", ""]
+    out += [f"* `{k}` — {i}" for k, i in blocked] or ["* none"]
+    return out + [""]

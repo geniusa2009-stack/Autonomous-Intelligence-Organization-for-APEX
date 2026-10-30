@@ -11,6 +11,8 @@ Modes for POST /v1/chat/completions:
   malformed   HTTP 200 with a body that is not JSON
   disconnect  promises a body (Content-Length) then closes the connection mid-response; the process stays alive
   unhealthy   /health answers 503 (the process runs but never becomes ready)
+  refused     nothing listens on the port (no process can be started)
+  resource_blocked  the resource scheduler refuses to load the model
   <mode>_once  fault on the first request only (tracked in --state-file, so it survives a restart), then ok
 """
 
@@ -127,6 +129,13 @@ class FakeServerProcess:
         import httpx
 
         self.starts += 1
+        if self.mode == "refused":          # nothing will ever listen on the port
+            raise RuntimeError(f"no server on port {self.port}")
+        if self.mode == "resource_blocked":   # the resource scheduler refuses the load
+            from apex_one.compute.local.resources import Admission, ResourceBlocked
+
+            raise ResourceBlocked(Admission("fake", "load", 99.0, "drill", 15.0, 1.35, {}, False,
+                                            "expected peak 99.0 GB + reserves 1.35 GB > available 15.0 GB"))
         log = self.logfile.open("ab")
         self.proc = subprocess.Popen([sys.executable, "-m", "apex_one.lab.fake_model_server", "--port", str(self.port),
                                       "--mode", self.mode, "--state-file", str(self.state_file)],

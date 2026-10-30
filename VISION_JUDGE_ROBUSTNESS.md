@@ -1,6 +1,6 @@
 # Vision judge robustness
 
-_Generated 2026-10-30 21:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 23:37 UTC by `apex-one reports build` from measured artifacts._
 
 Does a pairwise judge's calibration survive a change of input resolution? Same five calibration cases (good page vs each deliberately broken variant), both orders, 3 repeats per width.
 
@@ -15,6 +15,21 @@ Does a pairwise judge's calibration survive a change of input resolution? Same f
 * correction: the earlier investigation experiment labelled “E2 1024 px” actually ran at the native 794 px — `thumbnail()` never upscales. The sweep below renders a real 1024 px input.
 
 Pre-registered rules (`apex_one/lab/benchmarks/vision_robustness.py`, fixed before results): reliable at a width = every repeat all-valid and ≥ 4/5; legible = both probe facts read exactly; ROBUSTLY_CALIBRATED = reliable at every legible width and legible at canonical, native and 1024; CANONICAL_640_ONLY = reliable and legible at 640 only; UNQUALIFIED = not reliable or not legible at 640.
+
+## gemma3-12b — **UNQUALIFIED**
+
+canonical 640 px fails A_defect_discrimination, B_pair_order_stability, D_repeat_stability (correct per repeat [0, 0, 0], position_bias_rate 1.0, legible=True). Model digest `sha256:15b8fd9d8672…`.
+
+| width | input | repeats | correct per repeat | accuracy | order sensitivity | run variance | cases flipping | always wrong | confidence | median call latency | legible (deadline / tuition) | reliable | input hash (good) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 320 | — | 0 | NOT_RUN — canonical 640 px failed (pre-registered: UNQUALIFIED whatever other widths show) | — | — | — | — | — | — | — | — | — | — |
+| 480 | — | 0 | NOT_RUN — canonical 640 px failed (pre-registered: UNQUALIFIED whatever other widths show) | — | — | — | — | — | — | — | — | — | — |
+| 640 (640 px) | calibration render, downscaled by the judge-input contract | 3 | [0, 0, 0] | 0.00 | 1.00 (15 case-runs) | 0 | — | low_contrast, card_overuse, gradient, cramped, no_hierarchy | 0.00 | 83.7 s | yes (True / True) | NO | `c694ad322e2c` |
+| 768 | — | 0 | NOT_RUN — canonical 640 px failed (pre-registered: UNQUALIFIED whatever other widths show) | — | — | — | — | — | — | — | — | — | — |
+| native | — | 0 | NOT_RUN — canonical 640 px failed (pre-registered: UNQUALIFIED whatever other widths show) | — | — | — | — | — | — | — | — | — | — |
+| 1024 | — | 0 | NOT_RUN — canonical 640 px failed (pre-registered: UNQUALIFIED whatever other widths show) | — | — | — | — | — | — | — | — | — | — |
+
+Raw answers, per-call latency and every input hash: `docs/evidence/vision_robustness_gemma3-12b.json`.
 
 ## qwen3-vl-8b — **CANONICAL_640_ONLY**
 

@@ -75,12 +75,28 @@ class ComputeBroker:
         self.health.set_probe("mock", Availability.AVAILABLE, "mock", {"mock-llm"})
 
     # ---------- health ----------
-    def refresh_health(self, providers: list[str] | None = None, timeout: float = 4.0) -> dict[str, dict]:
+    def refresh_health(self, providers: list[str] | None = None, timeout: float = 4.0,
+                       force: bool = False) -> dict[str, dict]:
+        """Probe providers — through the TTL cache (compute/health_cache.py), so a blocked provider is re-checked
+        periodically, not on every job. Local providers are always probed (cheap, and their state changes)."""
+        from apex_one.compute import health_cache
+        from apex_one.compute.providers.base import ProbeResult
+
         out = {}
         for pid, adapter in self.adapters.items():
             if providers and pid not in providers:
                 continue
-            res = adapter.probe(timeout)
+            remote = adapter.provider.kind not in ("local", "self_hosted", "mock")
+            hit = health_cache.get(f"provider:{pid}") if remote and not force else None
+            if hit:
+                res = ProbeResult(Availability(hit["availability"]), hit["detail"] + " (cached)",
+                                  set(hit["model_ids"]) if hit.get("model_ids") is not None else None)
+            else:
+                res = adapter.probe(timeout)
+                if remote:
+                    health_cache.put(f"provider:{pid}", res.availability == Availability.AVAILABLE, res.detail,
+                                     availability=res.availability.value,
+                                     model_ids=sorted(res.model_ids) if res.model_ids is not None else None)
             self.health.set_probe(pid, res.availability, res.detail, res.model_ids)
             out[pid] = {"availability": res.availability.value, "detail": res.detail}
             if pid == "openrouter" and res.availability == Availability.AVAILABLE:

@@ -1,9 +1,10 @@
 {
-  "frozen_at_commit": "11d21c6",
+  "frozen_at_commit": "551042c",
   "evidence_sha256_12": {
-    "council_scores.json": "af212f01bbae",
-    "calibration_results.json": "c46d6a77ae09",
+    "council_scores.json": "f95b7050afe7",
+    "calibration_results.json": "858592959e12",
     "page_compare.json": "119855e92746",
+    "vision_robustness/gemma3-12b.json": "49a120afa9ed",
     "vision_robustness/qwen3-vl-8b.json": "da9ee24665d7"
   },
   "rows": [

@@ -1,0 +1,432 @@
+{
+  "model": "gemma3-12b",
+  "widths": {
+    "640": {
+      "width": 640,
+      "inputs": "calibration render, downscaled by the judge-input contract",
+      "reps": [
+        {
+          "checks": {
+            "low_contrast": false,
+            "card_overuse": false,
+            "gradient": false,
+            "cramped": false,
+            "no_hierarchy": false
+          },
+          "detail": {
+            "low_contrast": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the slightly cramped feel of page B.",
+                "Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more balanced layout, contributing to a clearer and more intentional composition."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the slightly cramped feel of page B.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more balanced layout, contributing to a clearer and more intentional composition.\"}"
+              ],
+              "latency_s": [
+                79.9,
+                80.2
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91"
+              }
+            },
+            "card_overuse": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more focused composition.",
+                "Page A establishes a clearer visual hierarchy with its layered card-like elements, creating a more organized and intentional composition."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more focused composition.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with its layered card-like elements, creating a more organized and intentional composition.\"}"
+              ],
+              "latency_s": [
+                82.3,
+                79.4
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792"
+              }
+            },
+            "gradient": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the cramped feel of page B.",
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and uses a more intentional layout for the key facts."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the cramped feel of page B.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and uses a more intentional layout for the key facts.\"}"
+              ],
+              "latency_s": [
+                81.5,
+                87.9
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d"
+              }
+            },
+            "cramped": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more considered layout, creating a clearer entry point for the reader.",
+                "Page A establishes a clearer visual hierarchy and a more restrained composition, prioritizing the deadline and key facts with greater clarity."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more considered layout, creating a clearer entry point for the reader.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy and a more restrained composition, prioritizing the deadline and key facts with greater clarity.\"}"
+              ],
+              "latency_s": [
+                90.5,
+                89.6
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394"
+              }
+            },
+            "no_hierarchy": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more readable layout.",
+                "Page A exhibits a more structured and visually balanced layout, prioritizing clarity and a sense of calm over the slightly cluttered feel of Page B."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more readable layout.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A exhibits a more structured and visually balanced layout, prioritizing clarity and a sense of calm over the slightly cluttered feel of Page B.\"}"
+              ],
+              "latency_s": [
+                91.1,
+                94.2
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+              }
+            }
+          },
+          "valid_checks": 5,
+          "correct": 0,
+          "discrimination_rate": 0.0,
+          "reliable": false,
+          "wall_s": 857.8
+        },
+        {
+          "checks": {
+            "low_contrast": false,
+            "card_overuse": false,
+            "gradient": false,
+            "cramped": false,
+            "no_hierarchy": false
+          },
+          "detail": {
+            "low_contrast": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the slightly cramped feel of page B.",
+                "Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more balanced layout, contributing to a clearer and more intentional composition."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the slightly cramped feel of page B.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more balanced layout, contributing to a clearer and more intentional composition.\"}"
+              ],
+              "latency_s": [
+                96.8,
+                97.4
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91"
+              }
+            },
+            "card_overuse": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more focused composition.",
+                "Page A establishes a clearer visual hierarchy with its layered card-like elements, creating a more organized and intentional composition."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more focused composition.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with its layered card-like elements, creating a more organized and intentional composition.\"}"
+              ],
+              "latency_s": [
+                96.2,
+                91.9
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792"
+              }
+            },
+            "gradient": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the cramped feel of page B.",
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and uses a more intentional layout for the key facts."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the cramped feel of page B.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and uses a more intentional layout for the key facts.\"}"
+              ],
+              "latency_s": [
+                95.1,
+                87.7
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d"
+              }
+            },
+            "cramped": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more considered layout, creating a clearer entry point for the reader.",
+                "Page A establishes a clearer visual hierarchy and a more restrained composition, prioritizing the deadline and key facts with greater clarity."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more considered layout, creating a clearer entry point for the reader.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy and a more restrained composition, prioritizing the deadline and key facts with greater clarity.\"}"
+              ],
+              "latency_s": [
+                91.8,
+                82.4
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394"
+              }
+            },
+            "no_hierarchy": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more readable layout.",
+                "Page A exhibits a more structured and visually balanced layout, prioritizing clarity and a sense of calm over the slightly cluttered feel of Page B."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more readable layout.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A exhibits a more structured and visually balanced layout, prioritizing clarity and a sense of calm over the slightly cluttered feel of Page B.\"}"
+              ],
+              "latency_s": [
+                84.3,
+                82.0
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+              }
+            }
+          },
+          "valid_checks": 5,
+          "correct": 0,
+          "discrimination_rate": 0.0,
+          "reliable": false,
+          "wall_s": 907.0
+        },
+        {
+          "checks": {
+            "low_contrast": false,
+            "card_overuse": false,
+            "gradient": false,
+            "cramped": false,
+            "no_hierarchy": false
+          },
+          "detail": {
+            "low_contrast": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the slightly cramped feel of page B.",
+                "Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more balanced layout, contributing to a clearer and more intentional composition."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the slightly cramped feel of page B.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more balanced layout, contributing to a clearer and more intentional composition.\"}"
+              ],
+              "latency_s": [
+                85.0,
+                82.2
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91"
+              }
+            },
+            "card_overuse": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more focused composition.",
+                "Page A establishes a clearer visual hierarchy with its layered card-like elements, creating a more organized and intentional composition."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more focused composition.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with its layered card-like elements, creating a more organized and intentional composition.\"}"
+              ],
+              "latency_s": [
+                83.7,
+                81.3
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792"
+              }
+            },
+            "gradient": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the cramped feel of page B.",
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and uses a more intentional layout for the key facts."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, avoiding the cramped feel of page B.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and uses a more intentional layout for the key facts.\"}"
+              ],
+              "latency_s": [
+                83.7,
+                79.0
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d"
+              }
+            },
+            "cramped": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more considered layout, creating a clearer entry point for the reader.",
+                "Page A establishes a clearer visual hierarchy and a more restrained composition, prioritizing the deadline and key facts with greater clarity."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a stronger visual hierarchy with the deadline prominently displayed and a more considered layout, creating a clearer entry point for the reader.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy and a more restrained composition, prioritizing the deadline and key facts with greater clarity.\"}"
+              ],
+              "latency_s": [
+                77.3,
+                77.1
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394"
+              }
+            },
+            "no_hierarchy": {
+              "good_as_A": "first",
+              "good_as_B": "second",
+              "position_bias": true,
+              "reasons": [
+                "Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more readable layout.",
+                "Page A exhibits a more structured and visually balanced layout, prioritizing clarity and a sense of calm over the slightly cluttered feel of Page B."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A establishes a clearer visual hierarchy with the deadline prominently displayed and a more intentional use of space, resulting in a calmer and more readable layout.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A exhibits a more structured and visually balanced layout, prioritizing clarity and a sense of calm over the slightly cluttered feel of Page B.\"}"
+              ],
+              "latency_s": [
+                80.3,
+                82.8
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+              }
+            }
+          },
+          "valid_checks": 5,
+          "correct": 0,
+          "discrimination_rate": 0.0,
+          "reliable": false,
+          "wall_s": 813.6
+        }
+      ],
+      "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+      "input_hashes": {
+        "good": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+        "low_contrast": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91",
+        "card_overuse": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792",
+        "gradient": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d",
+        "cramped": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394",
+        "no_hierarchy": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+      },
+      "legibility": {
+        "legible": true,
+        "read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "answer": {
+          "application_deadline": "1 نوفمبر 2026",
+          "tuition_coverage": "100%"
+        },
+        "raw": "{\"application_deadline\": \"1 نوفمبر 2026\", \"tuition_coverage\": \"100%\"}",
+        "truth": {
+          "application_deadline": "1 نوفمبر 2026",
+          "tuition_coverage": "100%"
+        },
+        "latency_s": 43.9,
+        "executed": true
+      }
+    }
+  },
+  "model_digest": "sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff"
+}

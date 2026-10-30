@@ -257,6 +257,8 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
             why = "calibration missing a timestamp or older than %d days" % MAX_CALIBRATION_AGE_DAYS
         elif r.get("model_digest") != model_digest(m):
             why = "calibrated a different model build (digest mismatch)"
+        elif mode == "pairwise" and _position_bias_rate(r) is not None and _position_bias_rate(r) > 0.2:
+            why = f"PAIRWISE_POSITION_BIAS {_position_bias_rate(r)} > 0.2 (follows the slot, not the page)"
         elif mode == "pairwise":
             why = _robustness_block(m, path.parent.parent / "vision_robustness")
         else:
@@ -270,6 +272,13 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
         else:
             ok.append(m)
     return sorted(ok), models
+
+
+def _position_bias_rate(r: dict[str, Any]) -> float | None:
+    if r.get("position_bias_rate") is not None:
+        return r["position_bias_rate"]
+    b = [d.get("position_bias") for d in (r.get("detail") or {}).values() if d.get("position_bias") is not None]
+    return round(sum(b) / len(b), 3) if b else None
 
 
 def _robustness_block(model_id: str, robust_dir: Path) -> str | None:

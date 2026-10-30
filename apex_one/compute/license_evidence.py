@@ -51,6 +51,24 @@ def _licence_text_id(text: str) -> str | None:
     return None
 
 
+def gguf_arch_fields(path: Path, home: Path) -> dict[str, object]:
+    """Architecture metadata (block count, KV heads, head dims) for memory estimates."""
+    sys.path.insert(0, str(home / GGUF_PY))
+    try:
+        from gguf import GGUFReader  # type: ignore[import-not-found]
+    finally:
+        sys.path.pop(0)
+    out: dict[str, object] = {}
+    for k, fld in GGUFReader(str(path)).fields.items():
+        if k == "general.architecture" or any(x in k for x in (".block_count", ".head_count", ".key_length",
+                                                                ".embedding_length")):
+            try:
+                out[k] = fld.contents()
+            except Exception:  # noqa: BLE001
+                continue
+    return out
+
+
 def gguf_licence_fields(path: Path, home: Path) -> dict[str, str]:
     sys.path.insert(0, str(home / GGUF_PY))
     try:

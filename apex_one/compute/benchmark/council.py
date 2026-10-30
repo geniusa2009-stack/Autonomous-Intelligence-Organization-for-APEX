@@ -284,6 +284,7 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
     scores_path = out_dir / "council_scores.json"
     data = json.loads(scores_path.read_text(encoding="utf-8")) if scores_path.exists() else {"models": {}, "runs": []}
     log = (out_dir / "council_runs.jsonl").open("a", encoding="utf-8")
+    from apex_one.compute.local.supervisor import outcome_class
     from apex_one.compute.router.capability import routing_config
 
     floor = float(routing_config().get("default_min_score", 50))
@@ -313,7 +314,7 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
                 else:
                     score, detail = t.score(text)
             rec = {"model": mid, "task": t.name, "score": score, "state": sample_state(score, fk, floor),
-                   "failure_kind": fk, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
+                   "outcome_class": outcome_class(score, fk).value, "failure_kind": fk, "detail": detail, "latency_s": round(time.perf_counter() - t0, 1),
                    "max_tokens": None if t.vision else (max_tokens or t.max_tokens), "checker_version": CHECKER_VERSION,
                    "output": text[:STORED_OUTPUT_CHARS]}
             log.write(json.dumps(rec, ensure_ascii=False) + "\n")

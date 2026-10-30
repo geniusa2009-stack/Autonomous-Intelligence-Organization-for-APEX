@@ -22,6 +22,15 @@ Pre-registered rules (fixed before any robustness result was observed; never tun
   CANONICAL_640_ONLY   = reliable and legible at the canonical width (640 px) but not robust
   UNQUALIFIED          = not reliable or not legible at the canonical width (a single lucky 4/5 is not enough)
   INCOMPLETE           = the canonical width has not finished all repeats yet
+
+PAIRWISE_POSITION_BIAS (permanent benchmark, required for EVERY future vision judge): each case is asked A-vs-B and
+B-vs-A; position_bias_rate = share of case-runs where the judge picked the same POSITION in both orders (it followed
+the slot, not the page). A judge qualifies at the canonical width only if ALL four hold — no single accuracy number
+is enough:
+  A. defect discrimination  every repeat >= 4/5 broken variants rejected (MIN_PASS_RATE)
+  B. pair-order stability   position_bias_rate <= POSITION_BIAS_MAX (0.2: at most one of five cases may flip)
+  C. factual legibility     both probe facts read exactly
+  D. repeat stability       every repeat valid and >= 4/5, and no case changes verdict between repeats
 """
 
 from __future__ import annotations
@@ -33,7 +42,7 @@ from pathlib import Path
 from typing import Any
 
 from apex_one.vision.council import MIN_PASS_RATE, PREPROCESS_VERSION, encode_png, preprocess_hash
-from apex_one.vision.pairwise import CALIBRATED_MAX_W
+from apex_one.vision.pairwise import CALIBRATED_MAX_W, POSITION_BIAS_MAX
 
 WIDTHS = ("320", "480", "640", "768", "native", "1024")
 REPEATS = 3
@@ -208,12 +217,28 @@ def summarize_width(w: dict[str, Any]) -> dict[str, Any]:
                                         and r.get("correct", 0) / len(cases) >= MIN_PASS_RATE for r in reps),
             "order_sensitivity": round(sum(bool(b) for b in bias) / max(1, sum(b is not None for b in bias)), 3),
             "position_bias_cases": sum(bool(b) for b in bias),
+            "position_bias_rate": round(sum(bool(b) for b in bias) / max(1, sum(b is not None for b in bias)), 3),
             "run_variance": round(statistics.pvariance(correct), 3), "cases_flipping_across_repeats": flips,
             "cases_failed_every_repeat": [k for k in cases if all(r["checks"].get(k) is False for r in reps)],
             "confidence_mean": round(statistics.mean(conf), 3) if conf else None,
             "median_call_latency_s": statistics.median(lat) if lat else None,
             "legible": leg.get("legible"), "legibility_read": leg.get("read"),
             "preprocess_version": w.get("preprocess_version"), "input_hash_good": (w.get("input_hashes") or {}).get("good")}
+
+
+def qualification(summary: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """The four required criteria (module docstring) on one width's summary."""
+    return {
+        "A_defect_discrimination": {"pass": summary.get("min_correct", 0) >= 4 and bool(summary.get("all_valid")),
+                                    "value": summary.get("correct_per_repeat")},
+        "B_pair_order_stability": {"pass": summary.get("order_sensitivity", 1.0) <= POSITION_BIAS_MAX,
+                                   "value": summary.get("order_sensitivity")},
+        "C_factual_legibility": {"pass": bool(summary.get("legible")), "value": summary.get("legibility_read")},
+        "D_repeat_stability": {"pass": bool(summary.get("reliable_all_repeats"))
+                               and not summary.get("cases_flipping_across_repeats"),
+                               "value": {"run_variance": summary.get("run_variance"),
+                                         "flips": summary.get("cases_flipping_across_repeats")}},
+    }
 
 
 def status(data: dict[str, Any] | None) -> tuple[str, str]:
@@ -224,9 +249,12 @@ def status(data: dict[str, Any] | None) -> tuple[str, str]:
     c = s.get(CANONICAL)
     if not c or c.get("repeats", 0) < REPEATS or c.get("legible") is None:
         return "INCOMPLETE", f"canonical {CANONICAL} px has {c.get('repeats', 0) if c else 0}/{REPEATS} repeats"
-    if not (c["reliable_all_repeats"] and c["legible"]):
-        return "UNQUALIFIED", (f"canonical {CANONICAL} px: correct per repeat {c['correct_per_repeat']}, "
-                               f"legible={c['legible']}")
+    q = qualification(c)
+    failed = [k for k, v in q.items() if not v["pass"]]
+    if failed:
+        return "UNQUALIFIED", (f"canonical {CANONICAL} px fails {', '.join(failed)} (correct per repeat "
+                               f"{c['correct_per_repeat']}, position_bias_rate {c['order_sensitivity']}, "
+                               f"legible={c['legible']})")
     done = {k: v for k, v in s.items() if v.get("repeats", 0) >= REPEATS and v.get("legible") is not None}
     missing = [k for k in WIDTHS if k not in done]
     must_be_legible = [CANONICAL, "native", "1024"]
