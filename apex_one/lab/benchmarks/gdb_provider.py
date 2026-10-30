@@ -65,6 +65,10 @@ class APEXBrokerModel(BaseModel):
         req = CapabilityRequest(task="bench.gdb", vision=bool(images), purpose="evaluation", model_id=self.model_id)
         res = self.broker.complete(req, [ChatMessage("user", inp.text, images_b64_png=images)],
                                    max_tokens=self.max_tokens, temperature=0.0, timeout=self.timeout)
+        # A call that did not run (server down, timeout, no route) or produced nothing is a FAILED sample, never an
+        # empty prediction that GDB would score as a wrong answer (0) — raising makes GDB count it as a failure.
         if not res.executed:
-            return ModelOutput(text="", raw={"error": res.decision.outcome.value, "reasons": res.decision.reasons})
-        return ModelOutput(text=res.text or "", raw={"model": res.model_id})
+            raise RuntimeError(f"model call not executed: {res.decision.outcome.value}: {res.decision.reasons[:2]}")
+        if not (res.text or "").strip():
+            raise RuntimeError("empty model output (NOT_MEASURED)")
+        return ModelOutput(text=res.text, raw={"model": res.model_id})

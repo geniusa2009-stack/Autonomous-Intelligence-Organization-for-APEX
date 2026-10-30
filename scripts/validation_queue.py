@@ -120,6 +120,10 @@ def run_step(step: str, spec, bench: Path) -> object:
             "suite": "v0-smoke", "preprocess": GDB_PREPROCESS}))
         if rc != 0:
             raise RuntimeError(f"gdb exit {rc}")
+        rep = json.loads((out / "report.json").read_text(encoding="utf-8")).get("results", {})
+        failed = {t: r.get("failure_count") for t, pm in rep.items() for r in pm.values() if r.get("failure_count")}
+        if failed:      # failed samples are not measurements: the run is reported, but the step is not done
+            raise RuntimeError(f"gdb samples failed (not scored): {failed}")
         return {"exit": rc}
     if step == "calib":
         from apex_one.lab.benchmarks.vision_investigation import investigate
@@ -152,7 +156,10 @@ def run_step(step: str, spec, bench: Path) -> object:
         from apex_one.compute.benchmark.council import rescore, run_council
 
         run_council(ComputeBroker(), [rid], bench, only=list(VECTOR_TASKS))
-        return {t: rescore(bench)["models"].get(rid, {}).get(t) for t in VECTOR_TASKS}
+        got = {t: rescore(bench)["models"].get(rid, {}).get(t) for t in VECTOR_TASKS}
+        if any(v is None for v in got.values()):
+            raise RuntimeError(f"vector tasks not measured (call not executed or empty): {got}")
+        return got
     if step == "rerun":
         from apex_one.compute.benchmark.council import rescore, run_council
 
@@ -229,6 +236,10 @@ def main(max_steps: int | None = None) -> None:
                     return
                 if max_steps is not None:
                     max_steps -= 1
+                if not srv.healthy():       # a dead server must fail the step, never yield empty "answers"
+                    log(f"{key}: server not healthy before {step}; restarting")
+                    srv.stop()
+                    srv.start(wait_s=1800)
                 log(f"{key}: {step} ...")
                 try:
                     info = run_step(step, spec, bench)

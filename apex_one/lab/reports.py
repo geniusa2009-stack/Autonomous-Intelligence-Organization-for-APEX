@@ -287,8 +287,12 @@ def design_bench_md(bench: dict[str, Any] | None, rows: list[dict[str, Any]], un
 
 
 def gdb_report_valid(rep: Any) -> bool:
-    """A GDB run counts only if it produced at least one numeric score and no top-level error."""
+    """A GDB run counts only if it produced at least one numeric score, no top-level error and NO failed sample
+    (GDB folds failed samples into its scores as empty predictions, i.e. as wrong answers)."""
     if not isinstance(rep, dict) or rep.get("error"):
+        return False
+    if any(r.get("failure_count") for pm in (rep.get("results") or {}).values() if isinstance(pm, dict)
+           for r in pm.values() if isinstance(r, dict)):
         return False
 
     def nums(x: Any) -> bool:
@@ -648,6 +652,8 @@ def gdb_md(gdb_dir: Path) -> list[str]:
         for task, per_model in sorted(res.items()):
             for _, r in per_model.items():
                 sc = ", ".join(f"{k}={v:.2f}" for k, v in (r.get("scores") or {}).items() if isinstance(v, (int, float)))
+                if r.get("failure_count"):     # failed samples were scored by GDB as empty answers: not a measurement
+                    sc = f"NOT_MEASURED — {r['failure_count']}/{r.get('count')} samples failed (GDB's score withheld)"
                 out.append(f"| {name} | {mid} | {dig} | {meta.get('exit_code', '—')} | {meta.get('runtime_s', '—')} s | "
                            f"{task} | {r.get('count')} | {r.get('success_count')} | {r.get('failure_count')} | {sc or '—'} |")
     out += ["", "Raw per-sample outputs: `artifacts/bench/gdb/<run>/` (GDB `outputs/`, `gdb.log`, `report.json`); "

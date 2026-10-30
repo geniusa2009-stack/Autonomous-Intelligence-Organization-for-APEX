@@ -931,3 +931,26 @@ def test_task_with_several_mandatory_capabilities_uses_the_weakest(registry):
     assert task_evidence_score(m, "editorial.write.egyptian_guide") == 75.0
     assert task_evidence_score(m, "editorial.write.bilingual") == 60.0
     assert rejection(m, "editorial.write.egyptian_guide") is None
+
+
+def test_failed_gdb_calls_are_failures_never_zero_scores(monkeypatch):
+    import pytest
+    from gdb.models.base import ModelInput
+
+    from apex_one.lab.benchmarks import gdb_provider
+    from apex_one.lab.reports import gdb_report_valid
+
+    class Res:
+        def __init__(self, executed, text):
+            self.executed, self.text, self.model_id = executed, text, "m"
+            self.decision = type("D", (), {"outcome": type("O", (), {"value": "DEGRADE"})(), "reasons": ["server down"]})()
+
+    model = gdb_provider.APEXBrokerModel.__new__(gdb_provider.APEXBrokerModel)
+    model.model_id, model.max_tokens, model.timeout = "m", 16, 1.0
+    for executed, text in ((False, ""), (True, "  ")):
+        model.broker = type("B", (), {"complete": lambda self, *a, **k: Res(executed, text)})()
+        with pytest.raises(RuntimeError):
+            model.predict(ModelInput(text="q"))
+    ok = {"results": {"svg-1": {"m": {"count": 2, "success_count": 2, "failure_count": 0, "scores": {"accuracy": 0.5}}}}}
+    bad = {"results": {"svg-1": {"m": {"count": 2, "success_count": 0, "failure_count": 2, "scores": {"accuracy": 0.0}}}}}
+    assert gdb_report_valid(ok) and not gdb_report_valid(bad)
