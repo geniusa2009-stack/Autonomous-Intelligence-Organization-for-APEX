@@ -109,8 +109,15 @@ def run_step(step: str, spec, bench: Path) -> object:
         t0 = time.time()
         with (out / "gdb.log").open("w") as fh:      # cwd=out: GDB writes ./outputs relative to the cwd
             rc = subprocess.call(cmd, stdout=fh, stderr=subprocess.STDOUT, cwd=out)
-        (out / "run_meta.json").write_text(json.dumps({"exit_code": rc, "runtime_s": round(time.time() - t0),
-                                                       "model": rid, "n_per_task": 10}))
+        import importlib.metadata
+
+        from apex_one.lab.benchmarks.gdb_provider import GDB_PREPROCESS
+        from apex_one.vision.council import model_digest
+
+        (out / "run_meta.json").write_text(json.dumps({
+            "exit_code": rc, "runtime_s": round(time.time() - t0), "model": rid, "n_per_task": 10,
+            "model_digest": model_digest(rid), "gguf": spec.tag, "lica_gdb": importlib.metadata.version("lica-gdb"),
+            "suite": "v0-smoke", "preprocess": GDB_PREPROCESS}))
         if rc != 0:
             raise RuntimeError(f"gdb exit {rc}")
         return {"exit": rc}

@@ -23,6 +23,11 @@ from gdb.models.base import BaseModel, Modality, ModelInput, ModelOutput
 from PIL import Image
 
 
+# GDB inputs are arbitrary design images (not A4 pages), so they keep their own box-bound normalisation; it is
+# recorded with every GDB result (it is NOT the vision-judge input contract).
+GDB_PREPROCESS = "box-bound thumbnail 768x768, Pillow default bicubic, RGB PNG"
+
+
 def _png_b64(img: Any) -> str:
     if isinstance(img, (str, Path)):
         im = Image.open(img)

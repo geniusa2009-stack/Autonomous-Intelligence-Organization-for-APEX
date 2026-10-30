@@ -1,6 +1,6 @@
 # Design Model Activation (Phases 16, 19, 26)
 
-_Generated 2026-10-30 12:26 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 13:14 UTC by `apex-one reports build` from measured artifacts._
 
 Every design system named in the APEX spec, with the evidence actually gathered here. Statuses: ACTIVATED, PROTOCOL_REIMPLEMENTED, PACKAGE_INSTALLABLE, WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED, ARCHITECTURE_REFERENCE, NOT_RELEASED_OR_UNFOUND, LICENSE_BLOCKED, RESEARCH_ONLY. Nothing is marked ACTIVATED without a stored smoke-test artifact.
 
@@ -81,28 +81,74 @@ Environment facts behind most rows: huggingface.co / GitHub releases / arXiv are
 
 ## GraphicDesignBench (lica-gdb) — real runs
 
-Benchmarks registered by the package: 39. Ran here: 6 (category-1, layout-4, layout-5, svg-1, template-1, typography-1). Skipped: 33 — their data lives on the Hugging Face Hub, which the egress proxy denies (dependency missing). Skipped tasks are NOT scored as zero and supported tasks are not passes: only the numbers below were measured.
+`lica-gdb` 0.2.1, suite `v0-smoke` (GDB's definitions are still `v0`, i.e. not frozen). Image inputs: box-bound thumbnail 768x768, Pillow default bicubic, RGB PNG. Registered tasks: 39 → **MEASURED 6**, **UNSUPPORTED 9** (modality), **SKIPPED 24** (data unreachable). Unsupported and skipped tasks are NOT scored — not zero, not a pass.
 
-The offline verification bundle ships **2 samples per task**, so every score below is an n=2 smoke measurement — enough to prove the pipeline runs a real model end-to-end, far too small to rank models.
+The offline verification bundle ships **2 samples per task**, so every score below is an n=2 smoke measurement — it proves a real model runs end-to-end; it is far too small to rank models.
 
-| run | task | n | ok | failed | scores | runtime |
-|---|---|---|---|---|---|---|
-| gemma3-4b-q4km | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 | — s total |
-| gemma3-4b-q4km | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | — s total |
-| gemma3-4b-q4km | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 | — s total |
-| gemma3-4b-q4km | svg-1 | 2 | 2 | 0 | accuracy=0.50 | — s total |
-| gemma3-4b-q4km | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | — s total |
-| gemma3-4b-q4km | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 | — s total |
-| gemma3-4b-q4km-full | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 | 795 s total |
-| gemma3-4b-q4km-full | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | 795 s total |
-| gemma3-4b-q4km-full | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 | 795 s total |
-| gemma3-4b-q4km-full | svg-1 | 2 | 2 | 0 | accuracy=0.50 | 795 s total |
-| gemma3-4b-q4km-full | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | 795 s total |
-| gemma3-4b-q4km-full | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 | 795 s total |
-| qwen3-vl-4b-q4kxl-full | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.50, macro_f1=0.00 | 491 s total |
-| qwen3-vl-4b-q4kxl-full | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 | 491 s total |
-| qwen3-vl-4b-q4kxl-full | layout-5 | 2 | 2 | 0 | mae=24.50, mse=690.50 | 491 s total |
-| qwen3-vl-4b-q4kxl-full | svg-1 | 2 | 2 | 0 | accuracy=1.00 | 491 s total |
-| qwen3-vl-4b-q4kxl-full | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 | 491 s total |
-| qwen3-vl-4b-q4kxl-full | typography-1 | 2 | 2 | 0 | accuracy_top1=0.00, f1_montserrat=0.00, f1_macro=0.00 | 491 s total |
+| run | model | model digest | exit | runtime | task | n | ok | failed | scores |
+|---|---|---|---|---|---|---|---|---|---|
+| gemma3-4b-q4km | — | — | — | — s | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 |
+| gemma3-4b-q4km | — | — | — | — s | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 |
+| gemma3-4b-q4km | — | — | — | — s | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 |
+| gemma3-4b-q4km | — | — | — | — s | svg-1 | 2 | 2 | 0 | accuracy=0.50 |
+| gemma3-4b-q4km | — | — | — | — s | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 |
+| gemma3-4b-q4km | — | — | — | — s | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 |
+| gemma3-4b-q4km-full | gemma-multimodal | sha256:04a43a22e8d2… (read at report time) | 0 | 795 s | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 |
+| gemma3-4b-q4km-full | gemma-multimodal | sha256:04a43a22e8d2… (read at report time) | 0 | 795 s | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 |
+| gemma3-4b-q4km-full | gemma-multimodal | sha256:04a43a22e8d2… (read at report time) | 0 | 795 s | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 |
+| gemma3-4b-q4km-full | gemma-multimodal | sha256:04a43a22e8d2… (read at report time) | 0 | 795 s | svg-1 | 2 | 2 | 0 | accuracy=0.50 |
+| gemma3-4b-q4km-full | gemma-multimodal | sha256:04a43a22e8d2… (read at report time) | 0 | 795 s | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 |
+| gemma3-4b-q4km-full | gemma-multimodal | sha256:04a43a22e8d2… (read at report time) | 0 | 795 s | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 |
+| qwen3-vl-4b-q4kxl-full | qwen-vl-current | sha256:a5563711a524… (read at report time) | 0 | 491 s | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.50, macro_f1=0.00 |
+| qwen3-vl-4b-q4kxl-full | qwen-vl-current | sha256:a5563711a524… (read at report time) | 0 | 491 s | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 |
+| qwen3-vl-4b-q4kxl-full | qwen-vl-current | sha256:a5563711a524… (read at report time) | 0 | 491 s | layout-5 | 2 | 2 | 0 | mae=24.50, mse=690.50 |
+| qwen3-vl-4b-q4kxl-full | qwen-vl-current | sha256:a5563711a524… (read at report time) | 0 | 491 s | svg-1 | 2 | 2 | 0 | accuracy=1.00 |
+| qwen3-vl-4b-q4kxl-full | qwen-vl-current | sha256:a5563711a524… (read at report time) | 0 | 491 s | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 |
+| qwen3-vl-4b-q4kxl-full | qwen-vl-current | sha256:a5563711a524… (read at report time) | 0 | 491 s | typography-1 | 2 | 2 | 0 | accuracy_top1=0.00, f1_montserrat=0.00, f1_macro=0.00 |
+
+Raw per-sample outputs: `artifacts/bench/gdb/<run>/` (GDB `outputs/`, `gdb.log`, `report.json`); reports copied to `docs/evidence/gdb_<run>.json`.
+
+### Every registered task
+
+| task | type | state | why | input | output |
+|---|---|---|---|---|---|
+| category-1 | understanding | MEASURED | ran on the offline verification bundle | Rendered layout image | Up to five predicted category labels (one per line) |
+| category-2 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered layout image | Free-text user intent |
+| layout-1 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Intent prompt + required on-canvas texts | Rendered layout image |
+| layout-2 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Selected top-layer component asset + intent + canvas size | Layout config JSON (single component bbox) + composited layo |
+| layout-3 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Source composite image (long ratio) + separated component as | Either layout JSON (component bboxes) or directly generated  |
+| layout-4 | understanding | MEASURED | ran on the offline verification bundle | Rendered layout image | Aspect ratio label (e.g. 16:9) |
+| layout-5 | understanding | MEASURED | ran on the offline verification bundle | Rendered layout image | Integer component count |
+| layout-6 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered layout image + component location | Component type label |
+| layout-7 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered layout image | JSON list of detections (bbox, label, score) |
+| layout-8 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Masked layout + insertion mask + reference asset or descript | Composited layout with identity-preserving object insertion |
+| lottie-1 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Natural-language description of animation | Lottie JSON (Bodymovin format) |
+| lottie-2 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Animation keyframe image + natural-language description | Lottie JSON (Bodymovin format) |
+| svg-1 | understanding | MEASURED | ran on the offline verification bundle | SVG code + question with multiple-choice options (+ optional | Answer letter (A, B, C, or D) |
+| svg-2 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | SVG code + question with multiple-choice options (+ optional | Answer letter (A, B, C, or D) |
+| svg-3 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Buggy SVG code | Fixed SVG code |
+| svg-4 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Original SVG code (+ optional target ratio) | Optimized SVG code |
+| svg-5 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Original SVG + edit command | Modified SVG code |
+| svg-6 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Natural-language description of the target graphic | SVG code |
+| svg-7 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered image of target graphic | SVG code |
+| svg-8 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered image + natural-language description of target grap | SVG code |
+| template-1 | understanding | MEASURED | ran on the offline verification bundle | Two layouts | Binary label (0 or 1) and optional confidence score |
+| template-2 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Reference layout + set of candidate layouts | Ranked list of candidate IDs (most similar first) |
+| template-3 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Collection of layouts | Cluster assignment for each layout (integer label) |
+| template-4 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Style-context sibling layouts + skeleton layout | Styled JSON layout object |
+| template-5 | generation | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Layout + target color palette + optional color mapping hint | Recolored JSON layout object |
+| temporal-1 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Four shuffled keyframe images | Permutation of frame indices (correct order) |
+| temporal-2 | understanding | UNSUPPORTED | needs video input — the local models are text-output VLMs | Animation video (MP4) | Motion type label |
+| temporal-3 | understanding | UNSUPPORTED | needs video input — the local models are text-output VLMs | Animation video (MP4) | JSON array of per-component animation property objects |
+| temporal-4 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Static layout image + animation prompt | Generated video (path or URI) |
+| temporal-5 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Static layout image + single-component motion prompt | Generated video (path or URI) |
+| temporal-6 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Marketing brief and aspect ratio (text only, no image input) | Generated video (path or URI) |
+| typography-1 | understanding | MEASURED | ran on the offline verification bundle | Rendered text component (image) | Font family name |
+| typography-2 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered text component (image) | Color as hex or rgb() |
+| typography-3 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered text component (image) | JSON object with keys font_size, font_weight, text_align, le |
+| typography-4 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered text component (image) | JSON array of spans with start, end, and style fields |
+| typography-5 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered text component (image) | JSON with is_curved and curvature |
+| typography-6 | understanding | SKIPPED | data lives on the Hugging Face Hub (egress-denied); model support NOT determined | Rendered text component (image) | JSON with is_rotated and angle |
+| typography-7 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Text string + typography specification + masked layout image | Layout image with styled text restored in masked region |
+| typography-8 | generation | UNSUPPORTED | needs image/video output — the local models are text-output VLMs | Text string + typography specification (no image input) | Generated image containing target styled text |
 

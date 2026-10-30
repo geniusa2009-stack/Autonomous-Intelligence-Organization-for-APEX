@@ -1,6 +1,6 @@
 # Production routing matrix
 
-_Generated 2026-10-30 12:26 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 13:14 UTC by `apex-one reports build` from measured artifacts._
 
 Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checker v2) and licence records. No global best model, no cross-task average. A task's score is the weakest of the capabilities it REQUIRES; a model measured below the floor (50, pre-registered) on any of them is rejected. **Primary / fallback must also be production-licensed and installed**; the best evaluation-only model is shown separately. Ties are broken by measured latency on the same evidence tasks (lower first).
 

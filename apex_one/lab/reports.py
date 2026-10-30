@@ -584,39 +584,77 @@ def vision_analysis_md(inv: dict[str, dict[str, Any]], calibration: dict[str, An
     return "\n".join(out) + "\n"
 
 
-def gdb_md(gdb_dir: Path) -> list[str]:
-    """Phase 12: what GraphicDesignBench actually ran — per model, per task — and what was skipped and why."""
-    import subprocess
-    import sys
+# A text-output vision model (text + image in -> text out) cannot produce image/video outputs or read video input.
+_GDB_UNSUPPORTED_OUT = re.compile(r"^(rendered layout image|composited layout|generated video|generated image|"
+                                  r"layout image with)", re.I)
+_GDB_UNSUPPORTED_IN = re.compile(r"\bvideo\b|\bMP4\b", re.I)
 
-    out = ["## GraphicDesignBench (lica-gdb) — real runs", ""]
+
+def gdb_task_states(runs: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Every registered GDB task -> MEASURED (ran here) / UNSUPPORTED (modality) / SKIPPED (data unreachable).
+    Unsupported and skipped tasks are never scored, never zero, never a pass."""
     try:
-        listing = subprocess.run([str(Path(sys.executable).parent / "gdb"), "list"], capture_output=True, text=True,
-                                 timeout=60).stdout
-        all_ids = [ln.split()[0] for ln in listing.splitlines() if re.match(r"^[a-z]+-\d+\s", ln)]
+        from gdb.registry import BenchmarkRegistry
+
+        reg = BenchmarkRegistry()
+        reg.discover()
+        metas = {b.meta.id: b.meta for b in (reg.list() if hasattr(reg, "list") else reg.all())}
     except Exception:  # noqa: BLE001
-        all_ids = []
+        metas = {}
+    ran = {t for res, _ in runs.values() for t in res}
+    out = {}
+    for tid, m in sorted(metas.items()):
+        if tid in ran:
+            st, why = "MEASURED", "ran on the offline verification bundle"
+        elif _GDB_UNSUPPORTED_OUT.search(m.output_spec.strip()) or _GDB_UNSUPPORTED_IN.search(m.input_spec):
+            st, why = "UNSUPPORTED", f"needs {'video input' if _GDB_UNSUPPORTED_IN.search(m.input_spec) else 'image/video output'} — the local models are text-output VLMs"
+        else:
+            st, why = "SKIPPED", "data lives on the Hugging Face Hub (egress-denied); model support NOT determined"
+        out[tid] = {"state": st, "why": why, "type": getattr(m.task_type, "value", str(m.task_type)),
+                    "in": m.input_spec, "out": m.output_spec}
+    return out
+
+
+def gdb_md(gdb_dir: Path) -> list[str]:
+    """What GraphicDesignBench actually ran — per model, per task — and what was unsupported or skipped and why."""
+    import importlib.metadata
+
+    from apex_one.lab.benchmarks.gdb_provider import GDB_PREPROCESS
+    from apex_one.vision.council import model_digest
+
     runs = {}
     for rep in sorted(gdb_dir.glob("*/report.json")) if gdb_dir.exists() else []:
         if rep.parent.name.startswith("_"):
             continue
-        data = _load(rep) or {}
-        meta = _load(rep.parent / "run_meta.json") or {}
-        runs[rep.parent.name] = (data.get("results", {}), meta)
-    ran = sorted({t for res, _ in runs.values() for t in res})
-    out += [f"Benchmarks registered by the package: {len(all_ids)}. Ran here: {len(ran)} ({', '.join(ran) or 'none'}). "
-            f"Skipped: {len(all_ids) - len(ran)} — their data lives on the Hugging Face Hub, which the egress proxy "
-            "denies (dependency missing). Skipped tasks are NOT scored as zero and supported tasks are not passes: "
-            "only the numbers below were measured.", "",
-            "The offline verification bundle ships **2 samples per task**, so every score below is an n=2 smoke "
-            "measurement — enough to prove the pipeline runs a real model end-to-end, far too small to rank models.",
-            "", "| run | task | n | ok | failed | scores | runtime |", "|---|---|---|---|---|---|---|"]
+        runs[rep.parent.name] = ((_load(rep) or {}).get("results", {}), _load(rep.parent / "run_meta.json") or {})
+    states = gdb_task_states(runs)
+    try:
+        version = importlib.metadata.version("lica-gdb")
+    except Exception:  # noqa: BLE001
+        version = "unknown"
+    count = lambda st: sum(1 for v in states.values() if v["state"] == st)  # noqa: E731
+    out = ["## GraphicDesignBench (lica-gdb) — real runs", "",
+           f"`lica-gdb` {version}, suite `v0-smoke` (GDB's definitions are still `v0`, i.e. not frozen). Image inputs: "
+           f"{GDB_PREPROCESS}. Registered tasks: {len(states)} → **MEASURED {count('MEASURED')}**, "
+           f"**UNSUPPORTED {count('UNSUPPORTED')}** (modality), **SKIPPED {count('SKIPPED')}** (data unreachable). "
+           "Unsupported and skipped tasks are NOT scored — not zero, not a pass.", "",
+           "The offline verification bundle ships **2 samples per task**, so every score below is an n=2 smoke "
+           "measurement — it proves a real model runs end-to-end; it is far too small to rank models.", "",
+           "| run | model | model digest | exit | runtime | task | n | ok | failed | scores |",
+           "|---|---|---|---|---|---|---|---|---|---|"]
     for name, (res, meta) in runs.items():
+        mid = meta.get("model", "—")
+        dig = meta.get("model_digest") or (model_digest(mid) and f"{model_digest(mid)[:19]}… (read at report time)") or "—"
         for task, per_model in sorted(res.items()):
             for _, r in per_model.items():
                 sc = ", ".join(f"{k}={v:.2f}" for k, v in (r.get("scores") or {}).items() if isinstance(v, (int, float)))
-                out.append(f"| {name} | {task} | {r.get('count')} | {r.get('success_count')} | {r.get('failure_count')} | "
-                           f"{sc} | {meta.get('runtime_s', '—')} s total |")
+                out.append(f"| {name} | {mid} | {dig} | {meta.get('exit_code', '—')} | {meta.get('runtime_s', '—')} s | "
+                           f"{task} | {r.get('count')} | {r.get('success_count')} | {r.get('failure_count')} | {sc or '—'} |")
+    out += ["", "Raw per-sample outputs: `artifacts/bench/gdb/<run>/` (GDB `outputs/`, `gdb.log`, `report.json`); "
+            "reports copied to `docs/evidence/gdb_<run>.json`.", "",
+            "### Every registered task", "", "| task | type | state | why | input | output |", "|---|---|---|---|---|---|"]
+    for tid, v in states.items():
+        out.append(f"| {tid} | {v['type']} | {v['state']} | {v['why']} | {v['in'][:60]} | {v['out'][:60]} |")
     return out + [""]
 
 
