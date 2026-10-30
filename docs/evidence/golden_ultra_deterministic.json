@@ -1,0 +1,162 @@
+{
+  "job_id": "J-0c0d3f04849d",
+  "commit": "25542ae",
+  "local_models": "disabled (APEX_DISABLE_LOCAL_MODELS=1)",
+  "pairwise_judges": [],
+  "targets": {
+    "reader_comprehension": [
+      "PASS",
+      98.889
+    ],
+    "typography": [
+      "PASS",
+      98.846
+    ],
+    "arabic_typography": [
+      "PASS",
+      100.0
+    ],
+    "visual_hierarchy": [
+      "PASS",
+      99.231
+    ],
+    "apex_brand_fit": [
+      "PASS",
+      100.0
+    ],
+    "editorial_quality": [
+      "PASS",
+      100.0
+    ],
+    "rtl_visual_quality": [
+      "PASS",
+      100.0
+    ],
+    "print_fidelity": [
+      "PASS",
+      100.0
+    ],
+    "cross_page_rhythm": [
+      "PASS",
+      94.0
+    ],
+    "novelty": [
+      "PASS",
+      98.462
+    ]
+  },
+  "critical": {
+    "critical_fact_accuracy": [
+      "PASS",
+      100.0
+    ],
+    "deadline_integrity": [
+      "PASS",
+      100.0
+    ],
+    "eligibility_integrity": [
+      "PASS",
+      100.0
+    ],
+    "funding_meaning_integrity": [
+      "PASS",
+      100.0
+    ],
+    "unresolved_critical_contradictions": [
+      "PASS",
+      0.0
+    ],
+    "critical_layout_failures": [
+      "PASS",
+      0.0
+    ],
+    "license_contamination": [
+      "PASS",
+      0.0
+    ],
+    "brand_production_assets": [
+      "NOT_APPLICABLE_SYNTHETIC",
+      6.0
+    ]
+  },
+  "layout_top": [
+    {
+      "page": "N-12a9516577ba",
+      "type": "Cover",
+      "archetype": "cover-monument",
+      "fitness": 98.769
+    },
+    {
+      "page": "N-53f6bdb5390d",
+      "type": "Opening",
+      "archetype": "split-asymmetric",
+      "fitness": 97.959
+    },
+    {
+      "page": "N-08b40ebf45cc",
+      "type": "OpportunitySnapshot",
+      "archetype": "ledger",
+      "fitness": 97.272
+    },
+    {
+      "page": "N-170f0f535bba",
+      "type": "HeroFact",
+      "archetype": "manifesto",
+      "fitness": 98.019
+    },
+    {
+      "page": "N-601a312e7409",
+      "type": "FundingChapter",
+      "archetype": "ledger",
+      "fitness": 98.037
+    },
+    {
+      "page": "N-c65673298781",
+      "type": "Warning",
+      "archetype": "manifesto",
+      "fitness": 97.206
+    },
+    {
+      "page": "N-6f76c9c141d3",
+      "type": "EligibilityChapter",
+      "archetype": "editorial-column",
+      "fitness": 96.213
+    },
+    {
+      "page": "N-11abe2d679b2",
+      "type": "Breath",
+      "archetype": "quiet-breath",
+      "fitness": 98.899
+    },
+    {
+      "page": "N-7bdc8659b297",
+      "type": "ApplicationJourney",
+      "archetype": "ledger",
+      "fitness": 99.919
+    },
+    {
+      "page": "N-63ef920db128",
+      "type": "Timeline",
+      "archetype": "timeline-rail",
+      "fitness": 97.475
+    },
+    {
+      "page": "N-cc052807dab5",
+      "type": "ApexTake",
+      "archetype": "editorial-column",
+      "fitness": 99.709
+    },
+    {
+      "page": "N-ae3dca2b2f8a",
+      "type": "Checklist",
+      "archetype": "checklist-sheet",
+      "fitness": 99.787
+    },
+    {
+      "page": "N-3995e3bd27da",
+      "type": "Closing",
+      "archetype": "manifesto",
+      "fitness": 97.559
+    }
+  ]
+}

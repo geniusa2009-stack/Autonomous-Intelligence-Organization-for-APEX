@@ -1,0 +1,275 @@
+{
+  "job_id": "J-0675a790dc62",
+  "state": "HUMAN_APPROVAL",
+  "status": "RELEASE_CANDIDATE",
+  "checks": {
+    "lock:deadline.application": true,
+    "lock:fee.application": true,
+    "lock:test_minimum.toefl_ibt": true,
+    "lock:test_minimum.ielts": true,
+    "lock:test_requirement.sat_act": true,
+    "lock:scholarship_coverage.tuition": true,
+    "lock:funding.student_contribution_per_year": true,
+    "stale_cycle_rejected": true,
+    "blog_values_rejected": true,
+    "stops_at_human_gate": true,
+    "not_final_without_human": true,
+    "critical_gates_pass": true,
+    "real_job_gates_reported": true,
+    "multiple_layouts_evaluated": true
+  },
+  "all_passed": true,
+  "targets": {
+    "reader_comprehension": [
+      "PASS",
+      98.889
+    ],
+    "typography": [
+      "PASS",
+      98.846
+    ],
+    "arabic_typography": [
+      "PASS",
+      99.538
+    ],
+    "visual_hierarchy": [
+      "PASS",
+      99.231
+    ],
+    "apex_brand_fit": [
+      "PASS",
+      100.0
+    ],
+    "editorial_quality": [
+      "PASS",
+      100.0
+    ],
+    "rtl_visual_quality": [
+      "PASS",
+      100.0
+    ],
+    "print_fidelity": [
+      "PASS",
+      100.0
+    ],
+    "cross_page_rhythm": [
+      "PASS",
+      94.0
+    ],
+    "novelty": [
+      "PASS",
+      100.0
+    ]
+  },
+  "artifacts": "/home/user/Autonomous-Intelligence-Organization-for-APEX/artifacts/jobs/J-0675a790dc62",
+  "runtime_s": 2675,
+  "pairwise_judges": [
+    "qwen3-vl-8b"
+  ],
+  "judge_status_8b": [
+    "CANONICAL_640_ONLY",
+    "not yet measured: 320, 480, 768, native, 1024"
+  ],
+  "pairwise_records": [
+    {
+      "page": "N-6b3e51ba1cf1",
+      "first": "LC-aff238bba7e1",
+      "second": "LC-2cc5fb0e755c",
+      "status": "MEASURED",
+      "winner": null,
+      "votes": {
+        "qwen3-vl-8b": null
+      },
+      "raw": {
+        "qwen3-vl-8b": [
+          [
+            "first",
+            "Page A\u2019s clean, grid-free layout and balanced typography create a more intentional, premium feel with clearer hierarchy, while Page B\u2019s grid introduces visual noise that undermines its restrained aest"
+          ],
+          [
+            "second",
+            "Page A has a clearer visual hierarchy with balanced typography and intentional negative space, avoiding the distracting overlay in Page B."
+          ]
+        ]
+      },
+      "disagreements": [
+        "qwen3-vl-8b: order-inconsistent (first vs second) \u2014 position bias, vote discarded"
+      ],
+      "failures": [],
+      "executed_judges": 1,
+      "raw_text": {
+        "qwen3-vl-8b": [
+          "{\"winner\": \"A\", \"reason\": \"Page A\u2019s clean, grid-free layout and balanced typography create a more intentional, premium feel with clearer hierarchy, while Page B\u2019s grid introduces visual noise that undermines its restrained aesthetic.\"}",
+          "{\"winner\": \"A\", \"reason\": \"Page A has a clearer visual hierarchy with balanced typography and intentional negative space, avoiding the distracting overlay in Page B.\"}"
+        ]
+      },
+      "latency_s": {
+        "qwen3-vl-8b": [
+          73.0,
+          66.9
+        ]
+      },
+      "preprocess": {
+        "width": 640,
+        "version": "width-bound-thumbnail-bicubic-v1",
+        "first": "0c0644a7abe5e04886fc818164067662c7973c62d2af7f8ebae4ad95c3a109b9",
+        "second": "df3ef932c403b4155eff7f4027e6ce24a1fd682fa210179527c28e855509783f"
+      }
+    },
+    {
+      "page": "N-3630228dddef",
+      "first": "LC-dda562dc5631",
+      "second": "LC-2d778f3bb3b0",
+      "status": "MEASURED",
+      "winner": "first",
+      "votes": {
+        "qwen3-vl-8b": "first"
+      },
+      "raw": {
+        "qwen3-vl-8b": [
+          [
+            "first",
+            "Page A's tighter vertical spacing and cleaner alignment create a more intentional, calm composition with clearer visual hierarchy for quick scanning."
+          ],
+          [
+            "first",
+            "Page B's top horizontal line creates a stronger visual anchor and compositional clarity, enhancing hierarchy and intentional restraint."
+          ]
+        ]
+      },
+      "disagreements": [],
+      "failures": [],
+      "executed_judges": 1,
+      "raw_text": {
+        "qwen3-vl-8b": [
+          "{\"winner\": \"A\", \"reason\": \"Page A's tighter vertical spacing and cleaner alignment create a more intentional, calm composition with clearer visual hierarchy for quick scanning.\"}",
+          "{\"winner\": \"B\", \"reason\": \"Page B's top horizontal line creates a stronger visual anchor and compositional clarity, enhancing hierarchy and intentional restraint.\"}"
+        ]
+      },
+      "latency_s": {
+        "qwen3-vl-8b": [
+          106.8,
+          67.8
+        ]
+      },
+      "preprocess": {
+        "width": 640,
+        "version": "width-bound-thumbnail-bicubic-v1",
+        "first": "66206638bec6cd948a88107f48a551e6f4bba2d6e8dd9146a375125b59122aaf",
+        "second": "f37206fc98130a1f9724a002d3ac32cff93212faab9d12747ce7581306d4da0d"
+      }
+    },
+    {
+      "page": "N-a7086ab8a09e",
+      "first": "LC-0e656e6cf460",
+      "second": "LC-ad09f5928443",
+      "status": "MEASURED",
+      "winner": "first",
+      "votes": {
+        "qwen3-vl-8b": "first"
+      },
+      "raw": {
+        "qwen3-vl-8b": [
+          [
+            "first",
+            "Page A's tighter, more intentional composition and clearer visual hierarchy make it more effective as a hero fact page."
+          ],
+          [
+            "first",
+            "Page B's typography is more intentional and visually balanced, creating a clearer hierarchy and more restrained composition than Page A."
+          ]
+        ]
+      },
+      "disagreements": [],
+      "failures": [],
+      "executed_judges": 1,
+      "raw_text": {
+        "qwen3-vl-8b": [
+          "{\"winner\": \"A\", \"reason\": \"Page A's tighter, more intentional composition and clearer visual hierarchy make it more effective as a hero fact page.\"}",
+          "{\"winner\": \"B\", \"reason\": \"Page B's typography is more intentional and visually balanced, creating a clearer hierarchy and more restrained composition than Page A.\"}"
+        ]
+      },
+      "latency_s": {
+        "qwen3-vl-8b": [
+          66.1,
+          65.5
+        ]
+      },
+      "preprocess": {
+        "width": 640,
+        "version": "width-bound-thumbnail-bicubic-v1",
+        "first": "a1012b2ec4babda83560e178b72e26d56824c1602adf308c8bf1b9b0bb14111e",
+        "second": "f92e19a863394a1e154e571e5f92e9721553bd653028da5a0e768162445e011e"
+      }
+    },
+    {
+      "page": "N-a5017e17669b",
+      "first": "LC-aa1041e1d70e",
+      "second": "LC-fd0cddf07403",
+      "status": "MEASURED",
+      "winner": "second",
+      "votes": {
+        "qwen3-vl-8b": "second"
+      },
+      "raw": {
+        "qwen3-vl-8b": [
+          [
+            "second",
+            "Page B's top-left chapter number and cleaner layout create a more intentional, premium composition with clearer visual hierarchy and fewer distracting elements."
+          ],
+          [
+            "second",
+            "Page A's bold numeral '05' and clean negative space create a stronger visual anchor and hierarchy, enhancing clarity and intentional composition."
+          ]
+        ]
+      },
+      "disagreements": [],
+      "failures": [],
+      "executed_judges": 1,
+      "raw_text": {
+        "qwen3-vl-8b": [
+          "{\"winner\": \"B\", \"reason\": \"Page B's top-left chapter number and cleaner layout create a more intentional, premium composition with clearer visual hierarchy and fewer distracting elements.\"}",
+          "{\"winner\": \"A\", \"reason\": \"Page A's bold numeral '05' and clean negative space create a stronger visual anchor and hierarchy, enhancing clarity and intentional composition.\"}"
+        ]
+      },
+      "latency_s": {
+        "qwen3-vl-8b": [
+          66.8,
+          67.6
+        ]
+      },
+      "preprocess": {
+        "width": 640,
+        "version": "width-bound-thumbnail-bicubic-v1",
+        "first": "f1b2e79ebb619451e5238d2b859e60e4ad040ca498174020f68db70967f15ed9",
+        "second": "bf463729a9bb8d2c2af8b79ee90876c62b11020713c0cf87f05fc754efb97404"
+      }
+    }
+  ],
+  "required": {
+    "reader_comprehension": {
+      "value": 98.889,
+      "floor": 95,
+      "pass": true
+    },
+    "cross_page_rhythm": {
+      "value": 94.0,
+      "floor": 93,
+      "pass": true
+    },
+    "arabic_typography": {
+      "value": 99.538,
+      "floor": 98,
+      "pass": true
+    },
+    "critical_fact_integrity": {
+      "critical_fact_accuracy": 100.0,
+      "deadline_integrity": 100.0,
+      "eligibility_integrity": 100.0,
+      "funding_meaning_integrity": 100.0
+    },
+    "critical_deterministic_failures": [],
+    "all_required_pass": true
+  },
+  "commit": "cc2511e"
+}
