@@ -209,6 +209,7 @@ def summarize_width(w: dict[str, Any]) -> dict[str, Any]:
             "order_sensitivity": round(sum(bool(b) for b in bias) / max(1, sum(b is not None for b in bias)), 3),
             "position_bias_cases": sum(bool(b) for b in bias),
             "run_variance": round(statistics.pvariance(correct), 3), "cases_flipping_across_repeats": flips,
+            "cases_failed_every_repeat": [k for k in cases if all(r["checks"].get(k) is False for r in reps)],
             "confidence_mean": round(statistics.mean(conf), 3) if conf else None,
             "median_call_latency_s": statistics.median(lat) if lat else None,
             "legible": leg.get("legible"), "legibility_read": leg.get("read"),

@@ -650,6 +650,9 @@ def robustness_md(robust_dir: Path, calib_dir: Path) -> str:
            + " (legibility is measured directly by the probe below, not assumed)",
            "* confidence = consistency across the 2 × repeats answers per case, |2p − 1| (the judge is not asked to "
            "self-report confidence, so the calibrated prompt is unchanged)",
+           "* judging runs at temperature 0 (as in production), so repeats measure DETERMINISM of the serving stack, "
+           "not sampling variance: identical repeats (variance 0, confidence 1.0) mean the verdict is reproducible, "
+           "not that it is right — accuracy and the per-case results carry that",
            "* correction: the earlier investigation experiment labelled “E2 1024 px” actually ran at the native "
            f"{native} px — `thumbnail()` never upscales. The sweep below renders a real 1024 px input.", "",
            "Pre-registered rules (`apex_one/lab/benchmarks/vision_robustness.py`, fixed before results): reliable at a "
@@ -664,16 +667,16 @@ def robustness_md(robust_dir: Path, calib_dir: Path) -> str:
         st, why = status(data)
         out += [f"## {mid} — **{st}**", "", f"{why}. Model digest `{(data.get('model_digest') or '—')[:19]}…`.", "",
                 "| width | input | repeats | correct per repeat | accuracy | order sensitivity | run variance | "
-                "cases flipping | confidence | median call latency | legible (deadline / tuition) | reliable | input hash (good) |",
-                "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+                "cases flipping | always wrong | confidence | median call latency | legible (deadline / tuition) | reliable | input hash (good) |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for wkey in WIDTHS:
             w = data.get("widths", {}).get(wkey)
             if not w:
-                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — |")
+                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |")
                 continue
             s = summarize_width(w)
             if not s.get("repeats"):
-                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — |")
+                out.append(f"| {wkey} | — | 0 | NOT_MEASURED yet | — | — | — | — | — | — | — | — | — | — |")
                 continue
             rd = s.get("legibility_read") or {}
             leg = "—" if s["legible"] is None else (f"{'yes' if s['legible'] else 'NO'} "
@@ -681,6 +684,7 @@ def robustness_md(robust_dir: Path, calib_dir: Path) -> str:
             out.append(f"| {wkey} ({s['width']} px) | {s['inputs']} | {s['repeats']} | {s['correct_per_repeat']} | "
                        f"{s['accuracy']:.2f} | {s['order_sensitivity']:.2f} ({s['position_bias_cases']} case-runs) | "
                        f"{s['run_variance']} | {', '.join(s['cases_flipping_across_repeats']) or '—'} | "
+                       f"{', '.join(s['cases_failed_every_repeat']) or '—'} | "
                        f"{_fmt(s['confidence_mean'], 2)} | {_fmt(s['median_call_latency_s'])} s | {leg} | "
                        f"{'yes' if s['reliable_all_repeats'] else 'NO'} | `{(s['input_hash_good'] or '')[:12]}` |")
         out += ["", "Raw answers, per-call latency and every input hash: `docs/evidence/vision_robustness_"

@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-30 11:59 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 12:26 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -235,5 +235,5 @@ Stability: 5/5 cases gave identical scores on repeat.
 ## What the gates may use (re-checked: bar, timestamp, model digest)
 
 * six-role scoring council (absolute): none → **Vision Quality scores = NOT_MEASURED**
-* finalist A/B judging (pairwise, both orders): none → pairwise judging NOT_MEASURED
+* finalist A/B judging (pairwise, both orders): qwen3-vl-8b → pairwise finalist votes ACTIVE (a vote counts only when both orders agree)
 * a pass in one mode never qualifies the other; deterministic DOM gates remain authoritative

@@ -1,6 +1,6 @@
 # APEX Design Bench (Phase 17)
 
-_Generated 2026-10-30 11:59 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 12:26 UTC by `apex-one reports build` from measured artifacts._
 
 Fifteen page types (every semantic page type of the Document AST), content from a real pipeline run (golden job AST + fact locks). Each system produces one page per type; all pages are rendered by the same Chromium and measured by the same deterministic page QA. **No single score is reported by design.**
 

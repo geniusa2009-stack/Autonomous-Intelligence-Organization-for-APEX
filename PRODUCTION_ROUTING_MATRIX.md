@@ -1,6 +1,6 @@
 # Production routing matrix
 
-_Generated 2026-10-30 11:59 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 12:26 UTC by `apex-one reports build` from measured artifacts._
 
 Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checker v2) and licence records. No global best model, no cross-task average. A task's score is the weakest of the capabilities it REQUIRES; a model measured below the floor (50, pre-registered) on any of them is rejected. **Primary / fallback must also be production-licensed and installed**; the best evaluation-only model is shown separately. Ties are broken by measured latency on the same evidence tasks (lower first).
 
@@ -55,10 +55,10 @@ Built ONLY from measured evidence (`artifacts/bench/council_scores.json`, checke
 ## Vision
 
 * scoring council (absolute): none qualified → **Vision Quality scores = NOT_MEASURED**
-* finalist A/B (pairwise, canonical input only): none admitted
+* finalist A/B (pairwise, canonical input only): qwen3-vl-8b
   * qwen-vl-current: robustness **INCOMPLETE** (no robustness results); not admitted — calibration not reliable
   * gemma-multimodal: robustness **INCOMPLETE** (no robustness results); not admitted — calibration not reliable
-  * qwen3-vl-8b: robustness **INCOMPLETE** (no robustness results); not admitted — robustness INCOMPLETE: no robustness results
+  * qwen3-vl-8b: robustness **CANONICAL_640_ONLY** (not yet measured: 320, 480, 768, native, 1024); ADMITTED
 
 ## Remote models
 

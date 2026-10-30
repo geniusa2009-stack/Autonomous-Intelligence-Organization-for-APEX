@@ -1,0 +1,432 @@
+{
+  "model": "qwen3-vl-8b",
+  "widths": {
+    "640": {
+      "width": 640,
+      "inputs": "calibration render, downscaled by the judge-input contract",
+      "reps": [
+        {
+          "checks": {
+            "low_contrast": true,
+            "card_overuse": true,
+            "gradient": true,
+            "cramped": false,
+            "no_hierarchy": true
+          },
+          "detail": {
+            "low_contrast": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A's stronger visual hierarchy and bolder typography create a more intentional, high-impact composition that better serves the critical deadline-focused intent.",
+                "B's darker, more intentional typography and tighter visual hierarchy create a calmer, more premium composition that better emphasizes the deadline as the critical entry point."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A's stronger visual hierarchy and bolder typography create a more intentional, high-impact composition that better serves the critical deadline-focused intent.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's darker, more intentional typography and tighter visual hierarchy create a calmer, more premium composition that better emphasizes the deadline as the critical entry point.\"}"
+              ],
+              "latency_s": [
+                72.6,
+                68.5
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91"
+              }
+            },
+            "card_overuse": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A’s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better serving the critical deadline-focused in",
+                "B's reversed text alignment creates a more intentional, visually grounded hierarchy that better anchors the deadline as the primary entry point."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A’s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better serving the critical deadline-focused intent.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's reversed text alignment creates a more intentional, visually grounded hierarchy that better anchors the deadline as the primary entry point.\"}"
+              ],
+              "latency_s": [
+                44.3,
+                63.7
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792"
+              }
+            },
+            "gradient": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A’s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of",
+                "B's deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clichés while emphasizing the deadline."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A’s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of Page B.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clichés while emphasizing the deadline.\"}"
+              ],
+              "latency_s": [
+                43.8,
+                69.6
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d"
+              }
+            },
+            "cramped": {
+              "good_as_A": "second",
+              "good_as_B": "second",
+              "position_bias": false,
+              "reasons": [
+                "B’s minimalist composition and intentional whitespace create a calmer, more premium feel, prioritizing clarity and hierarchy without visual clutter.",
+                "Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint."
+              ],
+              "raw_text": [
+                "{\"winner\": \"B\", \"reason\": \"B’s minimalist composition and intentional whitespace create a calmer, more premium feel, prioritizing clarity and hierarchy without visual clutter.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint.\"}"
+              ],
+              "latency_s": [
+                41.2,
+                63.2
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394"
+              }
+            },
+            "no_hierarchy": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A's cleaner hierarchy, stronger visual weight on the deadline, and more intentional spacing create a more authoritative and focused composition for critical decision-making.",
+                "B's bolded date and larger font create a stronger visual anchor and hierarchy, making the deadline immediately dominant and intentional."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A's cleaner hierarchy, stronger visual weight on the deadline, and more intentional spacing create a more authoritative and focused composition for critical decision-making.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's bolded date and larger font create a stronger visual anchor and hierarchy, making the deadline immediately dominant and intentional.\"}"
+              ],
+              "latency_s": [
+                41.4,
+                66.9
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+              }
+            }
+          },
+          "valid_checks": 5,
+          "correct": 4,
+          "discrimination_rate": 0.8,
+          "reliable": true,
+          "wall_s": 576.4
+        },
+        {
+          "checks": {
+            "low_contrast": true,
+            "card_overuse": true,
+            "gradient": true,
+            "cramped": false,
+            "no_hierarchy": true
+          },
+          "detail": {
+            "low_contrast": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A's stronger visual hierarchy and bolder typography create a more intentional, high-impact composition that better serves the critical deadline-focused intent.",
+                "B's darker, more intentional typography and tighter visual hierarchy create a calmer, more premium composition that better emphasizes the deadline as the critical entry point."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A's stronger visual hierarchy and bolder typography create a more intentional, high-impact composition that better serves the critical deadline-focused intent.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's darker, more intentional typography and tighter visual hierarchy create a calmer, more premium composition that better emphasizes the deadline as the critical entry point.\"}"
+              ],
+              "latency_s": [
+                42.2,
+                68.5
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91"
+              }
+            },
+            "card_overuse": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A’s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better serving the critical deadline-focused in",
+                "B's reversed text alignment creates a more intentional, visually grounded hierarchy that better anchors the deadline as the primary entry point."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A’s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better serving the critical deadline-focused intent.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's reversed text alignment creates a more intentional, visually grounded hierarchy that better anchors the deadline as the primary entry point.\"}"
+              ],
+              "latency_s": [
+                46.0,
+                65.6
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792"
+              }
+            },
+            "gradient": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A’s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of",
+                "B's deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clichés while emphasizing the deadline."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A’s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of Page B.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clichés while emphasizing the deadline.\"}"
+              ],
+              "latency_s": [
+                43.3,
+                68.2
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d"
+              }
+            },
+            "cramped": {
+              "good_as_A": "second",
+              "good_as_B": "second",
+              "position_bias": false,
+              "reasons": [
+                "B’s minimalist composition and intentional whitespace create a calmer, more premium feel, prioritizing clarity and hierarchy without visual clutter.",
+                "Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint."
+              ],
+              "raw_text": [
+                "{\"winner\": \"B\", \"reason\": \"B’s minimalist composition and intentional whitespace create a calmer, more premium feel, prioritizing clarity and hierarchy without visual clutter.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint.\"}"
+              ],
+              "latency_s": [
+                36.6,
+                66.5
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394"
+              }
+            },
+            "no_hierarchy": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A's cleaner hierarchy, stronger visual weight on the deadline, and more intentional spacing create a more authoritative and focused composition for critical decision-making.",
+                "B's bolded date and larger font create a stronger visual anchor and hierarchy, making the deadline immediately dominant and intentional."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A's cleaner hierarchy, stronger visual weight on the deadline, and more intentional spacing create a more authoritative and focused composition for critical decision-making.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's bolded date and larger font create a stronger visual anchor and hierarchy, making the deadline immediately dominant and intentional.\"}"
+              ],
+              "latency_s": [
+                42.4,
+                66.4
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+              }
+            }
+          },
+          "valid_checks": 5,
+          "correct": 4,
+          "discrimination_rate": 0.8,
+          "reliable": true,
+          "wall_s": 547.0
+        },
+        {
+          "checks": {
+            "low_contrast": true,
+            "card_overuse": true,
+            "gradient": true,
+            "cramped": false,
+            "no_hierarchy": true
+          },
+          "detail": {
+            "low_contrast": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A's stronger visual hierarchy and bolder typography create a more intentional, high-impact composition that better serves the critical deadline-focused intent.",
+                "B's darker, more intentional typography and tighter visual hierarchy create a calmer, more premium composition that better emphasizes the deadline as the critical entry point."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A's stronger visual hierarchy and bolder typography create a more intentional, high-impact composition that better serves the critical deadline-focused intent.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's darker, more intentional typography and tighter visual hierarchy create a calmer, more premium composition that better emphasizes the deadline as the critical entry point.\"}"
+              ],
+              "latency_s": [
+                42.6,
+                69.8
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91"
+              }
+            },
+            "card_overuse": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A’s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better serving the critical deadline-focused in",
+                "B's reversed text alignment creates a more intentional, visually grounded hierarchy that better anchors the deadline as the primary entry point."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A’s clean, unadorned layout with strong typographic hierarchy and minimal visual noise creates a more authoritative, intentional, and premium feel, better serving the critical deadline-focused intent.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's reversed text alignment creates a more intentional, visually grounded hierarchy that better anchors the deadline as the primary entry point.\"}"
+              ],
+              "latency_s": [
+                42.7,
+                67.8
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792"
+              }
+            },
+            "gradient": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A’s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of",
+                "B's deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clichés while emphasizing the deadline."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A’s deep navy, silver, and white palette delivers a calmer, more intentional, premium feel with superior typographic hierarchy and clearer visual entry point, avoiding the distracting gradient of Page B.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's deep navy, silver, and white palette delivers a premium, restrained aesthetic with clearer hierarchy and intentional composition, avoiding AI clichés while emphasizing the deadline.\"}"
+              ],
+              "latency_s": [
+                46.7,
+                66.8
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d"
+              }
+            },
+            "cramped": {
+              "good_as_A": "second",
+              "good_as_B": "second",
+              "position_bias": false,
+              "reasons": [
+                "B’s minimalist composition and intentional whitespace create a calmer, more premium feel, prioritizing clarity and hierarchy without visual clutter.",
+                "Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint."
+              ],
+              "raw_text": [
+                "{\"winner\": \"B\", \"reason\": \"B’s minimalist composition and intentional whitespace create a calmer, more premium feel, prioritizing clarity and hierarchy without visual clutter.\"}",
+                "{\"winner\": \"A\", \"reason\": \"Page A's cleaner layout, stronger visual hierarchy, and absence of distracting elements make it more effective for conveying critical deadline information with premium restraint.\"}"
+              ],
+              "latency_s": [
+                37.1,
+                65.1
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394"
+              }
+            },
+            "no_hierarchy": {
+              "good_as_A": "first",
+              "good_as_B": "first",
+              "position_bias": false,
+              "reasons": [
+                "Page A's cleaner hierarchy, stronger visual weight on the deadline, and more intentional spacing create a more authoritative and focused composition for critical decision-making.",
+                "B's bolded date and larger font create a stronger visual anchor and hierarchy, making the deadline immediately dominant and intentional."
+              ],
+              "raw_text": [
+                "{\"winner\": \"A\", \"reason\": \"Page A's cleaner hierarchy, stronger visual weight on the deadline, and more intentional spacing create a more authoritative and focused composition for critical decision-making.\"}",
+                "{\"winner\": \"B\", \"reason\": \"B's bolded date and larger font create a stronger visual anchor and hierarchy, making the deadline immediately dominant and intentional.\"}"
+              ],
+              "latency_s": [
+                37.8,
+                62.4
+              ],
+              "preprocess": {
+                "width": 640,
+                "version": "width-bound-thumbnail-bicubic-v1",
+                "first": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+                "second": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+              }
+            }
+          },
+          "valid_checks": 5,
+          "correct": 4,
+          "discrimination_rate": 0.8,
+          "reliable": true,
+          "wall_s": 540.2
+        }
+      ],
+      "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+      "input_hashes": {
+        "good": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27",
+        "low_contrast": "14fec158a56773e8b5151af4d985e200bf4332f0ce0b2967ec5ffed6c2073c91",
+        "card_overuse": "ad2a8a2c587224a5dbfb70523e98d88e3f5d91cf6c3b41551c08257bced24792",
+        "gradient": "1b419a75f0e037d524c81e3e301ce1fa65e90a364a83be411556c645ec4ca41d",
+        "cramped": "6c45f880d21768e997b9c2715eadc7a773b41c32f3e6f1a74e02a3b45354c394",
+        "no_hierarchy": "ff3f4e297e7365b423cd8b9b2414645d2994788edfeb9ba747cc595b0e457f5b"
+      },
+      "legibility": {
+        "legible": true,
+        "read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "answer": {
+          "application_deadline": "1 نوفمبر 2026",
+          "tuition_coverage": "100%"
+        },
+        "raw": "{\n  \"application_deadline\": \"1 نوفمبر 2026\",\n  \"tuition_coverage\": \"100%\"\n}",
+        "truth": {
+          "application_deadline": "1 نوفمبر 2026",
+          "tuition_coverage": "100%"
+        },
+        "latency_s": 34.8,
+        "executed": true
+      }
+    }
+  },
+  "model_digest": "sha256:e3d1a6e87c5cb31e054f2c3bc0dd82ffde052f613de5eef3665b7bd33c9b703e"
+}

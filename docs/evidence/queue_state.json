@@ -479,6 +479,36 @@
         "overall": 70.8,
         "measured_tasks": 8
       }
+    },
+    "qwen3-vl-8b-q4kxl:robust:640": {
+      "at": "2026-10-30T12:25:31",
+      "info": {
+        "width": 640,
+        "inputs": "calibration render, downscaled by the judge-input contract",
+        "repeats": 3,
+        "correct_per_repeat": [
+          4,
+          4,
+          4
+        ],
+        "accuracy": 0.8,
+        "min_correct": 4,
+        "all_valid": true,
+        "reliable_all_repeats": true,
+        "order_sensitivity": 0.0,
+        "position_bias_cases": 0,
+        "run_variance": 0,
+        "cases_flipping_across_repeats": [],
+        "confidence_mean": 1.0,
+        "median_call_latency_s": 62.8,
+        "legible": true,
+        "legibility_read": {
+          "application_deadline": true,
+          "tuition_coverage": true
+        },
+        "preprocess_version": "width-bound-thumbnail-bicubic-v1",
+        "input_hash_good": "c694ad322e2cdf038a9d5160471cc9bab08ea1b2832b14865253e71740bf7c27"
+      }
     }
   },
   "failed": {
