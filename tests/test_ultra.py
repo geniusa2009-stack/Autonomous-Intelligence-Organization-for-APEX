@@ -799,3 +799,17 @@ def test_license_verify_local_keeps_records_of_weights_not_on_disk(tmp_path, mon
     for lid, rec in before.items():
         assert after[lid]["production_allowed"] == rec["production_allowed"]
         assert after[lid]["artifacts"] == rec["artifacts"] and after[lid]["carried_forward"]
+
+
+def test_capability_score_is_the_weakest_measured_task_never_the_best(tmp_path):
+    from apex_one.compute.benchmark.council import rescore
+
+    rows = [  # real Qwen3-VL 8B outputs: MSA instead of Egyptian Arabic (0), facts kept (100)
+        {"model": "m", "task": "egyptian_arabic", "score": 0.0, "output": "يجب على الطالب يقدّم الأوراق قبل يوم 15 من الشهر."},
+        {"model": "m", "task": "fact_preservation", "score": 100.0,
+         "output": "آخر وقتي تقدر تقدم فيه هو 1 نوفمبر 2026، وبيكون مبلغ تأكيد المكان 50 دولار."}]
+    (tmp_path / "council_runs.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows),
+                                                 encoding="utf-8")
+    m = rescore(tmp_path)["models"]["m"]
+    assert m["egyptian_arabic"] == 0.0 and m["fact_preservation"] == 100.0
+    assert m["editorial.write"] == 0.0                     # was 100 under max-aggregation

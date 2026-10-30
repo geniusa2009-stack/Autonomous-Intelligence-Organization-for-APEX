@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-27 00:07 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 11:28 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -25,6 +25,7 @@ Tasks are scored by deterministic checkers (no model grades another model): date
 | nemotron-nano-omni | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | — | 75.0 | 8/9 |
 | qwen-vl-current | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 75.0 | 8/9 |
 | gpt-oss-20b | 100 | 50 | 100 | 100 | 100 | 100 | 100 | 100 | — | 93.8 | 8/9 |
+| qwen3-vl-8b | 0 | 0 | 67 | 100 | 100 | 100 | 100 | 100 | 100 | 70.8 | 8/9 |
 
 `—` = NOT_MEASURED (not run, not applicable, or empty output because a reasoning model spent its token budget on hidden reasoning; re-run with a larger budget). Overall means are over different task counts and are not directly comparable across rows. Checker version 2: scores recomputed from stored outputs.
 

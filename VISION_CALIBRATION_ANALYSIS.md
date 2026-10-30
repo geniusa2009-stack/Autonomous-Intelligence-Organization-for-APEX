@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-27 00:07 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-30 11:28 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -10,6 +10,7 @@ _Generated 2026-10-27 00:07 UTC by `apex-one reports build` from measured artifa
 
 * gemma-multimodal: score 50.0 — order-swapped answers correct=[True, False] (one pair: good vs no_hierarchy)
 * qwen-vl-current: score 100.0 — order-swapped answers correct=[True, True] (one pair: good vs no_hierarchy)
+* qwen3-vl-8b: score 100.0 — order-swapped answers correct=[True, True] (one pair: good vs no_hierarchy)
 
 ## gemma-multimodal
 
@@ -147,6 +148,38 @@ Parser/execution errors: none
 | cramped | second | second | False |
 | no_hierarchy | first | first | True |
 
+**E2 pairwise 1024 px:** 3/5 order-consistent wins; position-biased cases: 1
+
+| case | good shown as A → pick | good shown as B → pick | pass |
+|---|---|---|---|
+| low_contrast | first | second | False |
+| card_overuse | first | first | True |
+| gradient | first | first | True |
+| cramped | second | second | False |
+| no_hierarchy | first | first | True |
+
+**E3 single-role absolute:** 3/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 85 | 95 | False |
+| card_overuse | AIClicheJudge | 95 | 85 | True |
+| gradient | APEXBrandJudge | 95 | 20 | True |
+| cramped | EditorialDesignJudge | 85 | 85 | False |
+| no_hierarchy | VisualHierarchyJudge | 95 | 85 | True |
+
+**E4 single-role repeat:** 3/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 85 | 95 | False |
+| card_overuse | AIClicheJudge | 95 | 85 | True |
+| gradient | APEXBrandJudge | 95 | 20 | True |
+| cramped | EditorialDesignJudge | 85 | 85 | False |
+| no_hierarchy | VisualHierarchyJudge | 95 | 85 | True |
+
+Stability: 5/5 cases gave identical scores on repeat.
+
 ## Hypotheses — verdicts derived from the experiments
 
 | model | hypothesis | evidence | verdict |
@@ -172,7 +205,10 @@ Parser/execution errors: none
 | qwen3-vl-8b | scoring schema: absolute scores tie | ties on targeted role 2/5, inversions 0/5 | **CONFIRMED** |
 | qwen3-vl-8b | model ranks broken pages HIGHER | inversions 0/5 | **no** |
 | qwen3-vl-8b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
+| qwen3-vl-8b | rubric overload (six roles in one call) | six-role 3/5 vs single-role 3/5 | **RULED OUT** |
 | qwen3-vl-8b | pair-order sensitivity / position bias | 0/5 cases picked the same POSITION in both orders | **RULED OUT** |
+| qwen3-vl-8b | image scaling | pairwise 640 px 4/5 vs 1024 px 3/5 | **RULED OUT** |
+| qwen3-vl-8b | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen3-vl-8b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | qwen3-vl-8b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 4/5 | **YES** |
 

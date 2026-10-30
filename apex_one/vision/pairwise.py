@@ -53,8 +53,13 @@ class PairwiseResult:
                 "executed_judges": self.executed_judges}
 
 
+# production judges at the width they were calibrated at: Qwen3-VL 8B is 4/5 at 640 px but 3/5 at 1024 px
+CALIBRATED_MAX_W = 640
+
+
 class PairwiseJudge:
-    def __init__(self, broker, model_ids: list[str], workspace=None, max_w: int = 640, timeout: float = 900.0):
+    def __init__(self, broker, model_ids: list[str], workspace=None, max_w: int = CALIBRATED_MAX_W,
+                 timeout: float = 900.0):
         self.broker, self.models, self.ws, self.max_w, self.timeout = broker, model_ids, workspace, max_w, timeout
 
     def compare(self, first: Path, second: Path, intent: str) -> PairwiseResult:

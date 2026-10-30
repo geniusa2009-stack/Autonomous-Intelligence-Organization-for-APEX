@@ -23,6 +23,7 @@ from typing import Any
 
 from apex_one.compute.providers import ChatMessage
 from apex_one.core.schemas.compute import CapabilityRequest
+from apex_one.vision.pairwise import CALIBRATED_MAX_W
 
 TARGET_ROLE = {"low_contrast": "TypographyJudge", "card_overuse": "AIClicheJudge", "gradient": "APEXBrandJudge",
                "cramped": "EditorialDesignJudge", "no_hierarchy": "VisualHierarchyJudge"}
@@ -96,7 +97,7 @@ def investigate(model_id: str, calib_dir: Path, out_dir: Path, intent: str = "on
                          1 for k, v in res.get("scores", {}).items() if None not in (v["good"], v["broken"])
                          and v["broken"] > v["good"])}
         save()
-    for key, width in (("E1", 640), ("E2", 1024)):
+    for key, width in (("E1", CALIBRATED_MAX_W), ("E2", 1024)):
         if key in experiments and key not in rep:
             rep[key] = {"max_w": width, **calibrate_pairwise(PairwiseJudge(broker, [model_id], max_w=width, timeout=2400.0), good,
                                                              broken, intent)["models"][model_id]}

@@ -438,6 +438,47 @@
         "correct": 4,
         "valid": 5
       }
+    },
+    "qwen3-vl-8b-q4kxl:invest": {
+      "at": "2026-10-27T00:56:53",
+      "info": {
+        "E2": {
+          "correct": 3,
+          "valid": 5
+        },
+        "E3": {
+          "correct": 3,
+          "valid": 5
+        },
+        "E4": {
+          "correct": 3,
+          "valid": 5
+        }
+      }
+    },
+    "qwen3-vl-8b-q4kxl:council": {
+      "at": "2026-10-27T01:08:19",
+      "info": {
+        "reasoning": 0.0,
+        "egyptian_arabic": 0.0,
+        "en_ar_mixing": 66.66666666666667,
+        "structured_json": 100.0,
+        "fact_preservation": 100.0,
+        "html_css": 100.0,
+        "design_criticism": 100.0,
+        "long_context": 100.0,
+        "visual_hierarchy": 100.0,
+        "mission.analyze": 0.0,
+        "opportunity.model": 0.0,
+        "editorial.write": 100.0,
+        "editorial.critique": 0.0,
+        "evidence.extract": 100.0,
+        "live.structured": 100.0,
+        "design.html": 100.0,
+        "design.reward": 100.0,
+        "overall": 70.8,
+        "measured_tasks": 8
+      }
     }
   },
   "failed": {

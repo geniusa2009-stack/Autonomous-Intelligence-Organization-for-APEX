@@ -251,12 +251,10 @@ def run_council(broker, model_ids: list[str], out_dir: Path, calib_dir: Path | N
             log.flush()
             if score is not None:
                 entry[t.name] = score
-                for alias in t.maps_to:
-                    entry[alias] = max(entry.get(alias, 0.0), score) if alias != t.maps_to[0] else score
         measured = [v for k, v in entry.items() if k in {x.name for x in tasks(calib_dir)}]
         entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
     scores_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    return data
+    return rescore(out_dir)     # one aggregation path (capabilities = min of their measured tasks)
 
 
 def rescore(out_dir: Path) -> dict[str, Any]:
@@ -281,10 +279,15 @@ def rescore(out_dir: Path) -> dict[str, Any]:
     names = {t.name for t in tasks(Path("."))}
     alias = {t.name: t.maps_to for t in tasks(Path("."))}
     for entry in data["models"].values():
+        # a capability fed by several measured tasks is only as good as its weakest one (min, never max):
+        # editorial.write must not read 100 because fact preservation passed while Egyptian Arabic failed
+        cap: dict[str, list[float]] = {}
         for name, maps in alias.items():
             if name in entry:
                 for a in maps:
-                    entry[a] = entry[name] if a == maps[0] else max(entry.get(a, 0.0), entry[name])
+                    cap.setdefault(a, []).append(entry[name])
+        for a, vals in cap.items():
+            entry[a] = min(vals)
         measured = [v for k, v in entry.items() if k in names]
         entry["overall"] = round(sum(measured) / len(measured), 1) if measured else None
         entry["measured_tasks"] = len(measured)
