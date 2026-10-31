@@ -70,3 +70,5 @@ Push status: pushed to origin/claude/charming-archimedes-2guzc9.
 | Stronger judge search | DONE: none found | Q8_K_XL RESOURCE_BLOCKED before download. Remote routes egress-denied or keyless. See VISION_JUDGE_ROBUSTNESS.md. |
 | Native vs model pages | DONE | KEEP NATIVE on every page type (APEX_DESIGN_BENCH.md). A tie is not a win. |
 | Queue concurrency incident (01:04) | FIXED | bdc6bce: queue lock + same-port DEFER. Recorded in artifacts/bench/server_reliability/queue_incidents.json. |
+
+Test status: `.venv/bin/python -m pytest` → 197 passed, 0 failed (code identical to 65e962f).

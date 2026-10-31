@@ -12,7 +12,7 @@
     "PRODUCTION_READY": false
   },
   "test_command": ".venv/bin/python -m pytest",
-  "last_test_result": "see PROGRESS.md (full suite run at the final commit)",
+  "last_test_result": "197 passed, 0 failed (full suite, code identical to 65e962f)",
   "golden_ultra": {"targets": {"reader_comprehension": 98.889, "cross_page_rhythm": 94.0, "arabic_typography": 100.0},
                    "regression_guard": "tests/test_pipeline.py::test_golden_ultra_quality_never_regresses"},
   "vision_roles": {
