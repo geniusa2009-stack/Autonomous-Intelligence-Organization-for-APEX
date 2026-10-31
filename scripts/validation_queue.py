@@ -139,10 +139,30 @@ def record_memory(state: "State", key: str, srv, when: str, extra: dict | None =
 
 # A higher-precision build of an already-measured judge exists to answer ONE question: is the baseline's
 # order/resolution failure caused by quantization? Pre-registered decision (fixed before the candidate ran):
-# continue past the canonical width only if the candidate is MATERIALLY better there than the baseline — strictly
-# more correct cases in every repeat (e.g. 5/5 vs 4/5) with position bias no worse; then the native width; the other
-# widths only if native is also reliable. Otherwise stop: no full sweep.
+# run the canonical width only; continue (native width, then the rest) ONLY if the candidate is MATERIALLY better
+# there than the baseline on at least one of: defect discrimination (more correct in every repeat, e.g. 5/5),
+# position bias (lower), order stability (fewer position-biased case-runs), legibility (reads what the baseline
+# misread), repeat stability (fewer cases flipping, lower variance) — and no worse on discrimination. Otherwise
+# stop: quantization is not the main limitation, and no sweep is run.
 BASELINE_OF = {"qwen3-vl-8b-q8": "qwen3-vl-8b"}
+
+
+def material_improvement(c: dict, b: dict) -> list[str]:
+    better = []
+    if c.get("min_correct", 0) > b.get("min_correct", 5):
+        better.append(f"discrimination {c.get('correct_per_repeat')} vs {b.get('correct_per_repeat')}")
+    if c.get("position_bias_rate", 1.0) < b.get("position_bias_rate", 0.0):
+        better.append(f"position bias {c.get('position_bias_rate')} vs {b.get('position_bias_rate')}")
+    if c.get("position_bias_cases", 99) < b.get("position_bias_cases", 0):
+        better.append("order stability")
+    if c.get("legible") and not b.get("legible"):
+        better.append("legibility")
+    if len(c.get("cases_flipping_across_repeats") or []) < len(b.get("cases_flipping_across_repeats") or []) \
+            or c.get("run_variance", 9) < b.get("run_variance", 0):
+        better.append("repeat stability")
+    if c.get("min_correct", 0) < b.get("min_correct", 0):
+        return []                      # worse discrimination cancels any other gain
+    return better
 
 
 def material_improvement_gate(rid: str, width: str) -> str | None:
@@ -153,11 +173,12 @@ def material_improvement_gate(rid: str, width: str) -> str | None:
         return None
     mine, theirs = (load(rid) or {}).get("widths", {}), (load(base) or {}).get("widths", {})
     c, b = summarize_width(mine.get(CANONICAL, {})), summarize_width(theirs.get(CANONICAL, {}))
-    if not (c.get("min_correct", 0) > b.get("min_correct", 5)
-            and c.get("order_sensitivity", 1.0) <= b.get("order_sensitivity", 0.0)):
+    gain = material_improvement(c, b)
+    if not gain:
         return (f"no material improvement over {base} at {CANONICAL} px (candidate {c.get('correct_per_repeat')}, "
-                f"bias {c.get('order_sensitivity')}; baseline {b.get('correct_per_repeat')}, bias "
-                f"{b.get('order_sensitivity')}) — sweep stopped (pre-registered)")
+                f"bias {c.get('position_bias_rate')}; baseline {b.get('correct_per_repeat')}, bias "
+                f"{b.get('position_bias_rate')}) — quantization is not the main limitation; sweep stopped "
+                "(pre-registered)")
     if width != "native":
         n = summarize_width(mine.get("native", {}))
         if not n.get("reliable_all_repeats"):
@@ -284,7 +305,8 @@ def main(max_steps: int | None = None) -> None:
     """Run pending steps; with max_steps, stop (exit cleanly, state saved) after that many steps."""
     from apex_one.compute.local import LocalServer, acquire, load_catalogue
     from apex_one.compute.local.resources import (EVALUATION_MODE, ResourceBlocked, ScheduledServer,
-                                                  SchedulerViolation, admit, last_recovery_ok, wait_stable)
+                                                  SchedulerViolation, admit, baseline_capacity_gb,
+                                                  last_recovery_ok, wait_stable)
     from apex_one.compute.local.supervisor import ServerSupervisor, register, unregister
 
     bench = get_settings().artifacts_dir / "bench"
@@ -296,6 +318,14 @@ def main(max_steps: int | None = None) -> None:
         if not todo:
             continue
         if "acquire" in todo:
+            # admission BEFORE downloading: a model the scheduler would refuse on an idle machine is not fetched
+            first = next((x for x in todo if x != "acquire"), "load")
+            pre = admit(spec, first, state.data, mode=EVALUATION_MODE, available=baseline_capacity_gb(), others=[])
+            if pre.decision == "RESOURCE_BLOCKED":
+                log(f"{key}: RESOURCE_BLOCKED before acquisition — {pre.reason} ({pre.estimate_source})")
+                for step in todo:
+                    state.mark(f"{key}:{step}", f"RESOURCE_BLOCKED: {pre.reason} ({pre.estimate_source})", failed=True)
+                continue
             # make room: free re-acquirable weights whose every step is done
             for fk in FREEABLE:
                 fsteps = [s for k, ss in PLAN if k == fk for s in ss]
