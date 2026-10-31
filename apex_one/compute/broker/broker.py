@@ -92,9 +92,17 @@ class ComputeBroker:
                 res = ProbeResult(Availability(hit["availability"]), hit["detail"] + " (cached)",
                                   set(hit["model_ids"]) if hit.get("model_ids") is not None else None)
             else:
+                import time as _t
+
+                t0 = _t.perf_counter()
                 res = adapter.probe(timeout)
                 if remote:
-                    health_cache.put(f"provider:{pid}", res.availability == Availability.AVAILABLE, res.detail,
+                    ok = res.availability == Availability.AVAILABLE
+                    configured, _why = adapter.configured()
+                    health_cache.put(f"provider:{pid}", ok, res.detail, status=res.availability.value,
+                                     failure_type=None if ok else res.availability.value,
+                                     latency_ms=round((_t.perf_counter() - t0) * 1000, 1),
+                                     auth_state="credentials present" if configured else "credentials missing",
                                      availability=res.availability.value,
                                      model_ids=sorted(res.model_ids) if res.model_ids is not None else None)
             self.health.set_probe(pid, res.availability, res.detail, res.model_ids)

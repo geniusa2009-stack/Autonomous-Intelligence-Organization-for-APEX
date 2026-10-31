@@ -1,6 +1,6 @@
 # APEX Design Bench (Phase 17)
 
-_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
 
 Fifteen page types (every semantic page type of the Document AST), content from a real pipeline run (golden job AST + fact locks). Each system produces one page per type; all pages are rendered by the same Chromium and measured by the same deterministic page QA. **No single score is reported by design.**
 
@@ -42,6 +42,7 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 | Comparison | native-baseline | False | 100 | 100 | 100 | 100 | 90 | editorial-column defaults |
 | Comparison | native-tournament | False | 100 | 100 | 100 | 100 | 83 | editorial-column/dark; evaluated 42 |
 | Cover | llm:gemma-multimodal | True | 90 | 75 | 100 | 100 | 95 | 1653 chars; re-measured on neutral canvas |
+| Cover | llm:gemma3-12b | False | 89 | 100 | 90 | 100 | 91 | 1957 chars |
 | Cover | llm:gpt-oss-20b | True | — | — | — | — | — | EXECUTE; no <section> produced |
 | Cover | llm:nemotron-nano-omni | True | 89 | 100 | 100 | 100 | 89 | 1603 chars |
 | Cover | llm:qwen-vl-current | True | 89 | 100 | 100 | 100 | 89 | 753 chars; re-measured on neutral canvas; re-measured on neutral canvas |
@@ -56,6 +57,7 @@ Systems: `native-baseline` (fixed editorial-column genes, no search), `native-to
 | Opening | native-baseline | False | 100 | 100 | 100 | 83 | 86 | editorial-column defaults |
 | Opening | native-tournament | False | 100 | 100 | 100 | 100 | 79 | split-asymmetric/dark; evaluated 42 |
 | OpportunitySnapshot | llm:gemma-multimodal | True | 87 | 85 | 100 | 100 | 79 | 3889 chars; re-measured on neutral canvas |
+| OpportunitySnapshot | llm:gemma3-12b | True | 88 | 25 | 90 | 100 | 82 | 4118 chars |
 | OpportunitySnapshot | llm:gpt-oss-20b | True | — | — | — | — | — | EXECUTE; no <section> produced |
 | OpportunitySnapshot | llm:nemotron-nano-omni | True | — | — | — | — | — | <section class="page" dir="rtl" lang="ar">
   <div class="page-body">

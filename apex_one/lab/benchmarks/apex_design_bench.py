@@ -192,10 +192,14 @@ def _summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
     systems: dict[str, Any] = {}
     for sysname in sorted({r["system"] for r in rows}):
         rs = [r for r in rows if r["system"] == sysname]
+        infra = [r for r in rs if r.get("outcome_class") == "INFRASTRUCTURE_ERROR"]
+        rs = [r for r in rs if r not in infra]       # a failed call is not a bad page: never counted as critical
         entry: dict[str, Any] = {"pages": len(rs), "produced": sum(1 for r in rs if r["produced"]),
+                                 "infrastructure_errors": len(infra),
                                  "critical_pages": sum(1 for r in rs if r["critical"]),
                                  "contract_violations": sum(1 for r in rs if r["contract"]),
                                  "median_latency_s": statistics.median([r["latency_s"] for r in rs]) if rs else None,
+                                 "execution": sorted({r.get("execution", "interleaved") for r in rs}),
                                  "metrics": {}}
         for m in METRICS:
             vals = [r["metrics"].get(m) for r in rs if r["metrics"].get(m) is not None]
@@ -208,7 +212,13 @@ def _summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | None = None, *,
                           population: int = 10, generations: int = 4, initial: int = 32,
-                          only_types: list[str] | None = None, include_native: bool = True) -> dict[str, Any]:
+                          only_types: list[str] | None = None, include_native: bool = True,
+                          phase: str = "interleaved") -> dict[str, Any]:
+    """phase="interleaved": model call then render, page by page (model and Chromium resident together).
+    phase="generate": model calls only, sections saved under llm_sections/ — no Chromium is started.
+    phase="render": no model call; render + measure the saved sections (run after the model was unloaded).
+    The two-phase path is the resource scheduler's sequential strategy for models too large to share RAM with
+    Chromium; the prompt, budget and measurements are identical."""
     from apex_one.compute.broker import ComputeBroker
     from apex_one.compute.providers import ChatMessage
     from apex_one.core.governor.runner import JobRunner
@@ -230,7 +240,7 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
     total = len(nodes)
     palette = genome.invariants["palette"]
     fonts = genome.invariants["fonts"]
-    broker = ComputeBroker() if llm_models else None
+    broker = ComputeBroker() if llm_models and phase != "render" else None
     rows: list[dict[str, Any]] = []
     rows_path = out_dir / "apex_design_bench_rows.jsonl"
     done = {(r["system"], r["page_type"]) for r in (json.loads(x) for x in rows_path.read_text(encoding="utf-8")
@@ -253,6 +263,44 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
         rows.append(row)
         with rows_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
+
+    sections_dir = out_dir / "llm_sections"
+    if phase == "generate":
+        sections_dir.mkdir(parents=True, exist_ok=True)
+        for node in nodes:
+            ptype = node.semantic_type.value
+            for mid in llm_models or []:
+                slug = re.sub(r"[^a-z0-9]+", "-", mid.lower())
+                target = sections_dir / f"{ptype}--llm-{slug}.json"
+                if (f"llm:{mid}", ptype) in done or target.exists():
+                    continue
+                t0 = time.perf_counter()
+                req = CapabilityRequest(task="bench.design_html", purpose="evaluation", model_id=mid)
+                res = broker.complete(req, [ChatMessage("user", llm_prompt(node, lock_map, palette, fonts))],  # type: ignore[union-attr]
+                                      max_tokens=3000, temperature=0.2, timeout=1800)
+                from apex_one.compute.benchmark.council import call_failure_kind
+
+                target.write_text(json.dumps({"model": mid, "page_type": ptype, "executed": res.executed,
+                                              "text": res.text or "", "latency_s": round(time.perf_counter() - t0, 1),
+                                              "failure_kind": None if res.executed else call_failure_kind(res),
+                                              "outcome": res.decision.outcome.value}, ensure_ascii=False),
+                                  encoding="utf-8")
+        return {"phase": "generate", "sections": sorted(p.name for p in sections_dir.glob("*.json"))}
+
+    def model_output(mid: str, node: DocNode) -> tuple[bool, str, float, str | None, str]:
+        ptype = node.semantic_type.value
+        if phase == "render":
+            d = json.loads((sections_dir / f"{ptype}--llm-{re.sub(r'[^a-z0-9]+', '-', mid.lower())}.json")
+                           .read_text(encoding="utf-8"))
+            return d["executed"], d["text"], d["latency_s"], d.get("failure_kind"), d["outcome"]
+        from apex_one.compute.benchmark.council import call_failure_kind
+
+        t0 = time.perf_counter()
+        req = CapabilityRequest(task="bench.design_html", purpose="evaluation", model_id=mid)
+        res = broker.complete(req, [ChatMessage("user", llm_prompt(node, lock_map, palette, fonts))],  # type: ignore[union-attr]
+                              max_tokens=3000, temperature=0.2, timeout=1800)
+        return (res.executed, res.text or "", round(time.perf_counter() - t0, 1),
+                None if res.executed else call_failure_kind(res), res.decision.outcome.value)
 
     with Renderer() as r:
         t = LayoutTournament(genome, runner.locks, r, out_dir / "tournament", population=population,
@@ -286,23 +334,27 @@ def run_apex_design_bench(job_id: str, out_dir: Path, llm_models: list[str] | No
             for mid in llm_models or []:
                 if (f"llm:{mid}", ptype) in done:     # resumable: a measured (system, page) is never re-run
                     continue
-                t0 = time.perf_counter()
-                req = CapabilityRequest(task="bench.design_html", purpose="evaluation", model_id=mid)
-                res = broker.complete(req, [ChatMessage("user", llm_prompt(node, lock_map, palette, fonts))],  # type: ignore[union-attr]
-                                      max_tokens=3000, temperature=0.2, timeout=1800)
-                lat = round(time.perf_counter() - t0, 1)
-                section = extract_section(res.text or "") if res.executed else None
+                executed, text, lat, fk, outcome = model_output(mid, node)
+                if not executed:     # the CALL failed: infrastructure, never a bad page
+                    record({"system": f"llm:{mid}", "page_type": ptype, "produced": False, "metrics": {},
+                            "critical": False, "contract": [], "latency_s": lat, "screenshot": None,
+                            "outcome_class": "INFRASTRUCTURE_ERROR", "failure_kind": fk or "UNKNOWN_FAILURE",
+                            "execution": phase, "detail": outcome})
+                    continue
+                section = extract_section(text)
                 if section is None:
                     record({"system": f"llm:{mid}", "page_type": ptype, "produced": False, "metrics": {},
                             "critical": True, "contract": ["no <section> produced"], "latency_s": lat,
-                            "screenshot": None, "detail": (res.text or res.decision.outcome.value)[:300]})
+                            "screenshot": None, "outcome_class": "QUALITY_ZERO", "execution": phase,
+                            "detail": text[:300]})
                     continue
                 probs = contract_problems(section, node)
                 html = neutral_document(section)
                 mets, crit, shot = measure(r, html, f"{ptype}--llm-{re.sub(r'[^a-z0-9]+', '-', mid.lower())}", node)
                 record({"system": f"llm:{mid}", "page_type": ptype, "produced": True, "metrics": mets,
-                        "critical": crit, "contract": probs, "latency_s": lat,
-                        "screenshot": str(shot) if shot else None, "detail": f"{len(section)} chars"})
+                        "critical": crit, "contract": probs, "latency_s": lat, "outcome_class": "MEASURED",
+                        "execution": phase, "screenshot": str(shot) if shot else None,
+                        "detail": f"{len(section)} chars"})
     latest_rows = {(r["system"], r["page_type"]): r for r in
                    (json.loads(x) for x in rows_path.read_text(encoding="utf-8").splitlines() if x.strip())}
     all_rows = list(latest_rows.values())          # a re-measured (system, page) replaces its older row

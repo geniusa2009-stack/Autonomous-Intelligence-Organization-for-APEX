@@ -99,6 +99,28 @@
       "design.html": 100.0,
       "design.reward": 100.0,
       "measured_tasks": 10
+    },
+    "gemma3-12b": {
+      "reasoning": 0.0,
+      "egyptian_arabic": 25,
+      "en_ar_mixing": 100.0,
+      "structured_json": 100.0,
+      "fact_preservation": 100.0,
+      "english_factual_writing": 100.0,
+      "structured_editorial": 100.0,
+      "html_css": 100.0,
+      "design_criticism": 50.0,
+      "long_context": 100.0,
+      "visual_hierarchy": 50.0,
+      "mission.analyze": 0.0,
+      "opportunity.model": 0.0,
+      "editorial.write": 25,
+      "editorial.critique": 25,
+      "evidence.extract": 100.0,
+      "live.structured": 100.0,
+      "design.html": 100.0,
+      "design.reward": 50.0,
+      "measured_tasks": 10
     }
   },
   "checker_version": 2,

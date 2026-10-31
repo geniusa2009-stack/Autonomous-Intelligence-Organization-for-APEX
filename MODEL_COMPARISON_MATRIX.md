@@ -1,6 +1,6 @@
 # Model Comparison Matrix
 
-_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
 
 One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models measured on that same task.
 
@@ -16,6 +16,14 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 | gemma-multimodal | design_criticism | yes | 100 | 78.7 s | truncated in log | v1 | 600 (task default) | {"hierarchy": true, "contrast": true, "line_length": true, "cards": true} |
 | gemma-multimodal | visual_hierarchy | yes | 50 | 106.4 s | n/a (vision A/B) | v1 | 60 (A/B) | order-swapped answers correct=[True, False] |
 | gemma-multimodal | reasoning | yes | 0 | 3.9 s | yes | v1 | 900 (task default) | expected 2026-10-17, got 2026-10-26 |
+| gemma3-12b | structured_json | yes | 100 | 29.4 s | yes | v2 | 500 | 4/4 fields exact |
+| gemma3-12b | fact_preservation | yes | 100 | 17.5 s | yes | v2 | 500 | dates=['2026-11-01'] money=[('USD', 50.0)] |
+| gemma3-12b | egyptian_arabic | yes | 25 | 9.3 s | yes | v2 | 500 | dialect_markers=1 msa=0 number_kept=True |
+| gemma3-12b | html_css | yes | 100 | 38.9 s | yes | v2 | 700 | {"rtl": true, "h2": true, "p": true, "no_script": true, "no_gradient": true, "bdi_or_ltr": |
+| gemma3-12b | long_context | yes | 100 | 191.7 s | yes | v2 | 300 | got 2027-01-20 |
+| gemma3-12b | design_criticism | yes | 50 | 229.8 s | truncated in log | v2 | 600 | {"hierarchy": true, "contrast": false, "line_length": true, "cards": false} |
+| gemma3-12b | visual_hierarchy | yes | 50 | 139.2 s | n/a (vision A/B) | v2 | 60 (A/B) | order-swapped answers correct=[True, False] |
+| gemma3-12b | reasoning | yes | 0 | 9.3 s | yes | v2 | 900 | expected 2026-10-17, got 2026-10-24 |
 | gpt-oss-20b | structured_json | yes | 100 | 35.5 s | yes | v1 | 500 (task default) | 4/4 fields exact |
 | gpt-oss-20b | fact_preservation | yes | 100 | 95.2 s | yes | v2 | 4096 | dates=['2026-11-01'] money=[('USD', 50.0)] |
 | gpt-oss-20b | egyptian_arabic | yes | 50 | 28.8 s | yes | v1 | 500 (task default) | dialect_markers=1 msa=0 number_kept=True |
@@ -53,14 +61,14 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 
 | task | winner(s) | score | measured models | not measured |
 |---|---|---|---|---|
-| best structured output | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 5 | — |
-| best fact preservation | gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 5 | — |
-| best Egyptian Arabic | gemma-multimodal | 75 | 5 | — |
-| best HTML/CSS | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 5 | — |
-| best long-context retrieval | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 5 | — |
-| best design criticism | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 5 | — |
-| best vision hierarchy (pairwise, single pair) | qwen-vl-current, qwen3-vl-8b — NOT a judge qualification; see calibration below | 100 | 3 | gpt-oss-20b, nemotron-nano-omni |
-| best date reasoning | gpt-oss-20b — production date arithmetic is deterministic (apex_one/core/dates.py) regardless | 100 | 5 | — |
+| best structured output | gemma-multimodal, gemma3-12b, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 6 | — |
+| best fact preservation | gemma3-12b, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 6 | — |
+| best Egyptian Arabic | gemma-multimodal | 75 | 6 | — |
+| best HTML/CSS | gemma-multimodal, gemma3-12b, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 6 | — |
+| best long-context retrieval | gemma-multimodal, gemma3-12b, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 6 | — |
+| best design criticism | gemma-multimodal, gpt-oss-20b, nemotron-nano-omni, qwen-vl-current, qwen3-vl-8b | 100 | 6 | — |
+| best vision hierarchy (pairwise, single pair) | qwen-vl-current, qwen3-vl-8b — NOT a judge qualification; see calibration below | 100 | 4 | gpt-oss-20b, nemotron-nano-omni |
+| best date reasoning | gpt-oss-20b — production date arithmetic is deterministic (apex_one/core/dates.py) regardless | 100 | 6 | — |
 
 ## Vision judge qualification (calibration, not benchmark)
 

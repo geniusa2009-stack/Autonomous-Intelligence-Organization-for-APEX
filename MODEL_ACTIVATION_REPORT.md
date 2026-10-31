@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -27,6 +27,7 @@ Tasks are scored by deterministic checkers (no model grades another model): date
 | qwen-vl-current | 0 | 0 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | 100 | 9/11 |
 | gpt-oss-20b | 100 | 50 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | — | 8/11 |
 | qwen3-vl-8b | 0 | 0 | 67 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 11/11 |
+| gemma3-12b | 0 | 25 | 100 | 100 | 100 | 100 | 100 | 100 | 50 | 100 | 50 | 11/11 |
 
 `—` = NOT_MEASURED (not run, not applicable, or empty output because a reasoning model spent its token budget on hidden reasoning; re-run with a larger budget). **No overall mean is shown**: the rows cover different task sets, and an average would hide a 0 (e.g. Egyptian Arabic or date reasoning) behind unrelated 100s. Compare per task; routing uses the capability vector in PRODUCTION_ROUTING_MATRIX.md. Checker version 2: scores recomputed from stored outputs.
 

@@ -257,6 +257,8 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
             why = "calibration missing a timestamp or older than %d days" % MAX_CALIBRATION_AGE_DAYS
         elif r.get("model_digest") != model_digest(m):
             why = "calibrated a different model build (digest mismatch)"
+        elif mode == "pairwise" and _known_judge_failure(m):
+            why = _known_judge_failure(m)
         elif mode == "pairwise" and _position_bias_rate(r) is not None and _position_bias_rate(r) > 0.2:
             why = f"PAIRWISE_POSITION_BIAS {_position_bias_rate(r)} > 0.2 (follows the slot, not the page)"
         elif mode == "pairwise":
@@ -272,6 +274,12 @@ def reliable_judges(path: Path | None = None, mode: str = "absolute") -> tuple[l
         else:
             ok.append(m)
     return sorted(ok), models
+
+
+def _known_judge_failure(model_id: str) -> str | None:
+    from apex_one.vision.judge_failures import known_failure
+
+    return known_failure(model_id, model_digest(model_id))
 
 
 def _position_bias_rate(r: dict[str, Any]) -> float | None:

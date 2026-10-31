@@ -58,14 +58,19 @@ def network_check(url: str, timeout: float = 8.0, force: bool = False) -> tuple[
     hit = None if force else health_cache.get(f"net:{host.netloc}")
     if hit:
         return hit["ok"], hit["detail"] + " (cached)"
+    import time as _t
+
+    t0 = _t.perf_counter()
+    ftype = None
     try:
         r = httpx.get(root, timeout=timeout, follow_redirects=False)
         ok, why = True, f"reachable (HTTP {r.status_code} unauthenticated)"
     except httpx.ProxyError as e:
-        ok, why = False, f"egress proxy denied CONNECT to {host.netloc} ({str(e)[:80]})"
+        ok, why, ftype = False, f"egress proxy denied CONNECT to {host.netloc} ({str(e)[:80]})", "EGRESS_DENIED"
     except httpx.HTTPError as e:
-        ok, why = False, f"{type(e).__name__}: {str(e)[:100]}"
-    health_cache.put(f"net:{host.netloc}", ok, why)
+        ok, why, ftype = False, f"{type(e).__name__}: {str(e)[:100]}", type(e).__name__
+    health_cache.put(f"net:{host.netloc}", ok, why, status="REACHABLE" if ok else "NETWORK_BLOCKED",
+                     failure_type=ftype, latency_ms=round((_t.perf_counter() - t0) * 1000, 1))
     return ok, why
 
 

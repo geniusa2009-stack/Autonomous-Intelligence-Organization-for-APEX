@@ -520,8 +520,9 @@ def _roles(mid: str, policy: dict[str, Any]) -> list[str]:
 
 
 def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str, Any]) -> str:
-    from apex_one.compute.local.resources import (RENDERER_RESERVE_GB, RESERVES_GB, SAFETY_MARGIN_GB, admit,
-                                                  meminfo)
+    from apex_one.compute.local.resources import (BASE_RESERVES_GB, CHROMIUM_MEASURED_PEAK_GB, EVALUATION_MODE,
+                                                  MODE_RULES, PRODUCTION_MODE, PROFILES, admit,
+                                                  baseline_capacity_gb, load_estimates, meminfo, raw_estimate)
     from apex_one.compute.router.capability import routing_config
 
     qstate = _load(bench / "queue_state.json") or {}
@@ -532,34 +533,41 @@ def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str
     calib = _load(bench / "vision_calibration" / "calibration_results.json")
     floor = float(routing_config().get("default_min_score", 50))
     total = meminfo().get("MemTotal", 0.0)
-    cycles = [c for v in (qstate.get("done") or {}).values() if isinstance(v, dict)
-              for c in ((v.get("info") or {}).get("cycles") or []) if isinstance(v.get("info"), dict)]
-    measured_idle = max((c.get("available_before_load_gb", 0.0) for c in cycles), default=0.0)
-    idle = measured_idle or round(total * 0.95, 1)
-    idle_src = ("highest MemAvailable recorded before a load" if measured_idle
-                else "ESTIMATE 95% of MemTotal — no load recorded under the scheduler yet")
+    cap = baseline_capacity_gb()
+    est = load_estimates()
     out = ["# Local model resource matrix", "", _stamp(), "",
-           f"Machine: {total:.1f} GB RAM, no swap, 4 CPU threads, no GPU. Memory available with no model loaded: "
-           f"**{idle:.1f} GB** ({idle_src}). On this machine compute scheduling is "
-           "part of correctness: the resource scheduler (`apex_one/compute/local/resources.py`) refuses a load "
-           "with RESOURCE_BLOCKED when `expected_peak + reserves > available`, never runs two large models at once, "
-           "and asserts after every unload that the server process is gone and its memory has returned.", "",
-           "Reserves (headroom beside the model, GB): " + ", ".join(f"{k} {v}" for k, v in RESERVES_GB.items())
-           + f", safety margin {SAFETY_MARGIN_GB}; + renderer {RENDERER_RESERVE_GB} for stages that start Chromium "
-           "(model-written pages, golden runs). Expected peak = the MEASURED peak RSS of the artifact when it has run "
-           "before, else weights + KV cache (from GGUF metadata, configured context) + 0.6 GB compute.", "",
-           "| model | quantization | disk GB | loaded RAM GB | peak RAM GB | load time | unload time | median inference "
-           "latency | vision capability | text capability (≥ floor) | production status | recommended role | safe "
-           "concurrent services |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+           f"Machine: {total:.1f} GB RAM (10^9 bytes), no swap, 4 CPU threads, no GPU; memory available with no model "
+           f"loaded: **{cap:.1f} GB**. On this machine compute scheduling is part of correctness: every stage is "
+           "admitted BEFORE it starts (`apex_one/compute/local/resources.py`) with ADMIT / DEFER / RESOURCE_BLOCKED "
+           "and an explicit reason; a clean RESOURCE_BLOCKED is a successful scheduler decision.", "",
+           "**Modes.** EVALUATION_MODE (one controlled benchmark process) needs ≥ "
+           f"{MODE_RULES[EVALUATION_MODE]['min_headroom_gb']} GB headroom after every reserve. PRODUCTION_MODE needs ≥ "
+           f"{MODE_RULES[PRODUCTION_MODE]['min_headroom_gb']} GB AND ≥ {MODE_RULES[PRODUCTION_MODE]['min_headroom_pct']:.0%} of "
+           "MemTotal — a second job's worker, long uptimes and real pages are what evaluation never sees. "
+           "Base reserves: " + ", ".join(f"{k} {v} GB" for k, v in BASE_RESERVES_GB.items()) + ".", "",
+           "**Stage profiles** (what runs beside the model): " + "; ".join(
+               f"{p.name} = " + " + ".join(f"{k} {v:g}" for k, v in p.reserves().items()) + " GB"
+               for p in PROFILES.values())
+           + f". Chromium reserve = 2 × its measured peak ({CHROMIUM_MEASURED_PEAK_GB} GB, design-bench memory trace).",
+           "",
+           "**Expected peak** = the measured peak RSS when this artifact has run before; otherwise the raw estimate "
+           "(weights + GGUF-derived KV cache + 0.6 GB) × a safety multiplier: a same-family measured ratio if one "
+           "exists, else max(1.25, worst observed ratio).", "",
+           "| model | quantization | disk GB | estimated peak GB | measured peak GB | prediction error | load time | "
+           "warm-up | median inference latency | swap used (peak) | memory recovery ratio | safe in EVALUATION_MODE | "
+           "safe in PRODUCTION_MODE | recommended concurrency | recommended role |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for mid, name, key in COMPARED + JUDGE_CANDIDATES:
         spec = specs.get(key)
         if spec is None:
             continue
         r = _ram(key, qstate)
         cyc = r.get("last_cycle") or {}
+        e = est.get(key) or {}
+        raw, _ = raw_estimate(spec)
+        measured = e.get("measured_peak_gb") or r.get("peak_rss_gb")
+        err = (f"{measured - raw:+.1f} GB ({measured / raw:.2f}×)" if measured and raw else "—")
         lats = [rows[(mid, t)]["latency_s"] for _, t in MATRIX_TASKS if (mid, t) in rows and rows[(mid, t)].get("score") is not None]
-        good = [c for c, t in MATRIX_TASKS if (scores.get(mid) or {}).get(t) is not None and scores[mid][t] >= floor]
-        bad = [c for c, t in MATRIX_TASKS if (scores.get(mid) or {}).get(t) is not None and scores[mid][t] < floor]
         roles = _roles(mid, policy)
         lic = licence_cell(reg, mid)
         vis = vision_cell(mid, calib, getattr(spec, "vision", True))
@@ -568,40 +576,58 @@ def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str
         if not roles:
             roles = (["research / evaluation only (licence " + lic + ")"] if "ALLOWED" not in lic
                      else ["no production role (no task where it is the best qualified)"])
-        peak = r.get("peak_rss_gb")
-        if peak:
-            renderer = admit(spec, "pages", qstate, available=idle, others=[]).admitted
-            safe = f"Chromium renderer: {'yes' if renderer else 'NO (RESOURCE_BLOCKED)'}; second model: never"
-        else:
-            safe = "NOT_MEASURED (no recorded peak)"
-        out.append(f"| {name} | {spec.tag} | {_disk_gb(spec)} | {r.get('loaded_rss_gb', 'NOT_MEASURED')} | "
-                   f"{peak or 'NOT_MEASURED'} | {str(cyc.get('load_time_s', '—')) + ' s' if cyc else '—'} | "
-                   f"{str(cyc.get('unload_time_s', '—')) + ' s' if cyc else '—'} | "
-                   f"{f'{statistics.median(lats):.0f} s' if lats else 'NOT_MEASURED'} | {vis} | "
-                   f"strong: {', '.join(good) or '—'}; weak: {', '.join(bad) or '—'} | {lic} | {'; '.join(roles)} | {safe} |")
-    out += ["", "Median inference latency = median wall time of the model's measured council calls (CPU only, "
-            "one request at a time). Loaded / peak RAM = llama-server resident memory after the warm-up request and "
-            "its high-water mark; recorded from 2026-10-30 — models measured earlier show NOT_MEASURED until they "
-            "run again. A model may legitimately end with no production role: that is a benchmark result, not a "
-            "failure of the benchmark.", ""]
+
+        def safe(mode: str) -> str:
+            stages = {"text": "TEXT_ONLY_MODEL_CALL", "vision": "VISION_PAGE_JUDGING", "+Chromium": "MODEL_PLUS_CHROMIUM"}
+            got = []
+            for label, prof in stages.items():
+                step = {"TEXT_ONLY_MODEL_CALL": "vector", "VISION_PAGE_JUDGING": "council",
+                        "MODEL_PLUS_CHROMIUM": "pages"}[prof]
+                d = admit(spec, step, qstate, available=cap, others=[], mode=mode, capacity=cap)
+                got.append(f"{label} {'✓' if d.decision == 'ADMIT' else '✗'}")
+            return ", ".join(got)
+
+        ev, pr = safe(EVALUATION_MODE), safe(PRODUCTION_MODE)
+        conc = ("model + Chromium together" if "+Chromium ✓" in ev else
+                "sequential only: model, unload, then Chromium" if "text ✓" in ev else "does not fit this machine")
+        out.append(f"| {name} | {spec.tag} | {_disk_gb(spec)} | {raw:.1f} raw | {measured or 'NOT_MEASURED'} | {err} | "
+                   f"{str(cyc.get('load_time_s')) + ' s' if cyc.get('load_time_s') is not None else '—'} | "
+                   f"{str(cyc.get('warmup_time_s')) + ' s' if cyc.get('warmup_time_s') is not None else '—'} | "
+                   f"{f'{statistics.median(lats):.0f} s' if lats else 'NOT_MEASURED'} | "
+                   f"{cyc.get('swap_used_peak_gb', '—')} | {cyc.get('memory_recovery_ratio', '—')} | {ev} | {pr} | "
+                   f"{conc}; never two large models | {'; '.join(roles)} |")
+    out += ["", "✓/✗ = the scheduler's decision for that stage profile on an idle machine (text = text-only model "
+            "calls; vision = page judging with image buffers; +Chromium = model and renderer resident together). "
+            "Median inference latency = median wall time of the model's measured council calls (CPU only, one request "
+            "at a time). Swap / recovery come from the last scheduled load-unload cycle (recorded from 2026-10-31); "
+            "'—' = no cycle under the scheduler yet. A model may legitimately end with no production role — that is a "
+            "benchmark result.", ""]
     out += cycles_md(qstate)
     return "\n".join(out) + "\n"
 
 
 def cycles_md(qstate: dict[str, Any]) -> list[str]:
-    """Scheduler accounting of every recorded load/unload cycle + every RESOURCE_BLOCKED decision."""
-    out = ["## Load / unload cycles (resource scheduler accounting)", "",
-           "| model | rss before load (system) | rss after warm-up (server) | peak rss (server) | rss after unload "
-           "(system) | swap used | load time | unload time |", "|---|---|---|---|---|---|---|---|"]
+    """Measured memory lifecycle of every scheduled load/unload cycle + every RESOURCE_BLOCKED decision."""
+    out = ["## Memory lifecycle per load / unload cycle (resource scheduler)", "",
+           "Available memory (GB) at each point; recovery = available after stabilisation / available before load "
+           "(< 0.95 → MEMORY_LEAK_OR_RESIDUAL, and no next large model loads).", "",
+           "| model | mode | before load | after load | after warm-up | min while loaded | before unload | after exit | "
+           "after stabilisation | recovery | server peak RSS | swap before / peak | major faults | load / warm-up / "
+           "unload | latency degradation | flags |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     n = 0
     for mid, name, key in COMPARED + JUDGE_CANDIDATES:
         for c in _ram(key, qstate).get("cycles", []):
             n += 1
-            out.append(f"| {name} | {c.get('rss_before_load_gb')} GB | {c.get('rss_after_warmup_gb', '—')} GB | "
-                       f"{c.get('peak_rss_gb', '—')} GB | {c.get('rss_after_unload_gb')} GB | {c.get('swap_used_gb')} GB | "
-                       f"{c.get('load_time_s')} s | {c.get('unload_time_s')} s |")
+            g = lambda k: c.get(k, "—")  # noqa: E731
+            out.append(f"| {name} | {g('mode')} | {g('available_before_load_gb')} | {g('available_after_load_gb')} | "
+                       f"{g('available_after_warmup_gb')} | {g('min_available_while_loaded_gb')} | "
+                       f"{g('available_before_unload_gb')} | {g('available_after_exit_gb')} | "
+                       f"{g('available_after_unload_gb')} | {g('memory_recovery_ratio')} | {g('peak_rss_gb')} | "
+                       f"{g('swap_used_before_gb')} / {g('swap_used_peak_gb')} | {g('server_major_faults')} | "
+                       f"{g('load_time_s')} / {g('warmup_time_s')} / {g('unload_time_s')} s | "
+                       f"{g('latency_degradation_ratio')} | {', '.join(c.get('flags') or []) or '—'} |")
     if not n:
-        out.append("| — | no cycle recorded yet under the scheduler | | | | | | |")
+        out.append("| — | no cycle recorded yet under the scheduler |" + " |" * 14)
     blocked = [(k, v.get("info")) for k, v in (qstate.get("failed") or {}).items()
                if str(v.get("info", "")).startswith("RESOURCE_BLOCKED")]
     out += ["", "**RESOURCE_BLOCKED decisions** (a refusal is recorded, never an OOM):", ""]

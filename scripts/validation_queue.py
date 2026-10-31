@@ -215,6 +215,10 @@ def run_step(step: str, spec, bench: Path) -> object:
 
         rep = investigate(rid, calib, bench / "vision_investigation", experiments=("E1",))
         stamp_calibration(calib, "pairwise_models", rid, {k: v for k, v in rep["E1"].items() if k != "max_w"})
+        from apex_one.vision.council import model_digest
+        from apex_one.vision.judge_failures import remember
+
+        remember(rid, rep["E1"], model_digest(rid))     # slot-following becomes a remembered failure pattern
         return {"correct": rep["E1"]["correct"], "valid": rep["E1"]["valid_checks"]}
     if step == "invest":
         from apex_one.lab.benchmarks.vision_investigation import investigate
@@ -266,19 +270,21 @@ def run_step(step: str, spec, bench: Path) -> object:
         if tasks:
             run_council(ComputeBroker(), [rid], bench, only=tasks, max_tokens=4096)
         return {"rerun_tasks": tasks, "scores": rescore(bench)["models"].get(rid)}
-    if step == "pages":
+    if step in ("pages", "pages:generate", "pages:render"):
         from apex_one.lab.benchmarks.apex_design_bench import run_apex_design_bench
 
+        phase = {"pages": "interleaved", "pages:generate": "generate", "pages:render": "render"}[step]
         s = run_apex_design_bench(GOLDEN_JOB, bench / "apex_design", [rid], only_types=PAGE_TYPES,
-                                  include_native=False)
-        return s["systems"].get(f"llm:{rid}")
+                                  include_native=False, phase=phase)
+        return s if phase == "generate" else {**(s["systems"].get(f"llm:{rid}") or {}), "execution": phase}
     raise ValueError(step)
 
 
 def main(max_steps: int | None = None) -> None:
     """Run pending steps; with max_steps, stop (exit cleanly, state saved) after that many steps."""
     from apex_one.compute.local import LocalServer, acquire, load_catalogue
-    from apex_one.compute.local.resources import ResourceBlocked, ScheduledServer, SchedulerViolation
+    from apex_one.compute.local.resources import (EVALUATION_MODE, ResourceBlocked, ScheduledServer,
+                                                  SchedulerViolation, admit, last_recovery_ok, wait_stable)
     from apex_one.compute.local.supervisor import ServerSupervisor, register, unregister
 
     bench = get_settings().artifacts_dir / "bench"
@@ -318,14 +324,29 @@ def main(max_steps: int | None = None) -> None:
             if other.key != key:
                 LocalServer(other).stop()
         srv = LocalServer(spec)
-        # resource scheduler: admission BEFORE loading (RESOURCE_BLOCKED instead of an OOM), one large model at a
-        # time, unload confirmed (process gone, memory back, stable) before the next model may load
-        sched = ScheduledServer(srv, qstate=state.data, log_path=bench / "server_reliability" / "resources.jsonl")
+        # resource scheduler (EVALUATION_MODE: one controlled benchmark process): ADMIT / DEFER / RESOURCE_BLOCKED
+        # BEFORE loading, one large model at a time, and no load until the previous unload recovered its memory
+        sched = ScheduledServer(srv, qstate=state.data, log_path=bench / "server_reliability" / "resources.jsonl",
+                                mode=EVALUATION_MODE)
+        recovered, why_rec = last_recovery_ok(state.data)
         try:
-            dec = sched.load(stage=todo[0], wait_s=1200)
-            log(f"{key}: admitted — {dec.reason}")
+            dec = None
+            for attempt in range(3):
+                try:
+                    dec = sched.load(stage=todo[0], wait_s=1200, recovery_ok=recovered)
+                    break
+                except ResourceBlocked as e:
+                    if e.decision.decision != "DEFER" or attempt == 2:
+                        raise
+                    log(f"{key}: DEFER — {e.decision.reason}; waiting for memory to settle")
+                    wait_stable()
+                    recovered, why_rec = last_recovery_ok(state.data)
+            log(f"{key}: ADMIT — {dec.reason}")
         except ResourceBlocked as e:
             log(f"{key}: {e}")
+            if e.decision.decision == "DEFER":     # transient: retried by the next chunk, never marked failed
+                log(f"{key}: deferred ({why_rec}); stopping this chunk")
+                return
             for step in todo:
                 state.mark(f"{key}:{step}", f"RESOURCE_BLOCKED: {e.decision.reason}", failed=True)
             continue
@@ -339,6 +360,7 @@ def main(max_steps: int | None = None) -> None:
         sup = ServerSupervisor(key, srv, events_path=bench / "server_reliability" / "events.jsonl")
         register(spec.registry_model, sup)
         record_memory(state, key, srv, "loaded")
+        render_after_unload = False
         try:
             for step in todo:
                 if max_steps is not None and max_steps <= 0:
@@ -346,21 +368,32 @@ def main(max_steps: int | None = None) -> None:
                     return
                 if max_steps is not None:
                     max_steps -= 1
+                run_as = step
                 stage_ok = sched.admit_stage(step)
-                if not stage_ok.admitted:
-                    log(f"{key}: {step} RESOURCE_BLOCKED — {stage_ok.reason}")
-                    state.mark(f"{key}:{step}", f"RESOURCE_BLOCKED: {stage_ok.reason}", failed=True)
+                if stage_ok.decision != "ADMIT" and step == "pages":
+                    # model + Chromium do not fit together: sequential strategy B — generate every page with the
+                    # model (no Chromium), unload the model, THEN render. Reserves are never weakened.
+                    gen_ok = sched.admit_stage("pages:generate")
+                    log(f"{key}: pages {stage_ok.decision} together with Chromium ({stage_ok.reason}); "
+                        f"sequential strategy: generate {gen_ok.decision}")
+                    if gen_ok.decision == "ADMIT":
+                        run_as, stage_ok, render_after_unload = "pages:generate", gen_ok, True
+                if stage_ok.decision != "ADMIT":
+                    log(f"{key}: {step} {stage_ok.decision} — {stage_ok.reason}")
+                    if stage_ok.decision == "RESOURCE_BLOCKED":
+                        state.mark(f"{key}:{step}", f"RESOURCE_BLOCKED: {stage_ok.reason}", failed=True)
                     continue
-                log(f"{key}: {step} ...")
+                log(f"{key}: {run_as} ...")
                 try:
                     sup.before_call()       # a dead server must fail the step, never yield empty "answers"
-                    info = run_step(step, spec, bench)
-                    state.mark(f"{key}:{step}", info)
-                    record_memory(state, key, srv, step)
-                    log(f"{key}: {step} done {json.dumps(info, default=str)[:400]}")
+                    info = run_step(run_as, spec, bench)
+                    state.mark(f"{key}:{run_as}" if run_as != step else f"{key}:{step}", info)
+                    record_memory(state, key, srv, run_as)
+                    log(f"{key}: {run_as} done {json.dumps(info, default=str)[:400]}")
                 except Exception as e:  # noqa: BLE001
-                    log(f"{key}: {step} FAILED {e}\n{traceback.format_exc()[-800:]}")
-                    state.mark(f"{key}:{step}", str(e)[:300], failed=True)
+                    render_after_unload = False
+                    log(f"{key}: {run_as} FAILED {e}\n{traceback.format_exc()[-800:]}")
+                    state.mark(f"{key}:{run_as}", str(e)[:300], failed=True)
         finally:
             unregister(spec.registry_model)
             try:
@@ -371,6 +404,22 @@ def main(max_steps: int | None = None) -> None:
                 log(f"{key}: SCHEDULER VIOLATION {e}")
                 state.mark(f"{key}:unload", str(e)[:300], failed=True)
                 raise
+        if "MEMORY_LEAK_OR_RESIDUAL" in cycle.get("flags", []):
+            log(f"{key}: MEMORY_LEAK_OR_RESIDUAL (recovery {cycle.get('memory_recovery_ratio')}); no next model")
+            state.mark(f"{key}:memory_recovery", cycle.get("memory_recovery_ratio"), failed=True)
+            return
+        if render_after_unload:          # strategy B, phase 2: Chromium alone, model unloaded
+            rdec = admit(spec, "pages:render", state.data, mode=EVALUATION_MODE)
+            log(f"{key}: pages:render {rdec.decision} — {rdec.reason}")
+            if rdec.decision == "ADMIT":
+                try:
+                    info = run_step("pages:render", spec, bench)
+                    state.mark(f"{key}:pages", {**info, "strategy": "B: generate -> unload model -> render"})
+                    log(f"{key}: pages (sequential) done {json.dumps(info, default=str)[:300]}")
+                except Exception as e:  # noqa: BLE001
+                    state.mark(f"{key}:pages", str(e)[:300], failed=True)
+            elif rdec.decision == "RESOURCE_BLOCKED":
+                state.mark(f"{key}:pages", f"RESOURCE_BLOCKED: {rdec.reason}", failed=True)
     log("ALL DONE")
 
 

@@ -37,6 +37,8 @@ class FailureKind(StrEnum):
     CONNECTION_REFUSED = "CONNECTION_REFUSED"     # nothing listening on the port (server not running)
     STREAM_INTERRUPTED = "STREAM_INTERRUPTED"     # connection closed mid-response while the process stayed alive
     RESOURCE_BLOCKED = "RESOURCE_BLOCKED"         # the resource scheduler refused to load the model (not enough RAM)
+    RESOURCE_DEGRADED = "RESOURCE_DEGRADED"       # it ran, but only by swapping / with heavy latency degradation
+    MEMORY_LEAK_OR_RESIDUAL = "MEMORY_LEAK_OR_RESIDUAL"   # memory did not come back after the server exited
     UNKNOWN_FAILURE = "UNKNOWN_FAILURE"
 
 

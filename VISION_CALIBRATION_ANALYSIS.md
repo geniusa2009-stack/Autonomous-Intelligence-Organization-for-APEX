@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -11,6 +11,7 @@ _Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifa
 * gemma-multimodal: score 50.0 — order-swapped answers correct=[True, False] (one pair: good vs no_hierarchy)
 * qwen-vl-current: score 100.0 — order-swapped answers correct=[True, True] (one pair: good vs no_hierarchy)
 * qwen3-vl-8b: score 100.0 — order-swapped answers correct=[True, True] (one pair: good vs no_hierarchy)
+* gemma3-12b: score 50.0 — order-swapped answers correct=[True, False] (one pair: good vs no_hierarchy)
 
 ## gemma-multimodal
 
@@ -111,6 +112,18 @@ Parser/execution errors: none
 | gradient | APEXBrandJudge | 75 | 75 | False |
 | cramped | EditorialDesignJudge | 65 | 75 | False |
 | no_hierarchy | VisualHierarchyJudge | 85 | 75 | True |
+
+**E4 single-role repeat:** 2/5 passed
+
+| case | role | good | broken | pass |
+|---|---|---|---|---|
+| low_contrast | TypographyJudge | 85 | 85 | False |
+| card_overuse | AIClicheJudge | 95 | 92 | True |
+| gradient | APEXBrandJudge | 75 | 75 | False |
+| cramped | EditorialDesignJudge | 65 | 75 | False |
+| no_hierarchy | VisualHierarchyJudge | 85 | 75 | True |
+
+Stability: 5/5 cases gave identical scores on repeat.
 
 ## qwen-vl-current
 
@@ -252,6 +265,7 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | gemma3-12b | inability to discriminate the visual defects | pairwise 0/5, absolute 1/5 | **CONFIRMED** |
 | gemma3-12b | image scaling | pairwise 640 px 0/5 vs native 794 px 0/5 | **RULED OUT** |
 | gemma3-12b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
+| gemma3-12b | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | gemma3-12b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
 | gemma3-12b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 2/5 | **NO — stays out of every gate** |
 | qwen-vl-current | scoring schema: absolute scores tie | ties on targeted role 4/5, inversions 0/5 | **CONFIRMED** |

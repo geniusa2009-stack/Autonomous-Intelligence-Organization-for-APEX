@@ -1,6 +1,6 @@
 # Design Model Activation (Phases 16, 19, 26)
 
-_Generated 2026-10-30 23:39 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
 
 Every design system named in the APEX spec, with the evidence actually gathered here. Statuses: ACTIVATED, PROTOCOL_REIMPLEMENTED, PACKAGE_INSTALLABLE, WEIGHTS_UNREACHABLE, HARDWARE_BLOCKED, ARCHITECTURE_REFERENCE, NOT_RELEASED_OR_UNFOUND, LICENSE_BLOCKED, RESEARCH_ONLY. Nothing is marked ACTIVATED without a stored smoke-test artifact.
 
@@ -87,6 +87,12 @@ The offline verification bundle ships **2 samples per task**, so every score bel
 
 | run | model | model digest | exit | runtime | task | n | ok | failed | scores |
 |---|---|---|---|---|---|---|---|---|---|
+| gemma3-12b-q4km-full | gemma3-12b | sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff | 0 | 958 s | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 |
+| gemma3-12b-q4km-full | gemma3-12b | sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff | 0 | 958 s | layout-4 | 2 | 2 | 0 | accuracy=0.00, f1=0.00, precision=0.00, recall=0.00 |
+| gemma3-12b-q4km-full | gemma3-12b | sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff | 0 | 958 s | layout-5 | 2 | 2 | 0 | mae=16.00, mse=320.00 |
+| gemma3-12b-q4km-full | gemma3-12b | sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff | 0 | 958 s | svg-1 | 2 | 2 | 0 | accuracy=1.00 |
+| gemma3-12b-q4km-full | gemma3-12b | sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff | 0 | 958 s | template-1 | 2 | 2 | 0 | accuracy=0.50, precision=0.50, recall=0.50, f1=0.50, auc_roc=0.00, average_precision=0.00 |
+| gemma3-12b-q4km-full | gemma3-12b | sha256:15b8fd9d8672cd4240c178c217ca781409291f34e353d2e913b29c7602ceb3ff | 0 | 958 s | typography-1 | 2 | 2 | 0 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 |
 | gemma3-4b-q4km | — | — | — | — s | category-1 | 2 | 2 | 0 | top1_accuracy=0.00, top5_accuracy=0.00, macro_f1=0.00 |
 | gemma3-4b-q4km | — | — | — | — s | layout-4 | 2 | 2 | 0 | accuracy=0.50, f1=0.33, precision=0.33, recall=0.33 |
 | gemma3-4b-q4km | — | — | — | — s | layout-5 | 2 | 2 | 0 | mae=20.00, mse=481.00 |

@@ -721,9 +721,9 @@
       }
     },
     "gemma3-12b-q4km:ram": {
-      "at": "2026-10-30T23:10:49",
+      "at": "2026-10-31T00:14:55",
       "info": {
-        "loaded_rss_gb": 13.61,
+        "loaded_rss_gb": 13.54,
         "peak_rss_gb": 13.86,
         "peak_after_steps": [
           "loaded",
@@ -734,11 +734,15 @@
           "robust:480",
           "robust:768",
           "robust:native",
-          "robust:1024"
+          "robust:1024",
+          "invest",
+          "loaded",
+          "council",
+          "gdb"
         ],
-        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step"
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable"
       },
-      "commit": "0463a23"
+      "commit": "b61868b"
     },
     "gemma3-12b-q4km:pcalib": {
       "at": "2026-10-30T22:26:33",
@@ -820,6 +824,57 @@
         "not_run": "canonical 640 px failed: canonical 640 px: correct per repeat [0, 0, 0], legible=True"
       },
       "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:invest": {
+      "at": "2026-10-30T23:46:23",
+      "info": {
+        "E2": {
+          "correct": 0,
+          "valid": 5
+        },
+        "E3": {
+          "correct": 2,
+          "valid": 5
+        },
+        "E4": {
+          "correct": 2,
+          "valid": 5
+        }
+      },
+      "commit": "0463a23"
+    },
+    "gemma3-12b-q4km:council": {
+      "at": "2026-10-30T23:58:57",
+      "info": {
+        "reasoning": 0.0,
+        "egyptian_arabic": 25,
+        "en_ar_mixing": 100.0,
+        "structured_json": 100.0,
+        "fact_preservation": 100.0,
+        "english_factual_writing": 100.0,
+        "structured_editorial": 100.0,
+        "html_css": 100.0,
+        "design_criticism": 50.0,
+        "long_context": 100.0,
+        "visual_hierarchy": 50.0,
+        "mission.analyze": 0.0,
+        "opportunity.model": 0.0,
+        "editorial.write": 25,
+        "editorial.critique": 25,
+        "evidence.extract": 100.0,
+        "live.structured": 100.0,
+        "design.html": 100.0,
+        "design.reward": 50.0,
+        "measured_tasks": 10
+      },
+      "commit": "b61868b"
+    },
+    "gemma3-12b-q4km:gdb": {
+      "at": "2026-10-31T00:14:55",
+      "info": {
+        "exit": 0
+      },
+      "commit": "b61868b"
     }
   },
   "failed": {

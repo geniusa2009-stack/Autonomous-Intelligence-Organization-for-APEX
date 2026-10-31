@@ -1,6 +1,6 @@
 # Model server reliability
 
-_Generated 2026-10-30 23:39 UTC by `apex-one reports` at commit `2e7ded4` from measured artifacts._
+_Generated 2026-10-31 00:41 UTC by `apex-one reports` at commit `b61868b` from measured artifacts._
 
 A local model server can crash, hang, run out of memory, return nothing or return garbage. None of these is a wrong answer. `apex_one/compute/local/supervisor.py` classifies every failed call into exactly one failure kind, recovers the server when that is safe, and the benchmark records the sample as **ERROR** (never a score). Result states are kept separate: PASSED · FAILED (measured) · UNSUPPORTED · SKIPPED · ERROR.
 
@@ -72,11 +72,13 @@ Every row also carries its outcome class: persistent faults are INFRASTRUCTURE_E
 
 none recorded
 
-## Load / unload cycles (resource scheduler accounting)
+## Memory lifecycle per load / unload cycle (resource scheduler)
 
-| model | rss before load (system) | rss after warm-up (server) | peak rss (server) | rss after unload (system) | swap used | load time | unload time |
-|---|---|---|---|---|---|---|---|
-| — | no cycle recorded yet under the scheduler | | | | | | |
+Available memory (GB) at each point; recovery = available after stabilisation / available before load (< 0.95 → MEMORY_LEAK_OR_RESIDUAL, and no next large model loads).
+
+| model | mode | before load | after load | after warm-up | min while loaded | before unload | after exit | after stabilisation | recovery | server peak RSS | swap before / peak | major faults | load / warm-up / unload | latency degradation | flags |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| — | no cycle recorded yet under the scheduler | | | | | | | | | | | | | | |
 
 **RESOURCE_BLOCKED decisions** (a refusal is recorded, never an OOM):
 
