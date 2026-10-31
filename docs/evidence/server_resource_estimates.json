@@ -1,0 +1,42 @@
+{
+  "gemma3-12b-q4km": {
+    "family": "gemma",
+    "estimated_peak_gb": 11.98,
+    "measured_peak_gb": 14.08,
+    "prediction_error_gb": 2.1,
+    "ratio": 1.175,
+    "at": "2026-10-31T01:04:30"
+  },
+  "qwen3-vl-4b-q4kxl": {
+    "family": "qwen3-vl",
+    "estimated_peak_gb": 5.19,
+    "measured_peak_gb": 7.32,
+    "prediction_error_gb": 2.13,
+    "ratio": 1.41,
+    "at": "2026-10-31T01:11:33"
+  },
+  "gemma3-4b-q4km": {
+    "family": "gemma",
+    "estimated_peak_gb": 5.08,
+    "measured_peak_gb": 6.35,
+    "prediction_error_gb": 1.27,
+    "ratio": 1.25,
+    "at": "2026-10-31T01:16:15"
+  },
+  "nemotron-3-nano-4b-q4km": {
+    "family": "nemotron",
+    "estimated_peak_gb": 3.5,
+    "measured_peak_gb": 4.9,
+    "prediction_error_gb": 1.4,
+    "ratio": 1.4,
+    "at": "2026-10-31T01:21:03"
+  },
+  "qwen3-vl-8b-q4kxl": {
+    "family": "qwen3-vl",
+    "estimated_peak_gb": 8.12,
+    "measured_peak_gb": 12.51,
+    "prediction_error_gb": 4.39,
+    "ratio": 1.541,
+    "at": "2026-10-31T02:15:44"
+  }
+}

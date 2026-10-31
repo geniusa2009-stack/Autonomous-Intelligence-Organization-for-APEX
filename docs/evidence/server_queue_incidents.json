@@ -1,0 +1,7 @@
+[
+  {"at": "2026-10-31T01:04:30", "server": "qwen3-vl-4b-q4kxl (port 8093)",
+   "what": "a second validation-queue process (snapshot d28e25e) started while the first (b61868b) was loading the same model on the same port; the second llama-server exited (1) on the busy port and its unload assertion found a 1.47 GB server it had not started",
+   "outcome": "SchedulerViolation raised (fail-closed); no OOM, no swap, no process killed; the first queue finished normally",
+   "fix": "bdc6bce: exclusive queue lock (a second queue exits with code 3) + a server we did not start on our port DEFERs the load",
+   "regression_tests": "tests/test_server_reliability.py::test_only_one_queue_process_may_run, ::test_a_server_on_our_port_that_we_did_not_start_defers_the_load"}
+]

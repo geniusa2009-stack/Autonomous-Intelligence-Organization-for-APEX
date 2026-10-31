@@ -721,7 +721,7 @@
       }
     },
     "gemma3-12b-q4km:ram": {
-      "at": "2026-10-31T00:14:55",
+      "at": "2026-10-31T01:04:06",
       "info": {
         "loaded_rss_gb": 13.54,
         "peak_rss_gb": 13.86,
@@ -738,9 +738,34 @@
           "invest",
           "loaded",
           "council",
-          "gdb"
+          "gdb",
+          "pages"
         ],
-        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable"
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable",
+        "last_cycle": {
+          "rss_before_load_gb": 0.73,
+          "swap_used_gb": 0.0,
+          "available_before_load_gb": 16.14,
+          "load_time_s": 14.0,
+          "rss_after_warmup_gb": 13.86,
+          "peak_rss_gb": 14.08,
+          "unload_time_s": 2.6,
+          "rss_after_unload_gb": 0.78,
+          "available_after_unload_gb": 16.09
+        },
+        "cycles": [
+          {
+            "rss_before_load_gb": 0.73,
+            "swap_used_gb": 0.0,
+            "available_before_load_gb": 16.14,
+            "load_time_s": 14.0,
+            "rss_after_warmup_gb": 13.86,
+            "peak_rss_gb": 14.08,
+            "unload_time_s": 2.6,
+            "rss_after_unload_gb": 0.78,
+            "available_after_unload_gb": 16.09
+          }
+        ]
       },
       "commit": "b61868b"
     },
@@ -875,6 +900,527 @@
         "exit": 0
       },
       "commit": "b61868b"
+    },
+    "gemma3-12b-q4km:pages": {
+      "at": "2026-10-31T01:04:03",
+      "info": {
+        "pages": 5,
+        "produced": 5,
+        "critical_pages": 3,
+        "contract_violations": 0,
+        "median_latency_s": 547.6,
+        "metrics": {
+          "design.hierarchy": {
+            "mean": 88.9,
+            "min": 88.2,
+            "measured_pages": 5,
+            "below_90": 5
+          },
+          "design.typography": {
+            "mean": 76.0,
+            "min": 25.0,
+            "measured_pages": 5,
+            "below_90": 4
+          },
+          "design.brand_fit": {
+            "mean": 96.0,
+            "min": 90.0,
+            "measured_pages": 5,
+            "below_90": 0
+          },
+          "rtl.quality": {
+            "mean": 94.8,
+            "min": 79.0,
+            "measured_pages": 5,
+            "below_90": 1
+          },
+          "accessibility.contrast": {
+            "mean": 60.0,
+            "min": 0.0,
+            "measured_pages": 5,
+            "below_90": 2
+          },
+          "fact.critical_accuracy": {
+            "mean": 93.8,
+            "min": 75.0,
+            "measured_pages": 4,
+            "below_90": 1
+          },
+          "geometry.alignment": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 5,
+            "below_90": 0
+          },
+          "geometry.whitespace_ratio": {
+            "mean": 86.0,
+            "min": 82.5,
+            "measured_pages": 5,
+            "below_90": 4
+          }
+        }
+      },
+      "commit": "b61868b"
+    },
+    "qwen3-vl-4b-q4kxl:ram": {
+      "at": "2026-10-31T01:11:33",
+      "info": {
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable",
+        "last_cycle": {
+          "mode": "EVALUATION_MODE",
+          "available_before_load_gb": 15.78,
+          "rss_before_load_gb": 1.1,
+          "swap_total_gb": 0.0,
+          "swap_used_before_gb": 0.0,
+          "estimated_peak_gb": 6.49,
+          "estimate_source": "estimate 5.2 GB (weights 3.4 + KV 1.2 + compute 0.6 GB) x 1.25 (conservative default (no measured sibling))",
+          "at": "2026-10-31T01:11:12",
+          "load_time_s": 5.4,
+          "available_after_load_gb": 11.34,
+          "warmup_time_s": 0.33,
+          "available_after_warmup_gb": 11.34,
+          "rss_after_warmup_gb": 7.29,
+          "anon_after_warmup_gb": 4.75,
+          "peak_rss_gb": 7.32,
+          "available_before_unload_gb": 11.3,
+          "latency_probe_after_s": 0.23,
+          "latency_degradation_ratio": 0.7,
+          "min_available_while_loaded_gb": 11.3,
+          "swap_used_peak_gb": 0.0,
+          "server_major_faults": 0,
+          "available_after_exit_gb": 16.01,
+          "unload_time_s": 2.3,
+          "rss_after_unload_gb": 0.85,
+          "available_after_unload_gb": 16.03,
+          "memory_recovery_ratio": 1.016,
+          "swap_used_after_gb": 0.0,
+          "flags": [],
+          "estimate_record": {
+            "family": "qwen3-vl",
+            "estimated_peak_gb": 5.19,
+            "measured_peak_gb": 7.32,
+            "prediction_error_gb": 2.13,
+            "ratio": 1.41,
+            "at": "2026-10-31T01:11:33"
+          }
+        },
+        "cycles": [
+          {
+            "rss_before_load_gb": 1.2,
+            "swap_used_gb": 0.0,
+            "available_before_load_gb": 15.68,
+            "load_time_s": 251.2,
+            "unload_time_s": 33.0,
+            "rss_after_unload_gb": 0.8,
+            "available_after_unload_gb": 16.08
+          },
+          {
+            "mode": "EVALUATION_MODE",
+            "available_before_load_gb": 15.78,
+            "rss_before_load_gb": 1.1,
+            "swap_total_gb": 0.0,
+            "swap_used_before_gb": 0.0,
+            "estimated_peak_gb": 6.49,
+            "estimate_source": "estimate 5.2 GB (weights 3.4 + KV 1.2 + compute 0.6 GB) x 1.25 (conservative default (no measured sibling))",
+            "at": "2026-10-31T01:11:12",
+            "load_time_s": 5.4,
+            "available_after_load_gb": 11.34,
+            "warmup_time_s": 0.33,
+            "available_after_warmup_gb": 11.34,
+            "rss_after_warmup_gb": 7.29,
+            "anon_after_warmup_gb": 4.75,
+            "peak_rss_gb": 7.32,
+            "available_before_unload_gb": 11.3,
+            "latency_probe_after_s": 0.23,
+            "latency_degradation_ratio": 0.7,
+            "min_available_while_loaded_gb": 11.3,
+            "swap_used_peak_gb": 0.0,
+            "server_major_faults": 0,
+            "available_after_exit_gb": 16.01,
+            "unload_time_s": 2.3,
+            "rss_after_unload_gb": 0.85,
+            "available_after_unload_gb": 16.03,
+            "memory_recovery_ratio": 1.016,
+            "swap_used_after_gb": 0.0,
+            "flags": [],
+            "estimate_record": {
+              "family": "qwen3-vl",
+              "estimated_peak_gb": 5.19,
+              "measured_peak_gb": 7.32,
+              "prediction_error_gb": 2.13,
+              "ratio": 1.41,
+              "at": "2026-10-31T01:11:33"
+            }
+          }
+        ],
+        "loaded_rss_gb": 7.12,
+        "peak_rss_gb": 7.15,
+        "peak_after_steps": [
+          "loaded",
+          "vector"
+        ]
+      },
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-4b-q4kxl:vector": {
+      "at": "2026-10-31T01:11:30",
+      "info": {
+        "english_factual_writing": 100.0,
+        "structured_editorial": 100.0
+      },
+      "commit": "bdc6bce"
+    },
+    "gemma3-4b-q4km:ram": {
+      "at": "2026-10-31T01:16:15",
+      "info": {
+        "loaded_rss_gb": 6.16,
+        "peak_rss_gb": 6.21,
+        "peak_after_steps": [
+          "loaded",
+          "vector"
+        ],
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable",
+        "last_cycle": {
+          "mode": "EVALUATION_MODE",
+          "available_before_load_gb": 15.7,
+          "rss_before_load_gb": 1.17,
+          "swap_total_gb": 0.0,
+          "swap_used_before_gb": 0.0,
+          "estimated_peak_gb": 5.97,
+          "estimate_source": "estimate 5.1 GB (weights 3.3 + KV 1.1 + compute 0.6 GB) x 1.18 (same-family measured ratio (gemma))",
+          "at": "2026-10-31T01:11:44",
+          "load_time_s": 254.6,
+          "available_after_load_gb": 12.27,
+          "warmup_time_s": 0.58,
+          "available_after_warmup_gb": 12.27,
+          "rss_after_warmup_gb": 6.31,
+          "anon_after_warmup_gb": 3.81,
+          "peak_rss_gb": 6.35,
+          "available_before_unload_gb": 12.23,
+          "latency_probe_after_s": 0.35,
+          "latency_degradation_ratio": 0.6,
+          "min_available_while_loaded_gb": 12.23,
+          "swap_used_peak_gb": 0.0,
+          "server_major_faults": 0,
+          "available_after_exit_gb": 15.96,
+          "unload_time_s": 2.4,
+          "rss_after_unload_gb": 0.88,
+          "available_after_unload_gb": 15.99,
+          "memory_recovery_ratio": 1.018,
+          "swap_used_after_gb": 0.0,
+          "flags": [],
+          "estimate_record": {
+            "family": "gemma",
+            "estimated_peak_gb": 5.08,
+            "measured_peak_gb": 6.35,
+            "prediction_error_gb": 1.27,
+            "ratio": 1.25,
+            "at": "2026-10-31T01:16:15"
+          }
+        },
+        "cycles": [
+          {
+            "mode": "EVALUATION_MODE",
+            "available_before_load_gb": 15.7,
+            "rss_before_load_gb": 1.17,
+            "swap_total_gb": 0.0,
+            "swap_used_before_gb": 0.0,
+            "estimated_peak_gb": 5.97,
+            "estimate_source": "estimate 5.1 GB (weights 3.3 + KV 1.1 + compute 0.6 GB) x 1.18 (same-family measured ratio (gemma))",
+            "at": "2026-10-31T01:11:44",
+            "load_time_s": 254.6,
+            "available_after_load_gb": 12.27,
+            "warmup_time_s": 0.58,
+            "available_after_warmup_gb": 12.27,
+            "rss_after_warmup_gb": 6.31,
+            "anon_after_warmup_gb": 3.81,
+            "peak_rss_gb": 6.35,
+            "available_before_unload_gb": 12.23,
+            "latency_probe_after_s": 0.35,
+            "latency_degradation_ratio": 0.6,
+            "min_available_while_loaded_gb": 12.23,
+            "swap_used_peak_gb": 0.0,
+            "server_major_faults": 0,
+            "available_after_exit_gb": 15.96,
+            "unload_time_s": 2.4,
+            "rss_after_unload_gb": 0.88,
+            "available_after_unload_gb": 15.99,
+            "memory_recovery_ratio": 1.018,
+            "swap_used_after_gb": 0.0,
+            "flags": [],
+            "estimate_record": {
+              "family": "gemma",
+              "estimated_peak_gb": 5.08,
+              "measured_peak_gb": 6.35,
+              "prediction_error_gb": 1.27,
+              "ratio": 1.25,
+              "at": "2026-10-31T01:16:15"
+            }
+          }
+        ]
+      },
+      "commit": "bdc6bce"
+    },
+    "gemma3-4b-q4km:vector": {
+      "at": "2026-10-31T01:16:13",
+      "info": {
+        "english_factual_writing": 100.0,
+        "structured_editorial": 100.0
+      },
+      "commit": "bdc6bce"
+    },
+    "nemotron-3-nano-4b-q4km:ram": {
+      "at": "2026-10-31T01:21:03",
+      "info": {
+        "loaded_rss_gb": 4.24,
+        "peak_rss_gb": 4.79,
+        "peak_after_steps": [
+          "loaded",
+          "vector"
+        ],
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable",
+        "last_cycle": {
+          "mode": "EVALUATION_MODE",
+          "available_before_load_gb": 15.66,
+          "rss_before_load_gb": 1.21,
+          "swap_total_gb": 0.0,
+          "swap_used_before_gb": 0.0,
+          "estimated_peak_gb": 4.93,
+          "estimate_source": "estimate 3.5 GB (weights 2.9 + KV 0.0 + compute 0.6 GB) x 1.41 (conservative default (no measured sibling))",
+          "at": "2026-10-31T01:16:25",
+          "load_time_s": 209.4,
+          "available_after_load_gb": 14.38,
+          "warmup_time_s": 0.96,
+          "available_after_warmup_gb": 14.2,
+          "rss_after_warmup_gb": 4.34,
+          "anon_after_warmup_gb": 1.87,
+          "peak_rss_gb": 4.9,
+          "available_before_unload_gb": 13.63,
+          "latency_probe_after_s": 0.93,
+          "latency_degradation_ratio": 0.97,
+          "min_available_while_loaded_gb": 13.55,
+          "swap_used_peak_gb": 0.0,
+          "server_major_faults": 12,
+          "available_after_exit_gb": 15.85,
+          "unload_time_s": 2.3,
+          "rss_after_unload_gb": 1.01,
+          "available_after_unload_gb": 15.86,
+          "memory_recovery_ratio": 1.013,
+          "swap_used_after_gb": 0.0,
+          "flags": [],
+          "estimate_record": {
+            "family": "nemotron",
+            "estimated_peak_gb": 3.5,
+            "measured_peak_gb": 4.9,
+            "prediction_error_gb": 1.4,
+            "ratio": 1.4,
+            "at": "2026-10-31T01:21:03"
+          }
+        },
+        "cycles": [
+          {
+            "mode": "EVALUATION_MODE",
+            "available_before_load_gb": 15.66,
+            "rss_before_load_gb": 1.21,
+            "swap_total_gb": 0.0,
+            "swap_used_before_gb": 0.0,
+            "estimated_peak_gb": 4.93,
+            "estimate_source": "estimate 3.5 GB (weights 2.9 + KV 0.0 + compute 0.6 GB) x 1.41 (conservative default (no measured sibling))",
+            "at": "2026-10-31T01:16:25",
+            "load_time_s": 209.4,
+            "available_after_load_gb": 14.38,
+            "warmup_time_s": 0.96,
+            "available_after_warmup_gb": 14.2,
+            "rss_after_warmup_gb": 4.34,
+            "anon_after_warmup_gb": 1.87,
+            "peak_rss_gb": 4.9,
+            "available_before_unload_gb": 13.63,
+            "latency_probe_after_s": 0.93,
+            "latency_degradation_ratio": 0.97,
+            "min_available_while_loaded_gb": 13.55,
+            "swap_used_peak_gb": 0.0,
+            "server_major_faults": 12,
+            "available_after_exit_gb": 15.85,
+            "unload_time_s": 2.3,
+            "rss_after_unload_gb": 1.01,
+            "available_after_unload_gb": 15.86,
+            "memory_recovery_ratio": 1.013,
+            "swap_used_after_gb": 0.0,
+            "flags": [],
+            "estimate_record": {
+              "family": "nemotron",
+              "estimated_peak_gb": 3.5,
+              "measured_peak_gb": 4.9,
+              "prediction_error_gb": 1.4,
+              "ratio": 1.4,
+              "at": "2026-10-31T01:21:03"
+            }
+          }
+        ]
+      },
+      "commit": "bdc6bce"
+    },
+    "nemotron-3-nano-4b-q4km:vector": {
+      "at": "2026-10-31T01:21:00",
+      "info": {
+        "english_factual_writing": 100.0,
+        "structured_editorial": 100.0
+      },
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q4kxl:ram": {
+      "at": "2026-10-31T02:15:44",
+      "info": {
+        "loaded_rss_gb": 11.65,
+        "peak_rss_gb": 12.21,
+        "peak_after_steps": [
+          "loaded",
+          "pages"
+        ],
+        "method": "llama-server /proc VmRSS after warm-up; VmHWM (peak) after each step; system MemTotal-MemAvailable",
+        "last_cycle": {
+          "mode": "EVALUATION_MODE",
+          "available_before_load_gb": 15.6,
+          "rss_before_load_gb": 1.27,
+          "swap_total_gb": 0.0,
+          "swap_used_before_gb": 0.0,
+          "estimated_peak_gb": 11.45,
+          "estimate_source": "estimate 8.1 GB (weights 6.3 + KV 1.2 + compute 0.6 GB) x 1.41 (same-family measured ratio (qwen3-vl))",
+          "at": "2026-10-31T01:21:10",
+          "load_time_s": 254.1,
+          "available_after_load_gb": 8.5,
+          "warmup_time_s": 0.53,
+          "available_after_warmup_gb": 8.51,
+          "rss_after_warmup_gb": 11.93,
+          "anon_after_warmup_gb": 7.31,
+          "peak_rss_gb": 12.51,
+          "available_before_unload_gb": 8.21,
+          "latency_probe_after_s": 0.77,
+          "latency_degradation_ratio": 1.45,
+          "min_available_while_loaded_gb": 7.86,
+          "swap_used_peak_gb": 0.0,
+          "server_major_faults": 98,
+          "available_after_exit_gb": 15.43,
+          "unload_time_s": 2.4,
+          "rss_after_unload_gb": 1.42,
+          "available_after_unload_gb": 15.45,
+          "memory_recovery_ratio": 0.99,
+          "swap_used_after_gb": 0.0,
+          "flags": [],
+          "estimate_record": {
+            "family": "qwen3-vl",
+            "estimated_peak_gb": 8.12,
+            "measured_peak_gb": 12.51,
+            "prediction_error_gb": 4.39,
+            "ratio": 1.541,
+            "at": "2026-10-31T02:15:44"
+          }
+        },
+        "cycles": [
+          {
+            "mode": "EVALUATION_MODE",
+            "available_before_load_gb": 15.6,
+            "rss_before_load_gb": 1.27,
+            "swap_total_gb": 0.0,
+            "swap_used_before_gb": 0.0,
+            "estimated_peak_gb": 11.45,
+            "estimate_source": "estimate 8.1 GB (weights 6.3 + KV 1.2 + compute 0.6 GB) x 1.41 (same-family measured ratio (qwen3-vl))",
+            "at": "2026-10-31T01:21:10",
+            "load_time_s": 254.1,
+            "available_after_load_gb": 8.5,
+            "warmup_time_s": 0.53,
+            "available_after_warmup_gb": 8.51,
+            "rss_after_warmup_gb": 11.93,
+            "anon_after_warmup_gb": 7.31,
+            "peak_rss_gb": 12.51,
+            "available_before_unload_gb": 8.21,
+            "latency_probe_after_s": 0.77,
+            "latency_degradation_ratio": 1.45,
+            "min_available_while_loaded_gb": 7.86,
+            "swap_used_peak_gb": 0.0,
+            "server_major_faults": 98,
+            "available_after_exit_gb": 15.43,
+            "unload_time_s": 2.4,
+            "rss_after_unload_gb": 1.42,
+            "available_after_unload_gb": 15.45,
+            "memory_recovery_ratio": 0.99,
+            "swap_used_after_gb": 0.0,
+            "flags": [],
+            "estimate_record": {
+              "family": "qwen3-vl",
+              "estimated_peak_gb": 8.12,
+              "measured_peak_gb": 12.51,
+              "prediction_error_gb": 4.39,
+              "ratio": 1.541,
+              "at": "2026-10-31T02:15:44"
+            }
+          }
+        ]
+      },
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q4kxl:pages": {
+      "at": "2026-10-31T02:15:40",
+      "info": {
+        "pages": 5,
+        "produced": 4,
+        "infrastructure_errors": 0,
+        "critical_pages": 4,
+        "contract_violations": 1,
+        "median_latency_s": 563.6,
+        "execution": "interleaved",
+        "metrics": {
+          "design.hierarchy": {
+            "mean": 89.2,
+            "min": 88.2,
+            "measured_pages": 4,
+            "below_90": 3
+          },
+          "design.typography": {
+            "mean": 85.0,
+            "min": 85.0,
+            "measured_pages": 4,
+            "below_90": 4
+          },
+          "design.brand_fit": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 4,
+            "below_90": 0
+          },
+          "rtl.quality": {
+            "mean": 93.5,
+            "min": 79.0,
+            "measured_pages": 4,
+            "below_90": 1
+          },
+          "accessibility.contrast": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 4,
+            "below_90": 0
+          },
+          "fact.critical_accuracy": {
+            "mean": 95.8,
+            "min": 87.5,
+            "measured_pages": 3,
+            "below_90": 1
+          },
+          "geometry.alignment": {
+            "mean": 100.0,
+            "min": 100.0,
+            "measured_pages": 4,
+            "below_90": 0
+          },
+          "geometry.whitespace_ratio": {
+            "mean": 80.6,
+            "min": 78.8,
+            "measured_pages": 4,
+            "below_90": 4
+          }
+        }
+      },
+      "commit": "bdc6bce"
     }
   },
   "failed": {
@@ -889,6 +1435,66 @@
     "nemotron-3-nano-4b-q4km:server": {
       "at": "2026-10-12T12:09:33",
       "info": "llama-server exited (-4); see /home/user/Autonomous-Intelligence-Organization-for-APEX/var/models/nemotron-3-nano-4b-q4km/server.log"
+    },
+    "qwen3-vl-8b-q8kxl:acquire": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:live": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:pcalib": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:robust:640": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:robust:native": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:robust:320": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:robust:480": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:robust:768": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "qwen3-vl-8b-q8kxl:robust:1024": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))",
+      "commit": "bdc6bce"
+    },
+    "gpt-oss-20b-mxfp4:acquire": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.2 GB (peak 21.1 + reserves 1.10) leaves -6.1 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.7 GB (weights 12.1 + KV 1.0 + compute 0.6 GB) x 1.54 (conservative default (no measured sibling)))",
+      "commit": "bdc6bce"
+    },
+    "gpt-oss-20b-mxfp4:vector": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.2 GB (peak 21.1 + reserves 1.10) leaves -6.1 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.7 GB (weights 12.1 + KV 1.0 + compute 0.6 GB) x 1.54 (conservative default (no measured sibling)))",
+      "commit": "bdc6bce"
+    },
+    "gpt-oss-20b-mxfp4:rerun_vector": {
+      "at": "2026-10-31T02:15:44",
+      "info": "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.2 GB (peak 21.1 + reserves 1.10) leaves -6.1 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.7 GB (weights 12.1 + KV 1.0 + compute 0.6 GB) x 1.54 (conservative default (no measured sibling)))",
+      "commit": "bdc6bce"
     }
   }
 }

@@ -347,7 +347,13 @@ def reliability_md(bench: Path) -> str:
         c = Counter((e["server"], e["event"] + (f":{e['kind']}" if e.get("kind") else "")) for e in events)
         out += ["| server | event | count |", "|---|---|---|"] + [f"| {s} | {ev} | {n} |" for (s, ev), n in sorted(c.items())]
     else:
-        out.append("none recorded")
+        out.append("No supervisor event (restart, crash, timeout, empty output) was recorded in a real run.")
+    incidents = _load(bench / "server_reliability" / "queue_incidents.json") or []
+    if incidents:
+        out += ["", "**Queue / scheduler incidents** (before a server was under supervision):", "",
+                "| at | server | what happened | outcome | fix | regression tests |", "|---|---|---|---|---|---|"]
+        out += [f"| {i['at']} | {i['server']} | {i['what']} | {i['outcome']} | {i['fix']} | `{i['regression_tests']}` |"
+                for i in incidents]
     qstate = _load(bench / "queue_state.json") or {}
     out += [""] + cycles_md(qstate)
     tests = "tests/test_server_reliability.py"
@@ -484,7 +490,10 @@ def native_vs_model_md(cmp_: dict[str, Any] | None, golden_deterministic: Path |
             fb = "—" if b is None else f"{b:.0f}" if isinstance(b, (int, float)) else str(b)
             cells.append(f"{fa} vs {fb}")
         losses, negwins = tally(best)
-        decision = "KEEP NATIVE" if losses or not best.get("produced") else "model wins, review for promotion"
+        # a tie is not a win: the native page is deterministic, the model page one unrepeated sample
+        decision = ("KEEP NATIVE" if losses or not best.get("produced")
+                    else "KEEP NATIVE (tie; model stability NOT_MEASURED)" if not negwins
+                    else "model wins, review for promotion")
         out.append(f"| {ptype} | {best_s} | " + " | ".join(cells) + f" | NOT_MEASURED vs deterministic | **{decision}** |")
     return out + ["", "Cells read `model vs native`. Page types without a model-written page are native by construction.", ""]
 
@@ -619,7 +628,9 @@ def cycles_md(qstate: dict[str, Any]) -> list[str]:
         for c in _ram(key, qstate).get("cycles", []):
             n += 1
             g = lambda k: c.get(k, "—")  # noqa: E731
-            out.append(f"| {name} | {g('mode')} | {g('available_before_load_gb')} | {g('available_after_load_gb')} | "
+            # cycles recorded before the mode-aware scheduler (or by a run that failed mid-load) carry no mode
+            mode = c.get("mode") or "pre-scheduler record (partial)"
+            out.append(f"| {name} | {mode} | {g('available_before_load_gb')} | {g('available_after_load_gb')} | "
                        f"{g('available_after_warmup_gb')} | {g('min_available_while_loaded_gb')} | "
                        f"{g('available_before_unload_gb')} | {g('available_after_exit_gb')} | "
                        f"{g('available_after_unload_gb')} | {g('memory_recovery_ratio')} | {g('peak_rss_gb')} | "
@@ -631,5 +642,10 @@ def cycles_md(qstate: dict[str, Any]) -> list[str]:
     blocked = [(k, v.get("info")) for k, v in (qstate.get("failed") or {}).items()
                if str(v.get("info", "")).startswith("RESOURCE_BLOCKED")]
     out += ["", "**RESOURCE_BLOCKED decisions** (a refusal is recorded, never an OOM):", ""]
-    out += [f"* `{k}` — {i}" for k, i in blocked] or ["* none"]
+    by_model: dict[str, tuple[list[str], str]] = {}
+    for k, i in blocked:
+        model, _, step = k.partition(":")
+        by_model.setdefault(model, ([], str(i)))[0].append(step)
+    out += [f"* `{m}` ({len(steps)} steps: {', '.join(steps)}) — {i}" for m, (steps, i) in by_model.items()] \
+        or ["* none"]
     return out + [""]

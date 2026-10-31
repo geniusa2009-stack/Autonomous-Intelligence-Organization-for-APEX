@@ -1,6 +1,6 @@
 # Final model matrix
 
-_Generated 2026-10-31 00:41 UTC by `apex-one reports` at commit `b61868b` from measured artifacts._
+_Generated 2026-10-31 02:19 UTC by `apex-one reports` at commit `bdc6bce` from measured artifacts._
 
 One normalized table for the six local models. Every cell is ONE measured task under the same contract (same prompt, checker version, temperature 0, 500-token budget unless a cell says otherwise). **There is no overall score and no overall winner**: the models were not all measured on the same task set, and an average would hide a 0 behind unrelated 100s. Cells that did not measure say why (NOT_MEASURED / ERROR <kind>); none is ever counted as 0. GraphicDesignBench ran 2 samples per task — enough to show a model runs end to end, never enough to rank models.
 
@@ -8,11 +8,11 @@ One normalized table for the six local models. Every cell is ONE measured task u
 
 | model | structured_json | english_writing | egyptian_arabic | fact_preservation | structured_editorial | html_css | long_context | design_criticism | date_reasoning | vision_calibration | gdb_tasks_supported | median_latency | ram | production_license_state |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Gemma 3 4B | 100 | NOT_MEASURED | 75 | 50 | NOT_MEASURED | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 11 s (common set) | NOT_MEASURED | DECLARED_BUT_UNVERIFIED |
+| Gemma 3 4B | 100 | 100 | 75 | 50 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 11 s (common set) | 6.2 loaded / 6.2 peak GB | DECLARED_BUT_UNVERIFIED |
 | Gemma 3 12B | 100 | 100 | 25 | 100 | 100 | 100 | 100 | 50 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 29 s (common set) | 13.5 loaded / 13.9 peak GB | DECLARED_BUT_UNVERIFIED |
-| Qwen3-VL 4B | 100 | NOT_MEASURED | 0 QUALITY_ZERO | 100 | NOT_MEASURED | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 9 s (common set) | NOT_MEASURED | PRODUCTION_ALLOWED (verified) |
-| Qwen3-VL 8B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 3/5, pair 4/5 → **CANONICAL_640_ONLY** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 20 s (common set) | NOT_MEASURED | PRODUCTION_ALLOWED (verified) |
-| Nemotron 3 Nano 4B | 100 | NOT_MEASURED | 0 QUALITY_ZERO | 100 | NOT_MEASURED | 100 | 100 | 100 | 0 QUALITY_ZERO (re-run budget 4096) | UNSUPPORTED (text-only artifact) | NOT_RUN | 39 s (common set) | NOT_MEASURED | DECLARED_BUT_UNVERIFIED |
+| Qwen3-VL 4B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 9 s (common set) | 7.1 loaded / 7.2 peak GB | PRODUCTION_ALLOWED (verified) |
+| Qwen3-VL 8B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 3/5, pair 4/5 → **CANONICAL_640_ONLY** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 20 s (common set) | 11.7 loaded / 12.2 peak GB | PRODUCTION_ALLOWED (verified) |
+| Nemotron 3 Nano 4B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO (re-run budget 4096) | UNSUPPORTED (text-only artifact) | NOT_RUN | 39 s (common set) | 4.2 loaded / 4.8 peak GB | DECLARED_BUT_UNVERIFIED |
 | gpt-oss 20B | 100 | NOT_MEASURED | 50 | 100 (re-run budget 4096) | NOT_MEASURED | 100 | 100 | 100 | 100 (re-run budget 4096) | UNSUPPORTED (text-only artifact) | NOT_RUN | 77 s (common set) | NOT_MEASURED | UNKNOWN |
 
 Scores are 0–100 per deterministic checker (checker version 2). `abs` = absolute calibration, `pair` = order-swapped pairwise calibration (≥ 4/5 needed for either), the bold state is the resolution-robustness status (VISION_JUDGE_ROBUSTNESS.md). Median latency is over the identical task set only, so it is comparable. RAM = llama-server resident memory (`/proc`), recorded from 2026-10-30; earlier runs did not record it.
@@ -21,11 +21,11 @@ Scores are 0–100 per deterministic checker (checker version 2). `abs` = absolu
 
 | model | artifact (quantization) | model fingerprint (GGUF sha256) | council token budget | outputs complete | failures by kind | evaluation commits |
 |---|---|---|---|---|---|---|
-| Gemma 3 4B | 4b-q4_K_M | `sha256:04a43a22e8d2` | — | 9/9 tasks scored | none | before commit tracking |
+| Gemma 3 4B | 4b-q4_K_M | `sha256:04a43a22e8d2` | 500 | 11/11 tasks scored | none | bdc6bce |
 | Gemma 3 12B | 12b-q4_K_M | `sha256:15b8fd9d8672` | 300, 500, 600, 700, 900 | 11/11 tasks scored | none | 0463a23, b61868b |
-| Qwen3-VL 4B | 4B-UD-Q4_K_XL | `sha256:a5563711a524` | — | 9/9 tasks scored | none | before commit tracking |
-| Qwen3-VL 8B | 8B-UD-Q4_K_XL | `sha256:e3d1a6e87c5c` | 300, 500, 600, 700, 900 | 11/11 tasks scored | none | before commit tracking |
-| Nemotron 3 Nano 4B | 4b | `sha256:e515c9ceb10a` | 4096 | 8/8 tasks scored | none | before commit tracking |
+| Qwen3-VL 4B | 4B-UD-Q4_K_XL | `sha256:a5563711a524` | 500 | 11/11 tasks scored | none | bdc6bce |
+| Qwen3-VL 8B | 8B-UD-Q4_K_XL | `sha256:e3d1a6e87c5c` | 300, 500, 600, 700, 900 | 11/11 tasks scored | none | bdc6bce |
+| Nemotron 3 Nano 4B | 4b | `sha256:e515c9ceb10a` | 500, 4096 | 10/10 tasks scored | none | bdc6bce |
 | gpt-oss 20B | latest | `weights not on disk` | 4096 | 8/8 tasks scored | none | before commit tracking |
 | Qwen3-VL 8B Q8_K_XL | 8B-Q8_K_XL | `weights not on disk` | — | 0/0 tasks scored | none | before commit tracking |
 
@@ -35,11 +35,17 @@ Available memory (GB) at each point; recovery = available after stabilisation / 
 
 | model | mode | before load | after load | after warm-up | min while loaded | before unload | after exit | after stabilisation | recovery | server peak RSS | swap before / peak | major faults | load / warm-up / unload | latency degradation | flags |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| — | no cycle recorded yet under the scheduler | | | | | | | | | | | | | | |
+| Gemma 3 4B | EVALUATION_MODE | 15.7 | 12.27 | 12.27 | 12.23 | 12.23 | 15.96 | 15.99 | 1.018 | 6.35 | 0.0 / 0.0 | 0 | 254.6 / 0.58 / 2.4 s | 0.6 | — |
+| Gemma 3 12B | pre-scheduler record (partial) | 16.14 | — | — | — | — | — | 16.09 | — | 14.08 | — / — | — | 14.0 / — / 2.6 s | — | — |
+| Qwen3-VL 4B | pre-scheduler record (partial) | 15.68 | — | — | — | — | — | 16.08 | — | — | — / — | — | 251.2 / — / 33.0 s | — | — |
+| Qwen3-VL 4B | EVALUATION_MODE | 15.78 | 11.34 | 11.34 | 11.3 | 11.3 | 16.01 | 16.03 | 1.016 | 7.32 | 0.0 / 0.0 | 0 | 5.4 / 0.33 / 2.3 s | 0.7 | — |
+| Qwen3-VL 8B | EVALUATION_MODE | 15.6 | 8.5 | 8.51 | 7.86 | 8.21 | 15.43 | 15.45 | 0.99 | 12.51 | 0.0 / 0.0 | 98 | 254.1 / 0.53 / 2.4 s | 1.45 | — |
+| Nemotron 3 Nano 4B | EVALUATION_MODE | 15.66 | 14.38 | 14.2 | 13.55 | 13.63 | 15.85 | 15.86 | 1.013 | 4.9 | 0.0 / 0.0 | 12 | 209.4 / 0.96 / 2.3 s | 0.97 | — |
 
 **RESOURCE_BLOCKED decisions** (a refusal is recorded, never an OOM):
 
-* none
+* `qwen3-vl-8b-q8kxl` (9 steps: acquire, live, pcalib, robust:640, robust:native, robust:320, robust:480, robust:768, robust:1024) — RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))
+* `gpt-oss-20b-mxfp4` (3 steps: acquire, vector, rerun_vector) — RESOURCE_BLOCKED: EVALUATION_MODE: need 22.2 GB (peak 21.1 + reserves 1.10) leaves -6.1 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.7 GB (weights 12.1 + KV 1.0 + compute 0.6 GB) x 1.54 (conservative default (no measured sibling)))
 
 
 ## Gemma 3 12B — full results
@@ -69,6 +75,7 @@ Available memory (GB) at each point; recovery = available after stabilisation / 
 | GDB typography-1 | accuracy_top1=0.50, f1_montserrat=0.67, f1_macro=0.67 |
 | GDB svg-1 | accuracy=1.00 |
 | GDB template-1 | accuracy=0.50, precision=0.50, recall=0.50 |
+| model-written pages (5 types) | produced 5/5, critical pages 3, contract violations 0, median latency 547.6 s |
 | RAM | 13.5 loaded / 13.9 peak GB |
 | licence | DECLARED_BUT_UNVERIFIED — evaluation use only unless PRODUCTION_ALLOWED |
 
@@ -76,9 +83,10 @@ Available memory (GB) at each point; recovery = available after stabilisation / 
 
 | item | result |
 |---|---|
-| live structured-output test | NOT_RUN |
+| live structured-output test | {'at': '2026-10-31T02:15:44', 'info': "RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))", 'commit': 'bdc6bce'} |
 | absolute vision calibration | NOT_RUN |
 | pairwise calibration (both orders) | NOT_RUN |
 | **vision judge status** | **NOT_RUN**  |
 | RAM | NOT_MEASURED |
 | licence | UNKNOWN — evaluation use only unless PRODUCTION_ALLOWED |
+| failed steps | acquire: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; live: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; pcalib: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; robust:640: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; robust:native: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; robust:320: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; robust:480: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; robust:768: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav; robust:1024: RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leav |

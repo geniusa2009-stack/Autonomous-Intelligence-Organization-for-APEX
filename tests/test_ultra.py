@@ -1032,3 +1032,21 @@ def test_final_matrix_never_shows_failed_samples_as_zero(tmp_path, registry):
     assert _cell("m", "fact_preservation", {"m": {"fact_preservation": 0.0}}, rows) == "0 QUALITY_ZERO"
     assert _cell("m", "long_context", scores, rows) == "NOT_MEASURED"
     assert _cell("m", "html_css", scores, rows) == "100"            # 700 is html_css's own contract budget
+
+
+def test_native_vs_model_tie_keeps_native():
+    from apex_one.lab.final_reports import native_vs_model_md
+
+    nat = {"system": "native-tournament", "page_type": "Checklist", "produced": True, "text_fidelity": 100.0,
+           "fact_preservation": 100.0, "rtl": 100.0, "overflow_issues": 0, "apex_similarity": 100.0,
+           "editability": 100.0, "reader_comprehension": 100.0}
+    tie = {**nat, "system": "llm:m"}
+    row = [x for x in native_vs_model_md({"rows": [nat, tie]}) if x.startswith("| Checklist")][0]
+    assert "KEEP NATIVE (tie" in row
+    win = {**tie, "reader_comprehension": 100.0, "rtl": 100.0}
+    nat_low = {**nat, "reader_comprehension": 90.0}
+    row = [x for x in native_vs_model_md({"rows": [nat_low, win]}) if x.startswith("| Checklist")][0]
+    assert "review for promotion" in row
+    lose = {**tie, "rtl": 95.0}
+    row = [x for x in native_vs_model_md({"rows": [nat, lose]}) if x.startswith("| Checklist")][0]
+    assert "**KEEP NATIVE**" in row

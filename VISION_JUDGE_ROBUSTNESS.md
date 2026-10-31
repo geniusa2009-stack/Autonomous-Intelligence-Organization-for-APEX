@@ -1,6 +1,6 @@
 # Vision judge robustness
 
-_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 02:19 UTC by `apex-one reports build` from measured artifacts._
 
 Does a pairwise judge's calibration survive a change of input resolution? Same five calibration cases (good page vs each deliberately broken variant), both orders, 3 repeats per width.
 
@@ -68,8 +68,8 @@ only legal $0 routes allowed by APEX policy; same calibration suite, pair-order 
 | Qwen3-VL 32B (ai/qwen3-vl:32B-UD-Q4_K_XL) (21.3 GB) | DOES_NOT_FIT | 15 GB RAM machine |
 | Gemma 3 27B (ai/gemma3:27b-q4_K_M) (17.4 GB) | DOES_NOT_FIT | 15 GB RAM machine |
 | Qwen3-VL 235B-A22B (143.3 GB) | DOES_NOT_FIT |  |
-| Qwen3-VL 8B Q8_K_XL (ai/qwen3-vl:8B-Q8_K_XL) (12.0 GB) | QUEUED | largest Qwen3-VL build that fits; Apache-2.0 declared; calibrated as its own build |
-| Gemma 3 12B Q4_K_M (8.2 GB) | IN_EVALUATION | planned candidate; licence DECLARED_BUT_UNVERIFIED (evaluation only) |
+| Qwen3-VL 8B Q8_K_XL (ai/qwen3-vl:8B-Q8_K_XL) (12.0 GB) | RESOURCE_BLOCKED | never downloaded: pre-acquisition admission (EVALUATION_MODE) expects peak 21.0 GB = estimate 13.6 GB x 1.54 (measured ratio of the Q4_K_XL build of the same family) vs a 16.1 GB machine; the additive cross-check (Q4 measured peak 12.5 + 5.7 GB more weights = 18.2 GB) also exceeds it. Not measured; no claim about quantization. |
+| Gemma 3 12B Q4_K_M (8.2 GB) | UNQUALIFIED | abs 1/5, pairwise 0/5, canonical-640 repeats 0/0/0, position_bias_rate 1.0 (answered 'A' in every call); FailureMemory: PAIRWISE_POSITION_BIAS severe. Never a judge. |
 | Gemma 3n E4B, SmolVLM 500M (4.5 GB) | NOT_PURSUED | smaller than the 8B that already failed every non-canonical width; parameter count is not evidence, but a smaller model is not a 'stronger judge' candidate |
 
 **ROBUSTLY_CALIBRATED judges found: none.** Subjective visual quality stays NOT_MEASURED except the canonical 640 px secondary pairwise advice.

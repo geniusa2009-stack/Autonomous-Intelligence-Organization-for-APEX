@@ -67,14 +67,14 @@
     {
       "candidate": "Qwen3-VL 8B Q8_K_XL (ai/qwen3-vl:8B-Q8_K_XL)",
       "size_gb": 12.0,
-      "state": "QUEUED",
-      "detail": "largest Qwen3-VL build that fits; Apache-2.0 declared; calibrated as its own build"
+      "state": "RESOURCE_BLOCKED",
+      "detail": "never downloaded: pre-acquisition admission (EVALUATION_MODE) expects peak 21.0 GB = estimate 13.6 GB x 1.54 (measured ratio of the Q4_K_XL build of the same family) vs a 16.1 GB machine; the additive cross-check (Q4 measured peak 12.5 + 5.7 GB more weights = 18.2 GB) also exceeds it. Not measured; no claim about quantization."
     },
     {
       "candidate": "Gemma 3 12B Q4_K_M",
       "size_gb": 8.2,
-      "state": "IN_EVALUATION",
-      "detail": "planned candidate; licence DECLARED_BUT_UNVERIFIED (evaluation only)"
+      "state": "UNQUALIFIED",
+      "detail": "abs 1/5, pairwise 0/5, canonical-640 repeats 0/0/0, position_bias_rate 1.0 (answered 'A' in every call); FailureMemory: PAIRWISE_POSITION_BIAS severe. Never a judge."
     },
     {
       "candidate": "Gemma 3n E4B, SmolVLM 500M",
@@ -82,5 +82,7 @@
       "state": "NOT_PURSUED",
       "detail": "smaller than the 8B that already failed every non-canonical width; parameter count is not evidence, but a smaller model is not a 'stronger judge' candidate"
     }
-  ]
+  ],
+  "updated_at": "2026-10-31T02:20Z",
+  "conclusion": "No ROBUSTLY_CALIBRATED judge found on any legal $0 route. Absolute visual quality stays NOT_MEASURED; Qwen3-VL 8B Q4_K_XL remains the only SECONDARY_FINALIST_PAIRWISE_JUDGE (canonical 640 only, advisory)."
 }

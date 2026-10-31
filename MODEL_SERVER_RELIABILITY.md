@@ -1,6 +1,6 @@
 # Model server reliability
 
-_Generated 2026-10-31 00:41 UTC by `apex-one reports` at commit `b61868b` from measured artifacts._
+_Generated 2026-10-31 02:19 UTC by `apex-one reports` at commit `bdc6bce` from measured artifacts._
 
 A local model server can crash, hang, run out of memory, return nothing or return garbage. None of these is a wrong answer. `apex_one/compute/local/supervisor.py` classifies every failed call into exactly one failure kind, recovers the server when that is safe, and the benchmark records the sample as **ERROR** (never a score). Result states are kept separate: PASSED · FAILED (measured) · UNSUPPORTED · SKIPPED · ERROR.
 
@@ -70,7 +70,13 @@ Every row also carries its outcome class: persistent faults are INFRASTRUCTURE_E
 
 ## Incidents in real benchmark runs (since supervision)
 
-none recorded
+No supervisor event (restart, crash, timeout, empty output) was recorded in a real run.
+
+**Queue / scheduler incidents** (before a server was under supervision):
+
+| at | server | what happened | outcome | fix | regression tests |
+|---|---|---|---|---|---|
+| 2026-10-31T01:04:30 | qwen3-vl-4b-q4kxl (port 8093) | a second validation-queue process (snapshot d28e25e) started while the first (b61868b) was loading the same model on the same port; the second llama-server exited (1) on the busy port and its unload assertion found a 1.47 GB server it had not started | SchedulerViolation raised (fail-closed); no OOM, no swap, no process killed; the first queue finished normally | bdc6bce: exclusive queue lock (a second queue exits with code 3) + a server we did not start on our port DEFERs the load | `tests/test_server_reliability.py::test_only_one_queue_process_may_run, ::test_a_server_on_our_port_that_we_did_not_start_defers_the_load` |
 
 ## Memory lifecycle per load / unload cycle (resource scheduler)
 
@@ -78,11 +84,17 @@ Available memory (GB) at each point; recovery = available after stabilisation / 
 
 | model | mode | before load | after load | after warm-up | min while loaded | before unload | after exit | after stabilisation | recovery | server peak RSS | swap before / peak | major faults | load / warm-up / unload | latency degradation | flags |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| — | no cycle recorded yet under the scheduler | | | | | | | | | | | | | | |
+| Gemma 3 4B | EVALUATION_MODE | 15.7 | 12.27 | 12.27 | 12.23 | 12.23 | 15.96 | 15.99 | 1.018 | 6.35 | 0.0 / 0.0 | 0 | 254.6 / 0.58 / 2.4 s | 0.6 | — |
+| Gemma 3 12B | pre-scheduler record (partial) | 16.14 | — | — | — | — | — | 16.09 | — | 14.08 | — / — | — | 14.0 / — / 2.6 s | — | — |
+| Qwen3-VL 4B | pre-scheduler record (partial) | 15.68 | — | — | — | — | — | 16.08 | — | — | — / — | — | 251.2 / — / 33.0 s | — | — |
+| Qwen3-VL 4B | EVALUATION_MODE | 15.78 | 11.34 | 11.34 | 11.3 | 11.3 | 16.01 | 16.03 | 1.016 | 7.32 | 0.0 / 0.0 | 0 | 5.4 / 0.33 / 2.3 s | 0.7 | — |
+| Qwen3-VL 8B | EVALUATION_MODE | 15.6 | 8.5 | 8.51 | 7.86 | 8.21 | 15.43 | 15.45 | 0.99 | 12.51 | 0.0 / 0.0 | 98 | 254.1 / 0.53 / 2.4 s | 1.45 | — |
+| Nemotron 3 Nano 4B | EVALUATION_MODE | 15.66 | 14.38 | 14.2 | 13.55 | 13.63 | 15.85 | 15.86 | 1.013 | 4.9 | 0.0 / 0.0 | 12 | 209.4 / 0.96 / 2.3 s | 0.97 | — |
 
 **RESOURCE_BLOCKED decisions** (a refusal is recorded, never an OOM):
 
-* none
+* `qwen3-vl-8b-q8kxl` (9 steps: acquire, live, pcalib, robust:640, robust:native, robust:320, robust:480, robust:768, robust:1024) — RESOURCE_BLOCKED: EVALUATION_MODE: need 22.1 GB (peak 21.0 + reserves 1.10) leaves -5.9 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.6 GB (weights 12.0 + KV 1.0 + compute 0.6 GB) x 1.54 (same-family measured ratio (qwen3-vl)))
+* `gpt-oss-20b-mxfp4` (3 steps: acquire, vector, rerun_vector) — RESOURCE_BLOCKED: EVALUATION_MODE: need 22.2 GB (peak 21.1 + reserves 1.10) leaves -6.1 GB of the machine's 16.1 GB < required headroom 0.5 GB (estimate 13.7 GB (weights 12.1 + KV 1.0 + compute 0.6 GB) x 1.54 (conservative default (no measured sibling)))
 
 
 Regression tests: `tests/test_server_reliability.py` (classification, bounded restart with backoff, the full drill, GDB failures carry their kind).

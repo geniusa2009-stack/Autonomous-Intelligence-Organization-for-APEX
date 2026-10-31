@@ -1,36 +1,49 @@
 {
   "branch": "claude/charming-archimedes-2guzc9",
+  "updated": "2026-10-31",
   "maturity": {
     "ARCHITECTURE_COMPLETE": true,
     "OFFLINE_PIPELINE_VALIDATED": true,
-    "LOCAL_MODELS_VALIDATED": "evaluation scope (4 models LIVE_TESTED; per-task council scores)",
-    "DESIGN_MODELS_PARTIALLY_VALIDATED": true,
-    "VISION_GATE_VALIDATED": false,
-    "LIVE_REMOTE_ROUTING_VALIDATED": false,
-    "REAL_OPPORTUNITY_VALIDATED": "research stage only (CNCF LFX 2027 Term 1, AWAITING_HUMAN)",
+    "LOCAL_MODEL_ROUTING_VALIDATED": "evaluation scope: 6 local models measured per task under one contract; frozen routing policy (docs/evidence/production_routing_policy.json)",
+    "DESIGN_MODEL_VALIDATION": "PARTIAL (GDB 6/39 tasks offline, n=2; specialist checkpoints network/hardware blocked; native wins or ties every page type)",
+    "VISION_GATE": "PARTIAL (no ROBUSTLY_CALIBRATED judge; Qwen3-VL 8B CANONICAL_640_ONLY as advisory secondary finalist judge; absolute VisionCouncil NOT_MEASURED)",
+    "REMOTE_FREE_COMPUTE_VALIDATED": false,
+    "REAL_OPPORTUNITY_VALIDATED": false,
     "PRODUCTION_READY": false
   },
   "test_command": ".venv/bin/python -m pytest",
-  "last_test_result": "162 passed",
+  "last_test_result": "see PROGRESS.md (full suite run at the final commit)",
   "golden_ultra": {"targets": {"reader_comprehension": 98.889, "cross_page_rhythm": 94.0, "arabic_typography": 100.0},
                    "regression_guard": "tests/test_pipeline.py::test_golden_ultra_quality_never_regresses"},
-  "vision_calibration": {
-    "gemma-multimodal (Gemma 3 4B)": "absolute 0/5 — not qualified",
-    "qwen-vl-current (Qwen3-VL 4B)": "absolute 1/5 (4 ties, 0 inversions) — not qualified; pairwise in progress",
-    "qwen3-vl-8b / gemma3-12b": "queued"
+  "vision_roles": {
+    "Qwen3-VL 8B Q4_K_XL": "CANONICAL_640_ONLY -> SECONDARY_FINALIST_PAIRWISE_JUDGE (advisory, 640 px, same build/preprocessing hash, after deterministic QA)",
+    "Gemma 3 12B Q4_K_M": "UNQUALIFIED (abs 1/5, pair 0/5, 640 repeats 0/0/0, PAIRWISE_POSITION_BIAS severe 1.0) - never a judge",
+    "Qwen3-VL 4B": "UNQUALIFIED (position bias 1.0)",
+    "Gemma 3 4B": "UNQUALIFIED (position bias 1.0)",
+    "Nemotron 3 Nano 4B / gpt-oss 20B": "UNSUPPORTED (text-only artifacts)",
+    "Qwen3-VL 8B Q8_K_XL": "RESOURCE_BLOCKED before acquisition (expected peak 21.0 GB vs 16.1 GB machine) - NOT_MEASURED",
+    "VisionCouncil (absolute)": "NOT_MEASURED"
   },
   "licences": {
-    "lic-qwen3-vl-apache (Qwen3-VL 4B GGUF)": "PRODUCTION_ALLOWED — Apache-2.0, 2 independent artifact declarations",
-    "lic-gpt-oss": "blocked — usage-policy text not available locally",
-    "lic-gemma": "blocked — Gemma terms, single declaration",
-    "lic-nvidia-nemotron-nano": "blocked — NVIDIA licence, single declaration"
+    "Qwen3-VL 4B / 8B (Apache-2.0)": "PRODUCTION_ALLOWED (verified from artifact declarations)",
+    "Gemma 3 4B / 12B": "DECLARED_BUT_UNVERIFIED (evaluation only)",
+    "Nemotron 3 Nano 4B": "DECLARED_BUT_UNVERIFIED (evaluation only)",
+    "gpt-oss 20B": "UNKNOWN (usage-policy text not available locally)"
+  },
+  "scheduler": {
+    "module": "apex_one/compute/local/resources.py",
+    "modes": {"EVALUATION_MODE": ">= 0.5 GB headroom after reserves", "PRODUCTION_MODE": ">= 2.0 GB AND >= 12% of MemTotal after reserves"},
+    "estimates": "artifacts/bench/resource_estimates.json (measured peak / raw estimate per model; multiplier = worst same-family ratio)",
+    "incidents": "artifacts/bench/server_reliability/queue_incidents.json"
   },
   "blockers": [
     "brand assets missing -> BRAND_PRODUCTION_GATE FAIL",
-    "egress denies huggingface.co, provider APIs, official opportunity sites",
-    "no calibrated vision judge",
-    "real job needs human fact confirmation + unreachable funding/eligibility sources"
+    "egress denies huggingface.co, NVIDIA/Groq/OpenRouter/Cloudflare/Mistral/Together APIs and official opportunity sites (proxy CONNECT 403)",
+    "no Gemini free-tier key (only reachable remote vision route)",
+    "no ROBUSTLY_CALIBRATED vision judge; larger local candidates do not fit 16 GB RAM",
+    "real job needs human fact confirmation + unreachable funding/eligibility sources",
+    "no approver created yet; licence reviews for Gemma / Nemotron / gpt-oss"
   ],
-  "background": "scripts/validation_queue.py (resumable; state in artifacts/bench/queue_state.json); self check-ins every 30 min",
-  "resume_hint": "re-run scripts/validation_queue.py after any restart; then `apex-one reports`; read ULTRA_QUALITY_REPORT.md"
+  "queue": "scripts/validation_queue.py: ALL DONE (Q8_K_XL and gpt-oss RESOURCE_BLOCKED, terminal unless APEX_RETRY_BLOCKED=1)",
+  "resume_hint": "apex-one reports; read ULTRA_QUALITY_REPORT.md and NEXT_ACTIONS.md"
 }

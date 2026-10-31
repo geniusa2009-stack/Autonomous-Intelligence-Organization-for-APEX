@@ -1,6 +1,6 @@
 # Model Activation Report (Phases 14–15)
 
-_Generated 2026-10-31 00:41 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-10-31 02:19 UTC by `apex-one reports build` from measured artifacts._
 
 Real local inference: llama.cpp `llama-server` (built from source in this container) serving GGUF models pulled from the Docker Hub `ai/` OCI catalogue, each blob sha256-verified. One model in RAM at a time (4 vCPU, 15.7 GB RAM, no GPU).
 
@@ -22,9 +22,9 @@ Tasks are scored by deterministic checkers (no model grades another model): date
 
 | model | reasoning | egyptian_arabic | en_ar_mixing | english_factual_writing | structured_editorial | structured_json | fact_preservation | html_css | design_criticism | long_context | visual_hierarchy | measured tasks |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| gemma-multimodal | 0 | 75 | 100 | — | — | 100 | 50 | 100 | 100 | 100 | 50 | 9/11 |
-| nemotron-nano-omni | 0 | 0 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | — | 8/11 |
-| qwen-vl-current | 0 | 0 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | 100 | 9/11 |
+| gemma-multimodal | 0 | 75 | 100 | 100 | 100 | 100 | 50 | 100 | 100 | 100 | 50 | 11/11 |
+| nemotron-nano-omni | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | — | 10/11 |
+| qwen-vl-current | 0 | 0 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 11/11 |
 | gpt-oss-20b | 100 | 50 | 100 | — | — | 100 | 100 | 100 | 100 | 100 | — | 8/11 |
 | qwen3-vl-8b | 0 | 0 | 67 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 11/11 |
 | gemma3-12b | 0 | 25 | 100 | 100 | 100 | 100 | 100 | 100 | 50 | 100 | 50 | 11/11 |

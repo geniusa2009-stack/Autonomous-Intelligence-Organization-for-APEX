@@ -10,6 +10,8 @@
       "design_criticism": 100.0,
       "long_context": 100.0,
       "visual_hierarchy": 50.0,
+      "english_factual_writing": 100.0,
+      "structured_editorial": 100.0,
       "mission.analyze": 0.0,
       "opportunity.model": 0.0,
       "editorial.write": 50.0,
@@ -18,7 +20,7 @@
       "live.structured": 100.0,
       "design.html": 100.0,
       "design.reward": 100.0,
-      "measured_tasks": 8
+      "measured_tasks": 10
     },
     "nemotron-nano-omni": {
       "egyptian_arabic": 0.0,
@@ -29,6 +31,8 @@
       "design_criticism": 100.0,
       "long_context": 100.0,
       "reasoning": 0.0,
+      "english_factual_writing": 100.0,
+      "structured_editorial": 100.0,
       "mission.analyze": 0.0,
       "opportunity.model": 0.0,
       "editorial.write": 0.0,
@@ -37,7 +41,7 @@
       "live.structured": 100.0,
       "design.html": 100.0,
       "design.reward": 100.0,
-      "measured_tasks": 8
+      "measured_tasks": 10
     },
     "qwen-vl-current": {
       "reasoning": 0.0,
@@ -49,6 +53,8 @@
       "design_criticism": 100.0,
       "long_context": 100.0,
       "visual_hierarchy": 100.0,
+      "english_factual_writing": 100.0,
+      "structured_editorial": 100.0,
       "mission.analyze": 0.0,
       "opportunity.model": 0.0,
       "editorial.write": 0.0,
@@ -57,7 +63,7 @@
       "live.structured": 100.0,
       "design.html": 100.0,
       "design.reward": 100.0,
-      "measured_tasks": 8
+      "measured_tasks": 10
     },
     "gpt-oss-20b": {
       "egyptian_arabic": 50,

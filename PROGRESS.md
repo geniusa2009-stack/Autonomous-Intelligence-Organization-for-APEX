@@ -1,11 +1,10 @@
 # APEX ONE ULTRA — Progress log
 
-Last updated: 2026-10-12 (session 3: real intelligence validation)
+Last updated: 2026-10-31 (session 4: model validation, resource scheduler)
 
-**Overall maturity: FOUNDATION COMPLETE + PARTIAL ACTIVATION. Not finished.** Real local model inference runs
-($0, llama.cpp), but every cloud free tier is network-blocked here, no local model licence is verified for
-production, no specialist design checkpoint is reachable, original APEX brand assets are missing, and no real
-opportunity job can reach its primary sources from this container. See ULTRA_QUALITY_REPORT.md.
+**Overall maturity: ARCHITECTURE_COMPLETE + OFFLINE_PIPELINE_VALIDATED; LOCAL_MODEL_ROUTING_VALIDATED (evaluation
+scope); DESIGN_MODEL_VALIDATION and VISION_GATE PARTIAL; remote compute, real opportunity and production NOT
+validated.** See ULTRA_QUALITY_REPORT.md for the per-level reasons.
 
 ## Session 1 (foundation) — phases 0–13: DONE (111 tests) — see git history up to 7th commit.
 
@@ -55,3 +54,19 @@ Push status: pushed to origin/claude/charming-archimedes-2guzc9.
 | 13 Real opportunity job | PARTIAL (research stage) | CNCF LFX Mentorship 2027 Term 1 from CNCF's repository: deadline 2027-02-16 extracted; AWAITING_HUMAN |
 | 14 Maturity | DONE | ULTRA_QUALITY_REPORT.md |
 | 15 Regression guard | DONE | tests/test_pipeline.py::test_golden_ultra_quality_never_regresses |
+
+
+## Session 4 — model validation, supervision, resource scheduler (2026-10-30 → 31)
+
+| Item | Status | Evidence |
+|---|---|---|
+| Gemma 3 12B full evaluation | DONE | Text: 100 on 7 tasks; Egyptian Arabic 25; date reasoning 0 (QUALITY_ZERO). GDB: 6 tasks measured, 0 failures. Pages: 5/5 produced. Vision: UNQUALIFIED (position bias 1.0). See FINAL_MODEL_MATRIX.md and VISION_JUDGE_ROBUSTNESS.md. |
+| Normalized 6-model comparison | DONE (no overall winner) | FINAL_MODEL_MATRIX.md |
+| Frozen production routing policy | DONE | PRODUCTION_ROUTING_MATRIX.md, docs/evidence/production_routing_policy.json |
+| Server supervision + failure taxonomy | DONE | apex_one/compute/local/supervisor.py. 12 failure kinds, 4 outcome classes, 5 result states. The 14-mode fake-server drill passes. See MODEL_SERVER_RELIABILITY.md. |
+| Resource scheduler | DONE | apex_one/compute/local/resources.py. EVALUATION and PRODUCTION modes, stage profiles, ADMIT/DEFER/RESOURCE_BLOCKED, memory lifecycle, recovery ratio, estimation correction. See LOCAL_MODEL_RESOURCE_MATRIX.md. |
+| PAIRWISE_POSITION_BIAS gate + FailureMemory | DONE | apex_one/vision/pairwise.py, apex_one/vision/judge_failures.py |
+| Provider health cache (bounded backoff) | DONE | apex_one/compute/health_cache.py |
+| Stronger judge search | DONE: none found | Q8_K_XL RESOURCE_BLOCKED before download. Remote routes egress-denied or keyless. See VISION_JUDGE_ROBUSTNESS.md. |
+| Native vs model pages | DONE | KEEP NATIVE on every page type (APEX_DESIGN_BENCH.md). A tie is not a win. |
+| Queue concurrency incident (01:04) | FIXED | bdc6bce: queue lock + same-port DEFER. Recorded in artifacts/bench/server_reliability/queue_incidents.json. |

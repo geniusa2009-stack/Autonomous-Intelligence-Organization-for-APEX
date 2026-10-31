@@ -371,7 +371,8 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
     files["PRODUCTION_ROUTING_MATRIX.md"] = routing_matrix_md(reg, runs) + "\n" + "\n".join(policy_md(policy))
     files["APEX_DESIGN_BENCH.md"] += "\n" + "\n".join(native_vs_model_md(_load(bench / "apex_design" / "page_compare.json")))
     files["FINAL_MODEL_MATRIX.md"] = final_model_matrix_md(bench, reg, specs)
-    for src in (bench / "server_reliability" / "fault_drill.json", bench / "server_reliability" / "events.jsonl"):
+    for src in (bench / "server_reliability" / "fault_drill.json", bench / "server_reliability" / "events.jsonl",
+                bench / "server_reliability" / "queue_incidents.json", bench / "resource_estimates.json"):
         if src.exists():
             shutil.copy(src, evidence / f"server_{src.name}")
     files["MODEL_SERVER_RELIABILITY.md"] = reliability_md(bench)
