@@ -301,6 +301,23 @@ def run_step(step: str, spec, bench: Path) -> object:
     raise ValueError(step)
 
 
+def single_instance(bench: Path):
+    """Process-wide lock: two queue processes would load two models at once (2026-10-31 incident: a new chunk
+    started while the previous one was still loading its next model). A second queue exits instead of waiting."""
+    import fcntl
+
+    bench.mkdir(parents=True, exist_ok=True)
+    fh = (bench / "validation_queue.lock").open("w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        log("another validation_queue process holds the lock — exiting (never two queues, never two models)")
+        sys.exit(3)
+    fh.write(str(os.getpid()))
+    fh.flush()
+    return fh
+
+
 def main(max_steps: int | None = None) -> None:
     """Run pending steps; with max_steps, stop (exit cleanly, state saved) after that many steps."""
     from apex_one.compute.local import LocalServer, acquire, load_catalogue
@@ -310,6 +327,7 @@ def main(max_steps: int | None = None) -> None:
     from apex_one.compute.local.supervisor import ServerSupervisor, register, unregister
 
     bench = get_settings().artifacts_dir / "bench"
+    _lock = single_instance(bench)   # noqa: F841 — held for the life of the process
     state = State(bench / "queue_state.json")
     _, specs = load_catalogue()
     for key, steps in PLAN:

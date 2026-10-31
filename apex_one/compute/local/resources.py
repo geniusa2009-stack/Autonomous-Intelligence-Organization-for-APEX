@@ -328,8 +328,9 @@ def admit(spec, stage: str = "load", qstate: dict[str, Any] | None = None, avail
         peak, src = 0.0, "no model resident in this stage"
     res = prof.reserves()
     avail = available_gb() if available is None else available
-    others = [o for o in (llama_servers() if others is None else others)
-              if str(o.get("port")) != str(spec.port) and o.get("rss_gb", 0) >= UNLOADED_RSS_LIMIT_GB]
+    if others is None:
+        others = llama_servers()
+    others = [o for o in others if str(o.get("port")) != str(spec.port) and o.get("rss_gb", 0) >= UNLOADED_RSS_LIMIT_GB]
     need = peak + sum(res.values())
     req = required_headroom(mode, total)
     headroom = avail - need
@@ -429,7 +430,12 @@ class ScheduledServer:
     def load(self, stage: str = "load", wait_s: float = 1200.0, recovery_ok: bool = True) -> Admission:
         # never two large models at once: another resident server makes admission DEFER/BLOCK. The scheduler never
         # kills a process it did not start — its owner (e.g. the queue) stops its own servers.
-        dec = admit(self.server.spec, stage, self.qstate, mode=self.mode, recovery_ok=recovery_ok)
+        squatter = [s for s in llama_servers() if str(s["port"]) == str(self.server.spec.port)]
+        dec = admit(self.server.spec, stage, self.qstate, mode=self.mode, recovery_ok=recovery_ok,
+                    others=[{**s, "port": f"{s['port']} (not started by this scheduler)"} for s in squatter] or None)
+        if squatter and dec.decision == Decision.ADMIT:   # a server we did not start already holds our port
+            dec.decision, dec.admitted = Decision.DEFER.value, False
+            dec.reason = f"port {self.server.spec.port} is held by a server this scheduler did not start: {squatter}"
         if self.log_path:
             record(self.log_path, {"event": "admission", **dec.as_dict()})
         if dec.decision != Decision.ADMIT:

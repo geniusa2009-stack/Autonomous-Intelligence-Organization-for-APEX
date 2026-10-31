@@ -317,3 +317,46 @@ def test_provider_retry_interval_is_bounded_exponential(monkeypatch):
     assert ok["consecutive_failures"] == 0 and ok["next_probe_after"] - t == hc.OK_INTERVAL_S
     for k in ("provider", "last_probe", "status", "failure_type", "next_probe_after", "latency_ms", "auth_state"):
         assert k in r
+
+
+def test_a_server_on_our_port_that_we_did_not_start_defers_the_load(tmp_path, monkeypatch):
+    """2026-10-31 incident: a second queue process loaded the same model on the same port. The scheduler must DEFER,
+    not start a second server and not count the stranger as its own."""
+    from apex_one.compute.local import resources
+
+    spec = _spec(tmp_path, approx=2.0, port=8093)
+    monkeypatch.setattr(resources, "llama_servers", lambda: [{"pid": 9, "port": "8093", "rss_gb": 1.5}])
+    monkeypatch.setattr(resources, "baseline_capacity_gb", lambda: 64.0)
+
+    class Srv:
+        def __init__(self):
+            self.spec, self.started = spec, False
+
+        def start(self, wait_s=0):
+            self.started = True
+
+    srv = Srv()
+    with pytest.raises(resources.ResourceBlocked) as e:
+        resources.ScheduledServer(srv, qstate={}).load("council")
+    assert e.value.decision.decision == "DEFER" and not srv.started
+
+
+def test_only_one_queue_process_may_run(tmp_path):
+    import subprocess
+    import sys
+
+    code = ("import sys; sys.path.insert(0, 'scripts'); from pathlib import Path; import validation_queue as v; "
+            f"_l = v.single_instance(Path({str(tmp_path)!r}))")
+    holder = subprocess.Popen([sys.executable, "-c", code + "; import time; time.sleep(30)"])
+    try:
+        import time
+
+        for _ in range(50):
+            if (tmp_path / "validation_queue.lock").exists() and (tmp_path / "validation_queue.lock").read_text():
+                break
+            time.sleep(0.1)
+        second = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60)
+        assert second.returncode == 3 and "another validation_queue process holds the lock" in second.stdout
+    finally:
+        holder.kill()
+        holder.wait()
