@@ -11,13 +11,20 @@ DEFER             it does not fit NOW, but would on this machine once a transien
                   still resident, memory not yet recovered after an unload) — retry later, do not start
 RESOURCE_BLOCKED  it cannot fit on this machine even when idle — do not start; try another strategy
 
-Modes (both fixed before any model was admitted under them; never tuned to admit a model):
-  EVALUATION_MODE  one controlled benchmark process, nothing else scheduled: headroom >= 0.5 GB. Enough to absorb
-                   allocator jitter; acceptable ONLY because a failure there costs a benchmark sample, not a job.
-  PRODUCTION_MODE  headroom >= 2.0 GB AND >= 12 % of MemTotal. Production adds what evaluation never sees: a second
-                   job's worker, longer uptimes (fragmentation, page-cache churn of the mmapped weights), larger
-                   real pages. 2.0 GB covers one extra worker + one Chromium spike on this machine; the percentage
-                   keeps the rule meaningful on bigger machines where 2 GB would be noise.
+Modes (never tuned to admit a model; a requirement may only grow as evidence accumulates):
+  EVALUATION_MODE  one controlled benchmark process, nothing else scheduled. Required headroom is DERIVED from
+                   measurement, never chosen:
+                       miss_bound = max over measured cycles of (measured peak RSS - expected peak admitted)
+                       margin     = max over artifacts measured more than once of (max peak - min peak)
+                       required   = ceil_0.1(miss_bound + margin), never below the frozen value below
+                   2026-10-31 evidence: miss 1.06 GB (Qwen3-VL 8B: admitted 11.45, measured 12.51) + run-to-run
+                   spread 0.30 GB (Qwen3-VL 8B peaks 12.21 / 12.51) = 1.36 -> 1.4 GB. The old 0.5 GB was smaller
+                   than a miss that had already happened. A failure there costs a benchmark sample, not a job.
+  PRODUCTION_MODE  headroom >= max(2.0 GB, 12 % of MemTotal, evaluation requirement + 0.5 GB) — always stricter
+                   than evaluation. Production adds what evaluation never sees: a second job's worker, longer
+                   uptimes (fragmentation, page-cache churn of the mmapped weights), larger real pages. 2.0 GB covers
+                   one extra worker + one Chromium spike on this machine; the percentage keeps the rule meaningful
+                   on bigger machines where 2 GB would be noise.
 
 Stage profiles (StageResourceProfile) — what runs BESIDE the model during the stage. The Chromium reserve is
 derived from measurement: the headless Chromium of the design bench peaked at 0.50 GB (2026-10-31 memory trace,
@@ -41,8 +48,11 @@ from typing import Any
 GB = 1e9
 
 EVALUATION_MODE, PRODUCTION_MODE = "EVALUATION_MODE", "PRODUCTION_MODE"
-MODE_RULES = {EVALUATION_MODE: {"min_headroom_gb": 0.5, "min_headroom_pct": 0.0},
+# floors; the effective requirement is `required_headroom()` (evaluation = the measured prediction-error bound)
+MODE_RULES = {EVALUATION_MODE: {"min_headroom_gb": 1.4, "min_headroom_pct": 0.0},
               PRODUCTION_MODE: {"min_headroom_gb": 2.0, "min_headroom_pct": 0.12}}
+FROZEN_EVAL_BOUND_GB = 1.4                # derived 2026-10-31 (docstring); live evidence can only raise it
+PRODUCTION_OVER_EVALUATION_GB = 0.5       # production is always at least this much stricter than evaluation
 BASE_RESERVES_GB = {"os": 0.3, "python_worker": 0.3, "evaluation_artifacts": 0.2}
 MODEL_SERVER_OVERHEAD_GB = 0.25
 CHROMIUM_MEASURED_PEAK_GB = 0.50
@@ -90,7 +100,8 @@ PROFILES = {
 # queue step -> what actually runs beside the model during it
 STEP_PROFILE = {
     "live": "TEXT_ONLY_MODEL_CALL", "council": "VISION_PAGE_JUDGING", "vector": "TEXT_ONLY_MODEL_CALL",
-    "rerun": "TEXT_ONLY_MODEL_CALL", "rerun_vector": "TEXT_ONLY_MODEL_CALL", "calib": "VISION_PAGE_JUDGING",
+    "rerun": "TEXT_ONLY_MODEL_CALL", "rerun_vector": "TEXT_ONLY_MODEL_CALL", "contract": "TEXT_ONLY_MODEL_CALL",
+    "calib": "VISION_PAGE_JUDGING",
     "pcalib": "VISION_PAGE_JUDGING", "invest": "VISION_PAGE_JUDGING", "gdb": "VISION_PAGE_JUDGING",
     "pages": "MODEL_PLUS_CHROMIUM", "pages:generate": "TEXT_ONLY_MODEL_CALL", "pages:render": "PLAYWRIGHT_RENDER",
     "robust:1024": "MODEL_PLUS_CHROMIUM", "golden": "MODEL_PLUS_CHROMIUM", "load": "TEXT_ONLY_MODEL_CALL",
@@ -313,14 +324,53 @@ def baseline_capacity_gb() -> float:
     return best or round(total_gb() * 0.95, 2)
 
 
-def required_headroom(mode: str, total: float | None = None) -> float:
+def _ram_records() -> list[dict[str, Any]]:
+    try:
+        from apex_one.settings import get_settings
+
+        q = json.loads((get_settings().artifacts_dir / "bench" / "queue_state.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [{"model": k.removesuffix(":ram"), **v["info"]} for k, v in q.get("done", {}).items()
+            if k.endswith(":ram") and isinstance(v, dict) and isinstance(v.get("info"), dict)]
+
+
+def prediction_error_bound(ram_records: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """The evaluation headroom requirement, derived from measurement (see module docstring)."""
+    import math
+
+    recs = _ram_records() if ram_records is None else ram_records
+    misses, peaks = [], {}
+    for r in recs:
+        for c in r.get("cycles") or []:
+            if c.get("estimated_peak_gb") is not None and c.get("peak_rss_gb") is not None:
+                misses.append((round(c["peak_rss_gb"] - c["estimated_peak_gb"], 2), r["model"]))
+        vals = [v for v in [r.get("peak_rss_gb")] + [c.get("peak_rss_gb") for c in r.get("cycles") or []] if v]
+        if len(vals) >= 2:
+            peaks[r["model"]] = round(max(vals) - min(vals), 2)
+    miss, miss_model = max(misses, default=(0.0, None))
+    margin = max(peaks.values(), default=0.0)
+    derived = math.ceil(round((max(miss, 0.0) + margin) * 10, 6)) / 10
+    return {"miss_bound_gb": max(miss, 0.0), "miss_model": miss_model, "margin_gb": margin,
+            "margin_model": max(peaks, key=peaks.get) if peaks else None, "derived_gb": derived,
+            "required_gb": max(derived, FROZEN_EVAL_BOUND_GB),
+            "formula": "ceil_0.1(max(measured peak - admitted expected peak) + max run-to-run peak spread), "
+                       f"never below the frozen {FROZEN_EVAL_BOUND_GB} GB"}
+
+
+def required_headroom(mode: str, total: float | None = None, bound: dict[str, Any] | None = None) -> float:
     rule = MODE_RULES[mode]
-    return max(rule["min_headroom_gb"], rule["min_headroom_pct"] * (total_gb() if total is None else total))
+    ev = max(MODE_RULES[EVALUATION_MODE]["min_headroom_gb"], (bound or prediction_error_bound())["required_gb"])
+    if mode == EVALUATION_MODE:
+        return ev
+    return max(rule["min_headroom_gb"], rule["min_headroom_pct"] * (total_gb() if total is None else total),
+               ev + PRODUCTION_OVER_EVALUATION_GB)
 
 
 def admit(spec, stage: str = "load", qstate: dict[str, Any] | None = None, available: float | None = None,
           others: list[dict[str, Any]] | None = None, mode: str = EVALUATION_MODE,
-          capacity: float | None = None, total: float | None = None, recovery_ok: bool = True) -> Admission:
+          capacity: float | None = None, total: float | None = None, recovery_ok: bool = True,
+          bound: dict[str, Any] | None = None) -> Admission:
     """ADMIT / DEFER / RESOURCE_BLOCKED for `stage` of `spec` under `mode`, with the reason."""
     prof = profile_for(stage)
     peak, src = expected_peak(spec, qstate)
@@ -332,7 +382,7 @@ def admit(spec, stage: str = "load", qstate: dict[str, Any] | None = None, avail
         others = llama_servers()
     others = [o for o in others if str(o.get("port")) != str(spec.port) and o.get("rss_gb", 0) >= UNLOADED_RSS_LIMIT_GB]
     need = peak + sum(res.values())
-    req = required_headroom(mode, total)
+    req = required_headroom(mode, total, bound)
     headroom = avail - need
     cap = baseline_capacity_gb() if capacity is None else capacity
     fits_idle = cap - need >= req

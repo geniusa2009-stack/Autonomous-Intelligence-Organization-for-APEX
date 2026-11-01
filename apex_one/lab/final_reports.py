@@ -530,8 +530,9 @@ def _roles(mid: str, policy: dict[str, Any]) -> list[str]:
 
 def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str, Any]) -> str:
     from apex_one.compute.local.resources import (BASE_RESERVES_GB, CHROMIUM_MEASURED_PEAK_GB, EVALUATION_MODE,
-                                                  MODE_RULES, PRODUCTION_MODE, PROFILES, admit,
-                                                  baseline_capacity_gb, load_estimates, meminfo, raw_estimate)
+                                                  MODE_RULES, PRODUCTION_MODE, PRODUCTION_OVER_EVALUATION_GB,
+                                                  PROFILES, admit, baseline_capacity_gb, load_estimates, meminfo,
+                                                  prediction_error_bound, raw_estimate, required_headroom)
     from apex_one.compute.router.capability import routing_config
 
     qstate = _load(bench / "queue_state.json") or {}
@@ -544,16 +545,22 @@ def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str
     total = meminfo().get("MemTotal", 0.0)
     cap = baseline_capacity_gb()
     est = load_estimates()
+    bound = prediction_error_bound()
     out = ["# Local model resource matrix", "", _stamp(), "",
            f"Machine: {total:.1f} GB RAM (10^9 bytes), no swap, 4 CPU threads, no GPU; memory available with no model "
            f"loaded: **{cap:.1f} GB**. On this machine compute scheduling is part of correctness: every stage is "
            "admitted BEFORE it starts (`apex_one/compute/local/resources.py`) with ADMIT / DEFER / RESOURCE_BLOCKED "
            "and an explicit reason; a clean RESOURCE_BLOCKED is a successful scheduler decision.", "",
            "**Modes.** EVALUATION_MODE (one controlled benchmark process) needs ≥ "
-           f"{MODE_RULES[EVALUATION_MODE]['min_headroom_gb']} GB headroom after every reserve. PRODUCTION_MODE needs ≥ "
-           f"{MODE_RULES[PRODUCTION_MODE]['min_headroom_gb']} GB AND ≥ {MODE_RULES[PRODUCTION_MODE]['min_headroom_pct']:.0%} of "
-           "MemTotal — a second job's worker, long uptimes and real pages are what evaluation never sees. "
-           "Base reserves: " + ", ".join(f"{k} {v} GB" for k, v in BASE_RESERVES_GB.items()) + ".", "",
+           f"**{required_headroom(EVALUATION_MODE, total, bound):.1f} GB** headroom after every reserve, DERIVED from "
+           f"measurement: {bound['formula']}. Evidence: worst miss {bound['miss_bound_gb']:.2f} GB "
+           f"({bound['miss_model']}: measured peak above the expected peak it was admitted with) + run-to-run peak "
+           f"spread {bound['margin_gb']:.2f} GB ({bound['margin_model']}) = {bound['derived_gb']:.1f} GB. "
+           f"PRODUCTION_MODE needs ≥ **{required_headroom(PRODUCTION_MODE, total, bound):.2f} GB** = max("
+           f"{MODE_RULES[PRODUCTION_MODE]['min_headroom_gb']} GB, {MODE_RULES[PRODUCTION_MODE]['min_headroom_pct']:.0%} of "
+           f"MemTotal, evaluation + {PRODUCTION_OVER_EVALUATION_GB} GB) — a second job's worker, long uptimes and real "
+           "pages are what evaluation never sees. Base reserves: "
+           + ", ".join(f"{k} {v} GB" for k, v in BASE_RESERVES_GB.items()) + ".", "",
            "**Stage profiles** (what runs beside the model): " + "; ".join(
                f"{p.name} = " + " + ".join(f"{k} {v:g}" for k, v in p.reserves().items()) + " GB"
                for p in PROFILES.values())

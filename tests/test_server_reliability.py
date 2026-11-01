@@ -111,16 +111,20 @@ def test_scheduler_modes_and_decisions(tmp_path):
     spec = _spec(tmp_path)
     q = {"done": {"m-q4:ram": {"info": {"peak_rss_gb": 13.9}}}}         # measured peak wins over any estimate
     kw = {"others": [], "capacity": 16.16, "total": 16.9}
+    # under the measured prediction-error bound (1.4 GB) a 13.9 GB model no longer fits even for evaluation
     ev = admit(spec, "council", q, available=16.16, mode=EVALUATION_MODE, **kw)
-    assert ev.decision == "ADMIT" and ev.estimate_source.startswith("measured") and ev.headroom_gb < 1.0
+    assert ev.decision == "RESOURCE_BLOCKED" and ev.estimate_source.startswith("measured") and ev.headroom_gb < 1.4
+    q = {"done": {"m-q4:ram": {"info": {"peak_rss_gb": 13.0}}}}
+    ev = admit(spec, "council", q, available=16.16, mode=EVALUATION_MODE, **kw)
+    assert ev.decision == "ADMIT" and 1.4 <= ev.headroom_gb < 2.0
     # the same stage is NOT production-safe: < 2 GB / 12 % headroom on an idle machine -> RESOURCE_BLOCKED
     pr = admit(spec, "council", q, available=16.16, mode=PRODUCTION_MODE, **kw)
     assert pr.decision == "RESOURCE_BLOCKED" and pr.required_headroom_gb >= 2.0
     # model + Chromium: blocked even for evaluation (never launch Chromium and hope)
-    pages = admit(spec, "pages", q, available=16.16, mode=EVALUATION_MODE, **kw)
+    pages = admit(spec, "pages", q, available=16.16, mode=EVALUATION_MODE, **kw)    # 13.0 + 2.35 reserves
     assert pages.decision == "RESOURCE_BLOCKED" and pages.profile == "MODEL_PLUS_CHROMIUM" and "renderer" in pages.reserves
     # memory still held by something else, but the stage fits an idle machine -> DEFER, not BLOCKED
-    assert admit(spec, "council", q, available=15.0, mode=EVALUATION_MODE, **kw).decision == "DEFER"
+    assert admit(spec, "council", q, available=15.5, mode=EVALUATION_MODE, **kw).decision == "DEFER"
     # render phase alone (model unloaded): no model peak in the need
     r = admit(spec, "pages:render", q, available=16.16, mode=PRODUCTION_MODE, **kw)
     assert r.decision == "ADMIT" and r.expected_peak_gb == 0.0
@@ -360,3 +364,32 @@ def test_only_one_queue_process_may_run(tmp_path):
     finally:
         holder.kill()
         holder.wait()
+
+
+def test_evaluation_headroom_exceeds_the_measured_prediction_error_bound(tmp_path):
+    """A headroom smaller than (worst measured miss + run-to-run spread) is never admitted; production stays stricter."""
+    from apex_one.compute.local.resources import (
+        EVALUATION_MODE,
+        PRODUCTION_MODE,
+        admit,
+        prediction_error_bound,
+        required_headroom,
+    )
+
+    recs = [{"model": "qwen3-vl-8b-q4kxl", "peak_rss_gb": 12.21,
+             "cycles": [{"estimated_peak_gb": 11.45, "peak_rss_gb": 12.51}]},
+            {"model": "nemotron", "peak_rss_gb": 4.79, "cycles": [{"estimated_peak_gb": 4.93, "peak_rss_gb": 4.9}]}]
+    b = prediction_error_bound(recs)
+    assert b["miss_bound_gb"] == 1.06 and b["margin_gb"] == 0.3 and b["derived_gb"] == 1.4
+    ev = required_headroom(EVALUATION_MODE, 16.9, b)
+    assert ev > b["miss_bound_gb"] and ev >= b["miss_bound_gb"] + b["margin_gb"]
+    assert required_headroom(PRODUCTION_MODE, 16.9, b) >= ev + 0.5
+    # evidence of a bigger miss raises the requirement; it never falls below the frozen bound
+    worse = recs + [{"model": "x", "cycles": [{"estimated_peak_gb": 5.0, "peak_rss_gb": 7.0}]}]
+    assert required_headroom(EVALUATION_MODE, 16.9, prediction_error_bound(worse)) >= 2.3
+    assert prediction_error_bound([])["required_gb"] == 1.4
+    # a stage that leaves 1.2 GB (> the old 0.5 GB rule, < the measured bound) is rejected
+    spec = _spec(tmp_path)
+    q = {"done": {"m-q4:ram": {"info": {"peak_rss_gb": 13.86}}}}
+    d = admit(spec, "live", q, available=16.16, others=[], capacity=16.16, total=16.9, mode=EVALUATION_MODE, bound=b)
+    assert 0.5 < d.headroom_gb < ev and d.decision != "ADMIT"

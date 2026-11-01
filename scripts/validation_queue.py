@@ -14,6 +14,8 @@ steps. Steps per model, in order (only steps that apply to the model run):
   robust:W  vision-judge robustness at width W (5 cases x both orders x 3 repeats + legibility probe)
   vector    council tasks added for the capability vector (English factual writing, structured editorial),
             same 500-token task budget as the other prose tasks
+  contract  re-measure every other text council task under the CURRENT contract (per-task token budget, checker
+            version) so a route decision between two models compares identical measurements only
 
 Usage: python scripts/validation_queue.py
 """
@@ -56,8 +58,13 @@ PLAN = [
     # gpt-oss weights were freed for disk room: re-acquire (same digest) to measure the two writing tasks; a
     # reasoning model that spends the 500-token budget on hidden reasoning gets the documented 4096 re-run
     ("gpt-oss-20b-mxfp4", ["acquire", "vector", "rerun_vector"]),
+    # Qwen3-VL 4B's older council rows predate contract tracking (no token budget / checker version recorded):
+    # re-measure them under the 8B's exact contract before any 4B-vs-8B route decision
+    ("qwen3-vl-4b-q4kxl", ["contract"]),
 ]
 VECTOR_TASKS = ("english_factual_writing", "structured_editorial")
+CONTRACT_TASKS = ("structured_json", "fact_preservation", "en_ar_mixing", "html_css", "long_context",
+                  "design_criticism", "egyptian_arabic", "reasoning")
 PAGE_TYPES = ["Cover", "OpportunitySnapshot", "Timeline", "ApexTake", "Checklist"]
 GOLDEN_JOB = os.environ.get("APEX_BENCH_JOB", "J-2da4830a2781")
 # weights that may be removed (re-acquirable, digest recorded) to make disk room for the larger candidates,
@@ -270,6 +277,14 @@ def run_step(step: str, spec, bench: Path) -> object:
         got = {t: rescore(bench)["models"].get(rid, {}).get(t) for t in VECTOR_TASKS}
         if any(v is None for v in got.values()):
             raise RuntimeError(f"vector tasks not measured (call not executed or empty): {got}")
+        return got
+    if step == "contract":
+        from apex_one.compute.benchmark.council import rescore, run_council
+
+        run_council(ComputeBroker(), [rid], bench, only=list(CONTRACT_TASKS))
+        got = {t: rescore(bench)["models"].get(rid, {}).get(t) for t in CONTRACT_TASKS}
+        if any(v is None for v in got.values()):     # an infrastructure failure is recorded, never scored as zero
+            raise RuntimeError(f"contract tasks not measured (call not executed or empty): {got}")
         return got
     if step == "rerun_vector":
         from apex_one.compute.benchmark.council import rescore, run_council
