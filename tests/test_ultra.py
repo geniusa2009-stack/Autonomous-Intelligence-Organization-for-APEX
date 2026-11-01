@@ -847,7 +847,7 @@ def test_vision_hypothesis_verdicts():
     assert v["pair-order sensitivity / position bias"] == "CONFIRMED"
     assert v["image scaling"].startswith("CONFIRMED")
     assert v["model instability (temperature 0)"] == "RULED OUT"
-    assert v["qualifies as a judge in ANY tested mode (>= 4/5)"].startswith("NO")
+    assert v["passes the 4/5 calibration bar in at least one tested mode"].startswith("NO")
 
 
 def test_page_compare_accepts_lock_defined_conditional_wording():

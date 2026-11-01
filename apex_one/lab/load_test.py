@@ -391,6 +391,8 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
         (out_dir() / "report.json").write_text(json.dumps(rep, indent=2))
         return rep
     events = out_dir() / "server_events.jsonl"
+    if events.exists():        # one event log per run: recovery is never measured against an older run's failure
+        events.rename(out_dir() / f"server_events.{int(time.time())}.jsonl")
     sup = ServerSupervisor(spec.registry_model, srv, policy=SupervisorPolicy(backoff_s=(1.0, 4.0, 10.0)),
                            events_path=events)
     register(spec.registry_model, sup)
@@ -442,7 +444,7 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
             rec = [e for e in ok if e["event"] == "recovered"]
             return {"server_killed": "killed_at" in ctx, "restarts": sup.restarts,
                     "recovery_events": len(rec), "supervisor_events": _count(e["event"] for e in ok)}
-        t_crash = time.monotonic()
+        t_crash = time.time()
         go("server_crash", n=4, workers=2, max_queue=8, setup=crash, extra_fn=recovery, max_failure_rate=0.25)
         if results and results[-1]["scenario"] == "server_crash":
             results[-1]["recovery_time_s"] = _recovery_time(events, t_crash)
@@ -475,12 +477,14 @@ def _recovery_time(events: Path, since: float) -> float | None:
     ev = [json.loads(x) for x in events.read_text().splitlines()]
     from datetime import datetime
 
+    def t(e: dict[str, Any]) -> float:
+        return datetime.fromisoformat(e["at"]).timestamp()
+    ev = [e for e in ev if t(e) >= since]
     starts = [e for e in ev if e["event"] in ("unhealthy_before_call", "call_failed")]
-    rec = [e for e in ev if e["event"] == "recovered"]
+    rec = [e for e in ev if e["event"] == "recovered" and t(e) >= t(starts[0])] if starts else []
     if not starts or not rec:
         return None
-    t = lambda e: datetime.fromisoformat(e["at"]).timestamp()
-    return round(t(rec[-1]) - t(starts[0]), 1)
+    return round(t(rec[0]) - t(starts[0]), 1)     # first failure seen -> first recovery after it
 
 
 def restart_recovery(base: dict[str, Any], factory, pid) -> dict[str, Any]:
