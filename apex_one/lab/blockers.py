@@ -73,10 +73,24 @@ def probe_real_job_release_candidate() -> tuple[bool, str]:
         j = _load(jf) or {}
         if j.get("offline_fixture") or (j.get("mission") or {}).get("synthetic"):
             continue
+        if _test_pack_job(j):      # reserved test domains prove the pipeline, never a real opportunity
+            continue
         if j.get("status") in ("RELEASE_CANDIDATE", "FINAL"):
             hits.append(jf.parent.name)
     return bool(hits), (f"real jobs at RELEASE_CANDIDATE/FINAL: {hits}" if hits
                         else "no non-synthetic job has reached RELEASE_CANDIDATE")
+
+
+def _test_pack_job(job: dict[str, Any]) -> bool:
+    from apex_one.research.evidence_pack import is_test_url
+
+    for d in job.get("source_inputs") or []:
+        man = Path(d) / "sources.yaml"
+        if man.exists():
+            urls = [e.get("url", "") for e in (yaml.safe_load(man.read_text(encoding="utf-8")) or {}).get("sources") or []]
+            if any(is_test_url(u) for u in urls):
+                return True
+    return False
 
 
 def probe_load_test_passed() -> tuple[bool, str]:

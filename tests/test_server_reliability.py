@@ -393,3 +393,26 @@ def test_evaluation_headroom_exceeds_the_measured_prediction_error_bound(tmp_pat
     q = {"done": {"m-q4:ram": {"info": {"peak_rss_gb": 13.86}}}}
     d = admit(spec, "live", q, available=16.16, others=[], capacity=16.16, total=16.9, mode=EVALUATION_MODE, bound=b)
     assert 0.5 < d.headroom_gb < ev and d.decision != "ADMIT"
+
+
+def test_concurrent_callers_restart_a_dead_server_exactly_once(tmp_path):
+    """Two workers that find the same dead server must not both restart it (production concurrency)."""
+    import threading
+
+    from apex_one.compute.local.supervisor import ServerSupervisor, SupervisorPolicy
+    from apex_one.lab.fake_model_server import FakeServerProcess
+
+    srv = FakeServerProcess(8197, "ok", tmp_path)
+    srv.start()
+    sup = ServerSupervisor("fake", srv, policy=SupervisorPolicy(backoff_s=(0.2,)), sleep=lambda s: None)
+    try:
+        srv.proc.kill()
+        srv.proc.wait(timeout=5)
+        threads = [threading.Thread(target=sup.before_call) for _ in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+        assert srv.healthy() and sup.restarts == 1 and srv.starts == 2
+    finally:
+        srv.stop()

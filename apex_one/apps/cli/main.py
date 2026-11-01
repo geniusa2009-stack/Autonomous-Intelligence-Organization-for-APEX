@@ -701,6 +701,41 @@ def benchmark(suite: str = typer.Option("design", help="design | apex-design | m
         raise typer.BadParameter("suite must be design | apex-design | models | golden")
 
 
+evidence_app = typer.Typer(help="Evidence packs: validate a real opportunity from saved official pages/PDFs offline.")
+app.add_typer(evidence_app, name="evidence")
+
+
+@evidence_app.command("init")
+def evidence_init(pack: Path):
+    """Create an evidence-pack layout (pack.yaml, sources.yaml, confirmations.yaml) with instructions."""
+    from apex_one.research.evidence_pack import init
+
+    console.print(f"created {init(pack) or 'nothing (already initialised)'} in {pack}")
+
+
+@evidence_app.command("check")
+def evidence_check(pack: Path):
+    """Readiness of an evidence pack (files, kinds, URLs, hashes, confirmations). Exit 1 if not ready."""
+    from apex_one.research.evidence_pack import check
+
+    rep = check(pack)
+    console.print_json(json.dumps(rep, ensure_ascii=False))
+    raise typer.Exit(0 if rep["ready"] else 1)
+
+
+@evidence_app.command("run")
+def evidence_run(pack: Path, quality: str = typer.Option("standard", help="draft|standard|high|ultra")):
+    """Source extraction → Fact Lock → deadline/eligibility/funding validation → citations → guide → QA → release
+    candidate, from the pack only (no live network); applies confirmations.yaml to NEEDS_HUMAN slots."""
+    from apex_one.research.evidence_pack import run
+
+    rep = run(pack, quality=quality)
+    console.print_json(json.dumps({k: rep.get(k) for k in ("status", "job_id", "state", "blockers", "stages",
+                                                           "confirmations_applied", "counts_as_real_opportunity",
+                                                           "problems", "warnings")}, ensure_ascii=False, default=str))
+    raise typer.Exit(0 if rep.get("stages", {}).get("release_candidate") else 1)
+
+
 vision_app = typer.Typer(help="Vision-judge validation (same calibration contracts as every local judge).")
 app.add_typer(vision_app, name="vision")
 

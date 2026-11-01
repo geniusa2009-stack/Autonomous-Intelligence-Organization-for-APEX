@@ -16,6 +16,7 @@ score of 0). This module:
 from __future__ import annotations
 
 import json
+import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -139,6 +140,9 @@ class ServerSupervisor:
         self.sleep = sleep
         self.restarts = 0
         self.events: list[dict] = []
+        # concurrent callers (worker threads) must not restart the same server twice: recovery is serialized and a
+        # caller that waited re-checks health first (another thread may already have recovered it)
+        self._lock = threading.RLock()
 
     # ---- incident log ----
     def _event(self, event: str, **kw) -> None:
@@ -179,6 +183,12 @@ class ServerSupervisor:
         """Pre-call health probe; recover a dead or unhealthy server before sending the request."""
         if self.server.healthy(timeout=self.policy.health_timeout_s):
             return
+        with self._lock:
+            if self.server.healthy(timeout=self.policy.health_timeout_s):
+                return               # recovered by another caller while this one waited
+            self._recover_before_call()
+
+    def _recover_before_call(self) -> None:
         alive = self.server.alive()
         if alive is False:          # it died: crash or OOM
             kind = classify("connection_refused", alive=alive, exit_code=self.server.exit_code(),
@@ -192,6 +202,10 @@ class ServerSupervisor:
 
     def after_failure(self, provider_error_kind: str) -> tuple[FailureKind | None, bool]:
         """Classify a failed call and recover if needed. Returns (kind, safe_to_retry_same_request)."""
+        with self._lock:
+            return self._after_failure(provider_error_kind)
+
+    def _after_failure(self, provider_error_kind: str) -> tuple[FailureKind | None, bool]:
         alive = self.server.alive()
         t0 = time.monotonic()   # a dying process closes its sockets just before it is reaped: let it settle
         while alive and provider_error_kind in ("disconnected", "connection_refused") and time.monotonic() - t0 < 1.0:
@@ -204,6 +218,10 @@ class ServerSupervisor:
         self._event("call_failed", kind=kind.value, provider_error=provider_error_kind, alive=alive,
                     exit_code=self.server.exit_code(), log_tail=self.server.log_tail(400)[-400:])
         recovered = True
+        died = kind in (FailureKind.MODEL_SERVER_CRASH, FailureKind.OOM, FailureKind.CONNECTION_REFUSED)
+        if died and self.server.alive() and self.server.healthy(timeout=self.policy.health_timeout_s):
+            self._event("already_recovered", kind=kind.value)    # another caller restarted it while this one waited
+            return kind, kind in RETRY_AFTER_RECOVERY
         if kind in RESTART_ON:
             try:
                 self.restart(kind)

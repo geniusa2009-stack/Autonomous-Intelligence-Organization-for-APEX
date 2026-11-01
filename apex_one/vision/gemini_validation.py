@@ -35,7 +35,7 @@ from typing import Any
 
 MODEL_ID = "gemini-flash-free"          # registry entry whose gemini route is pinned
 PROVIDER = "gemini"
-EXCLUDE = re.compile(r"latest|preview|exp|lite|tts|image|embedding|audio|live|thinking|learnlm|aqa", re.I)
+EXCLUDE = re.compile(r"latest|preview|exp|lite|tts|image|embedding|audio|live|thinking|learnlm|aqa", re.IGNORECASE)
 STEPS = ("live", "identify", "absolute", "pairwise", "canonical", "widths", "reports")
 EXIT_DONE, EXIT_BLOCKED, EXIT_ERROR = 0, 2, 3
 
@@ -126,7 +126,13 @@ def validate_gemini(model: str | None = None, force: bool = False,
     """Run (or resume) the whole validation; returns (exit code, report)."""
     from apex_one.compute.local.supervisor import failure_kind_for
     from apex_one.compute.registry import load_registry
-    from apex_one.lab.benchmarks.vision_robustness import CANONICAL, WIDTHS, load, qualification, status
+    from apex_one.lab.benchmarks.vision_robustness import (
+        CANONICAL,
+        WIDTHS,
+        load,
+        qualification,
+        status,
+    )
     from apex_one.settings import get_settings
 
     rep = {} if force else _load()

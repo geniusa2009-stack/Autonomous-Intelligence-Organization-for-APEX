@@ -408,6 +408,21 @@ def admit(spec, stage: str = "load", qstate: dict[str, Any] | None = None, avail
                      dec == Decision.ADMIT, why, others, dec.value, mode, prof.name, round(headroom, 2), round(req, 2))
 
 
+def admit_increment(stage: str, need_gb: float, mode: str = PRODUCTION_MODE, available: float | None = None,
+                    total: float | None = None) -> Admission:
+    """Admission of ONE MORE concurrent stage on a running system (a render, a request) whose cost is `need_gb` on top
+    of everything already resident (already excluded from MemAvailable). ADMIT if the mode's headroom still holds
+    after it; otherwise DEFER — the caller waits and retries, it never starts the stage and hopes."""
+    avail = available_gb() if available is None else available
+    req = required_headroom(mode, total)
+    headroom = avail - need_gb
+    ok = headroom >= req
+    why = (f"{mode}: +{need_gb:.2f} GB for {stage}; headroom {headroom:.2f} GB "
+           + (">=" if ok else "<") + f" required {req:.2f} GB")
+    return Admission("system", stage, need_gb, "incremental stage cost", round(avail, 2), 0.0, {}, ok, why, [],
+                     (Decision.ADMIT if ok else Decision.DEFER).value, mode, stage, round(headroom, 2), round(req, 2))
+
+
 def wait_stable(timeout: float = STABLE_TIMEOUT_S, sleep=time.sleep) -> float:
     """Wait until MemAvailable stops moving (pages released after an unload); returns the settled value."""
     vals: list[float] = []
