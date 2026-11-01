@@ -1,33 +1,26 @@
 # Next actions (ordered)
 
-The local validation queue is finished: every planned step either ran, or ended in a recorded RESOURCE_BLOCKED or
-SKIPPED decision. No model step can go further on this machine without one of the human actions below.
+Everything Claude can still do on its own. Human-only work is in **HUMAN_ACTIONS_REQUIRED.md**. The authoritative
+blocker list, with live status, is **PRODUCTION_BLOCKERS.md** (source: `config/production_blockers.yaml`).
 
-## Needs a human
+## The moment a human action lands (no code changes needed)
 
-1. **Gemini free-tier key**: the only legal $0 vision route that answers from this container. Put it in the environment's
-   secrets as `GEMINI_API_KEY`. Never enable billing. Then run
-   `apex-one providers live-test` and the same calibration suite (absolute, order-swapped pairwise, 3 repeats, legibility).
-   This is the only path to a ROBUSTLY_CALIBRATED judge here.
-2. **Brand package**: `apex-one brand import <folder>` (logo.svg, logo-on-dark.svg, robot.svg, and a brand.yaml that sets
-   approved_by / approved_at / palette / fonts / font_files). Until then, BRAND_PRODUCTION_GATE = FAIL for real jobs.
-3. **Approver**: `apex-one auth add-approver "<your name>"` (the token is shown once). Approve with
-   `APEX_APPROVER_TOKEN=<token> apex-one approve <job>`.
-4. **Network access** (environment settings → Network access → allowed domains), as needed:
-   - `huggingface.co` (+ CDN), for the full GraphicDesignBench dataset and specialist design weights;
-   - `integrate.api.nvidia.com`, `api.groq.com`, `openrouter.ai`, `api.cloudflare.com`, for free remote models;
-   - the official sites of the target opportunity.
-5. **Real job J-2fe410878683 (CNCF LFX 2027 Term 1)**: confirm the single-source deadline with
-   `apex-one facts confirm J-2fe410878683 deadline.application --claim <id> --by "<name>"`. Supply the
-   stipend and eligibility pages, then run `apex-one resume J-2fe410878683`.
-6. **Licence reviews**: Gemma 3 (4B/12B), Nemotron and gpt-oss stay evaluation-only until a person runs
-   `apex-one license verify ... --by <name>`.
+| when this appears | Claude runs | result |
+|---|---|---|
+| `GEMINI_API_KEY` + `apex-one providers attest gemini` | `apex-one vision validate-gemini` (re-run to resume; ~200 requests/day on the free tier) | Gemini verdict (ROBUSTLY_CALIBRATED / CANONICAL_640_ONLY / UNQUALIFIED), pinned to the exact model version; reports regenerated |
+| an evidence pack for one real opportunity | `apex-one evidence check <pack>` then `apex-one evidence run <pack>` | Fact Lock, deadline / eligibility / funding validation, guide, QA, release candidate (or the exact missing source) |
+| the APEX brand folder | `apex-one brand import <folder> --dry-run`, then `apex-one brand import <folder>` and `apex-one brand validate` | BRAND_ASSETS_VALIDATED |
+| an approver exists | `apex-one auth verify-ledger`; on approval, FINAL re-checks that the approved artifact hash still matches | HUMAN_APPROVAL_VALIDATED |
+| licence decisions recorded | `apex-one reports` | EVALUATION_ONLY routes become deployable (or stay native) |
+| `huggingface.co` allowed | the queue's GDB steps at n ≥ 20 | DESIGN_MODEL_VALIDATION evidence |
 
-## System work (no human needed)
+## Autonomous work still open
 
-7. A machine with ≥ 24 GB RAM would admit Qwen3-VL 8B Q8_K_XL (expected peak 21.0 GB) and gpt-oss 20B. The
-   blocked steps are terminal. Re-open them with `APEX_RETRY_BLOCKED=1 scripts/snapshot_run.sh <commit>
-   scripts/validation_queue.py --max-steps 3`. The pre-acquisition admission still decides.
-8. Measure the run-to-run stability of model-written pages: two more samples per page type. A model page can be
-   promoted over native only if it wins without a safety loss and is stable. Today, native wins or ties every
-   page type.
+1. **Model-page stability.** Two more samples per model-written page type. Measure run-to-run stability. Promote
+   only a loss-free, stable lead over native. Native stays primary until then.
+2. **Load test with longer duration.** The current harness runs about 50 jobs. A soak run (hundreds of jobs,
+   several hours) would expose fragmentation and page-cache churn. Command:
+   `python -m apex_one.lab.load_test --only concurrent_safe` in a loop under the queue lock.
+3. **Hardware-bound candidates.** On a machine with ≥ 24 GB RAM, Qwen3-VL 8B Q8_K_XL and gpt-oss 20B would be
+   admitted. Run `APEX_RETRY_BLOCKED=1 scripts/snapshot_run.sh <commit> scripts/validation_queue.py --max-steps 3`.
+   The pre-acquisition admission still decides.

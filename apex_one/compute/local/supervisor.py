@@ -92,13 +92,29 @@ def failure_kind_for(provider_error_kind: str | None) -> FailureKind | None:
     return _BY_PROVIDER_KIND.get(provider_error_kind, FailureKind.UNKNOWN_FAILURE)
 
 
+def oom_kill_count() -> int | None:
+    """Kernel OOM-killer invocations since boot (/proc/vmstat `oom_kill`); None where the kernel does not say."""
+    try:
+        for line in open("/proc/vmstat", encoding="ascii"):
+            if line.startswith("oom_kill "):
+                return int(line.split()[1])
+    except OSError:
+        pass
+    return None
+
+
 def classify(provider_error_kind: str | None, *, alive: bool | None, exit_code: int | None = None,
-             log_tail: str = "") -> FailureKind | None:
-    """One failure kind per failed call. A dead process outranks the transport symptom it caused."""
+             log_tail: str = "", oom_kills_delta: int | None = None) -> FailureKind | None:
+    """One failure kind per failed call. A dead process outranks the transport symptom it caused.
+    OOM needs evidence: an allocator failure in the server log, or the kernel's OOM-kill counter rising while the
+    server ran. A bare SIGKILL (-9) is not evidence — an operator or another process can send it — so without that
+    evidence it is a MODEL_SERVER_CRASH; when the kernel counter is unavailable, -9 stays the OOM suspect."""
     if provider_error_kind in NOT_SERVER_FAILURES:
         return None
     if alive is False:
-        if exit_code == -9 or any(m in log_tail.lower() for m in OOM_MARKERS):
+        if any(m in log_tail.lower() for m in OOM_MARKERS) or (oom_kills_delta or 0) > 0:
+            return FailureKind.OOM
+        if exit_code == -9 and oom_kills_delta is None:
             return FailureKind.OOM
         return FailureKind.MODEL_SERVER_CRASH
     return failure_kind_for(provider_error_kind) or FailureKind.UNKNOWN_FAILURE
@@ -143,6 +159,11 @@ class ServerSupervisor:
         # concurrent callers (worker threads) must not restart the same server twice: recovery is serialized and a
         # caller that waited re-checks health first (another thread may already have recovered it)
         self._lock = threading.RLock()
+        self._oom_base = oom_kill_count()
+
+    def _oom_delta(self) -> int | None:
+        now = oom_kill_count()
+        return None if now is None or self._oom_base is None else now - self._oom_base
 
     # ---- incident log ----
     def _event(self, event: str, **kw) -> None:
@@ -169,6 +190,7 @@ class ServerSupervisor:
             try:
                 self.server.start(wait_s=self.policy.start_wait_s)
                 if self.server.warm_up(timeout=self.policy.warmup_timeout_s):
+                    self._oom_base = oom_kill_count()
                     self._event("recovered", attempt=self.restarts)
                     return
                 self._event("warmup_failed", attempt=self.restarts)
@@ -192,7 +214,7 @@ class ServerSupervisor:
         alive = self.server.alive()
         if alive is False:          # it died: crash or OOM
             kind = classify("connection_refused", alive=alive, exit_code=self.server.exit_code(),
-                            log_tail=self.server.log_tail())
+                            log_tail=self.server.log_tail(), oom_kills_delta=self._oom_delta())
         elif alive is None:         # nothing we started is there: the port is closed
             kind = FailureKind.CONNECTION_REFUSED
         else:                       # running but not ready / not answering /health
@@ -212,7 +234,7 @@ class ServerSupervisor:
             time.sleep(0.05)
             alive = self.server.alive()
         kind = classify(provider_error_kind, alive=alive, exit_code=self.server.exit_code(),
-                        log_tail=self.server.log_tail())
+                        log_tail=self.server.log_tail(), oom_kills_delta=self._oom_delta())
         if kind is None:
             return None, False
         self._event("call_failed", kind=kind.value, provider_error=provider_error_kind, alive=alive,

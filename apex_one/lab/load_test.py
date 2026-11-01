@@ -15,7 +15,7 @@ one render; the others must wait). Measured per scenario: throughput, queue dela
 peak server RSS), CPU, failure rate (by outcome class), recovery time, admission decisions.
 
 Safety: the run is refused unless PRODUCTION_MODE admits the model; nothing else large may be resident; the ballast
-never takes MemAvailable below the production headroom + 1 GB; a sampler aborts the run if MemAvailable falls under
+never takes MemAvailable below the production headroom + 0.5 GB; a sampler flags the run if MemAvailable falls under
 the evaluation headroom. The scheduler kills only the server this harness started.
 """
 
@@ -456,6 +456,10 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
     finally:
         unregister(spec.registry_model)
         cycle = sched.unload()
+    prev = json.loads((out_dir() / "report.json").read_text()) if only and (out_dir() / "report.json").exists() else {}
+    if prev.get("scenarios"):      # --only re-runs a scenario: replace it, keep the others' measured results
+        fresh = {r["scenario"] for r in results}
+        results = [r for r in prev["scenarios"] if r["scenario"] not in fresh] + results
     verdict = "PASS" if results and all(r["verdict"] == "PASS" for r in results) else "FAIL"
     rep = {"verdict": verdict, "model": a.model, "real_model": True, "mode": PRODUCTION_MODE,
            "admission": dec.as_dict(), "scenarios": results, "memory_cycle": cycle,
@@ -515,24 +519,48 @@ def restart_recovery(base: dict[str, Any], factory, pid) -> dict[str, Any]:
     return rep
 
 
-def memory_pressure(base: dict[str, Any], factory, pid) -> dict[str, Any]:
-    """A bounded ballast leaves room for about ONE render under the production headroom: renders must queue
-    behind admission (DEFER), and memory must never fall under the evaluation headroom."""
-    req = required_headroom(PRODUCTION_MODE)
-    target_free = req + RENDER_NEED_GB + 0.6          # one render fits, a second does not
-    floor = req + 1.0                                  # the ballast never goes below this
-    want = max(0.0, available_gb() - max(target_free, floor))
-    ballast = bytearray(int(want * 1e9))
-    mv = memoryview(ballast)
-    for i in range(0, len(ballast), 4096):           # touch every page so the memory is really committed
+def _ballast(gb: float) -> bytearray:
+    b = bytearray(int(max(gb, 0.0) * 1e9))
+    mv = memoryview(b)
+    for i in range(0, len(b), 4096):           # touch every page so the memory is really committed
         mv[i] = 1
+    mv.release()
+    return b
+
+
+def memory_pressure(base: dict[str, Any], factory, pid) -> dict[str, Any]:
+    """Memory is squeezed until not even ONE render fits under the production headroom: every render must wait
+    (DEFER) — never start and hope. After 15 s part of the squeeze is released and the waiting renders proceed.
+    Bounded: the squeeze never leaves less than the production headroom + 0.5 GB free (above the evaluation floor),
+    and the scenario PASSES only if the throttle actually engaged."""
+    req = required_headroom(PRODUCTION_MODE)
+    squeeze_free = req + 0.5                    # < req + RENDER_NEED_GB: no render can be admitted
+    release_gb = 1.6                            # after release: room for one render at a time
+    total = available_gb() - squeeze_free
+    if total <= release_gb:
+        return {"scenario": "memory_pressure", "verdict": "FAIL", "done": 0, "failed": 0,
+                "reason": f"cannot squeeze safely: only {available_gb():.1f} GB free"}
+    hold = [_ballast(release_gb), _ballast(total - release_gb)]
+    released: dict[str, float] = {}
+
+    def release():
+        hold[0] = bytearray()                    # free the first part: memory becomes available again
+        released["at"] = time.monotonic()
+    timer = threading.Timer(15.0, release)
     try:
-        return run_scenario("memory_pressure", {**base, "render_wait_s": 300.0}, n=4, workers=4, max_queue=8,
-                            broker_factory=factory, server_pid=pid,
-                            extra_fn=lambda e, q, c: {"ballast_gb": round(want, 2),
-                                                      "free_after_ballast_target_gb": round(target_free, 2)})
+        timer.start()
+        rep = run_scenario("memory_pressure", {**base, "render_wait_s": 300.0}, n=4, workers=4, max_queue=8,
+                           broker_factory=factory, server_pid=pid,
+                           extra_fn=lambda e, q, c: {"ballast_gb": round(total, 2), "released_gb": release_gb,
+                                                     "free_during_squeeze_target_gb": round(squeeze_free, 2)})
+        rep["checks"]["throttle_engaged"] = rep["admissions"].get("DEFER", 0) > 0 and rep["render_throttle_waits"] > 0
+        rep["checks"]["all_jobs_completed_after_release"] = rep["done"] == 4
+        rep["verdict"] = "PASS" if all(rep["checks"].values()) else "FAIL"
+        (out_dir() / "memory_pressure" / "summary.json").write_text(json.dumps(rep, indent=2))
+        return rep
     finally:
-        del mv, ballast
+        timer.cancel()
+        hold.clear()
 
 
 if __name__ == "__main__":

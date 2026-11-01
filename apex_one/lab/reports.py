@@ -555,8 +555,10 @@ def hypothesis_verdicts(rep: dict[str, Any], legible: bool | None = None) -> lis
                  "RULED OUT by construction"))
     best = max([v for v in (ok("E1"), ok("E2"), ok("E3"), ok("E4")) if v is not None] +
                [sum(1 for v in e0["result"]["checks"].values() if v)] if e0 else [0])
-    rows.append(("qualifies as a judge in ANY tested mode (>= 4/5)", f"best mode {best}/5",
-                 "YES" if best >= 4 else "NO — stays out of every gate"))
+    rows.append(("passes the 4/5 calibration bar in at least one tested mode", f"best mode {best}/5",
+                 "YES at the calibration input only — the production role is set by resolution robustness "
+                 "(VISION_JUDGE_ROBUSTNESS.md), never a general vision judge" if best >= 4
+                 else "NO — stays out of every gate"))
     return rows
 
 

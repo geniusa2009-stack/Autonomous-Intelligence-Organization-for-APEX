@@ -1055,7 +1055,7 @@ def test_native_vs_model_tie_keeps_native():
     win = {**tie, "reader_comprehension": 100.0, "rtl": 100.0}
     nat_low = {**nat, "reader_comprehension": 90.0}
     row = [x for x in native_vs_model_md({"rows": [nat_low, win]}) if x.startswith("| Checklist")][0]
-    assert "review for promotion" in row
+    assert "model ahead without a loss; stability NOT_MEASURED" in row and "KEEP NATIVE" in row
     lose = {**tie, "rtl": 95.0}
     row = [x for x in native_vs_model_md({"rows": [nat, lose]}) if x.startswith("| Checklist")][0]
     assert "**KEEP NATIVE**" in row

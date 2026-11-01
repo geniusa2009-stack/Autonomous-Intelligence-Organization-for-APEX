@@ -355,6 +355,7 @@ def reliability_md(bench: Path) -> str:
         out += [f"| {i['at']} | {i['server']} | {i['what']} | {i['outcome']} | {i['fix']} | `{i['regression_tests']}` |"
                 for i in incidents]
     qstate = _load(bench / "queue_state.json") or {}
+    out += [""] + load_test_md(_load(bench / "load_test" / "report.json"))
     out += [""] + cycles_md(qstate)
     tests = "tests/test_server_reliability.py"
     out += ["", f"Regression tests: `{tests}` (classification, bounded restart with backoff, the full drill, GDB "
@@ -544,7 +545,8 @@ def production_policy(reg, runs: list[dict[str, Any]], bench: Path) -> dict[str,
     winners = [s for s, d in v.items() if not d["safety_losses"] and d["wins"]]
     add("page design (HTML writing)", "DETERMINISTIC_ENGINE", "APEX native engine",
         None, "no model page beat native without a safety loss" if not winners else
-        f"model wins without safety loss: {winners} (not promoted: run-to-run stability NOT_MEASURED)",
+        f"model ahead without a safety loss: {winners} — not a win and not promoted: run-to-run stability "
+        "NOT_MEASURED",
         minimum="win without a safety loss AND measured stability", evidence="APEX_DESIGN_BENCH.md",
         abstain="—", deployment="PRODUCTION")
     add("release approval", "HUMAN_REQUIRED", "authenticated approver (token)", None, "hash-chained approval ledger",
@@ -664,7 +666,7 @@ def native_vs_model_md(cmp_: dict[str, Any] | None, golden_deterministic: Path |
         # a tie is not a win: the native page is deterministic, the model page one unrepeated sample
         decision = ("KEEP NATIVE" if losses or not best.get("produced")
                     else "KEEP NATIVE (tie; model stability NOT_MEASURED)" if not negwins
-                    else "model wins, review for promotion")
+                    else "KEEP NATIVE (model ahead without a loss; stability NOT_MEASURED — repeat samples first)")
         out.append(f"| {ptype} | {best_s} | " + " | ".join(cells) + f" | NOT_MEASURED vs deterministic | **{decision}** |")
     return out + ["", "Cells read `model vs native`. Page types without a model-written page are native by construction.", ""]
 
@@ -791,6 +793,39 @@ def resource_matrix_md(bench: Path, reg, specs: dict[str, Any], policy: dict[str
             "benchmark result.", ""]
     out += cycles_md(qstate)
     return "\n".join(out) + "\n"
+
+
+def load_test_md(rep: dict[str, Any] | None) -> list[str]:
+    """PRODUCTION_MODE under controlled concurrent load (apex_one/lab/load_test.py)."""
+    out = ["## Production load test (PRODUCTION_MODE, real model, real Chromium)", ""]
+    if not rep:
+        return out + ["NOT_RUN — `python -m apex_one.lab.load_test --model qwen3-vl-4b-q4kxl`", ""]
+    if rep.get("verdict") == "RESOURCE_BLOCKED":
+        return out + [f"RESOURCE_BLOCKED — {rep.get('reason')}", ""]
+    out += [f"**Verdict: {rep['verdict']}** — model `{rep['model']}` (real: {rep['real_model']}), run {rep.get('at')} "
+            f"at commit `{rep.get('commit')}`. A job = one supervised production model call + one memory-admitted "
+            "Chromium render to PDF + one idempotent SQLite write, through a bounded journalled queue. Required "
+            f"production headroom {rep['scenarios'][0]['required_production_headroom_gb'] if rep['scenarios'] else '?'} GB.",
+            "", "| scenario | verdict | jobs (done / failed / rejected) | failure rate | throughput (jobs/min) | queue "
+            "delay p50 / p95 s | latency p50 / p95 s | model p50 s | render p50 s | min free RAM GB | server peak "
+            "RSS GB | CPU avg / max % | swap GB | render admissions (ADMIT / DEFER) | recovery | notes |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in rep["scenarios"]:
+        notes = "; ".join(f"{k}={v}" for k, v in r.items() if k in (
+            "server_killed", "restarts", "recovery_events", "db_rows", "duplicate_side_effects", "ballast_gb",
+            "failures_by_kind") and v not in (None, {}, []))
+        rec = r.get("recovery_time_s")
+        out.append(f"| {r['scenario']} | **{r['verdict']}** | {r['done']} / {r['failed']} / "
+                   f"{r['rejected_backpressure']} | {r['failure_rate']} | {r['throughput_jobs_per_min']} | "
+                   f"{r['queue_delay_s']['p50']} / {r['queue_delay_s']['p95']} | {r['latency_s']['p50']} / "
+                   f"{r['latency_s']['p95']} | {r['model_s_p50']} | {r['render_s_p50']} | {r['min_available_gb']} | "
+                   f"{r['server_peak_rss_gb']} | {r['cpu_avg_pct']} / {r['cpu_max_pct']} | {r['swap_peak_gb']} | "
+                   f"{r['admissions'].get('ADMIT', 0)} / {r['admissions'].get('DEFER', 0)} | "
+                   f"{'—' if rec is None else f'{rec} s'} | {notes or '—'} |")
+    out += ["", "Rejected = back-pressure (queue full: the caller retries later), never a failure. Failures are "
+            "classified by kind and are INFRASTRUCTURE_ERROR, never a quality score. DEFER = the render waited for "
+            "memory instead of starting (throttle, not OOM).", ""]
+    return out
 
 
 def cycles_md(qstate: dict[str, Any]) -> list[str]:

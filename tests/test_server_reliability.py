@@ -15,7 +15,10 @@ from apex_one.compute.local.supervisor import (
 
 
 def test_classification_dead_process_outranks_transport_symptom():
-    assert classify("disconnected", alive=False, exit_code=-9) == FailureKind.OOM
+    assert classify("disconnected", alive=False, exit_code=-9) == FailureKind.OOM          # no kernel counter: suspect
+    assert classify("disconnected", alive=False, exit_code=-9, oom_kills_delta=1) == FailureKind.OOM
+    # a SIGKILL with the kernel OOM counter unchanged is a kill, not an OOM (load test: our own kill -9)
+    assert classify("disconnected", alive=False, exit_code=-9, oom_kills_delta=0) == FailureKind.MODEL_SERVER_CRASH
     assert classify("disconnected", alive=False, exit_code=1, log_tail="... failed to allocate buffer") == FailureKind.OOM
     assert classify("disconnected", alive=False, exit_code=1) == FailureKind.MODEL_SERVER_CRASH
     assert classify("timeout", alive=True) == FailureKind.MODEL_TIMEOUT

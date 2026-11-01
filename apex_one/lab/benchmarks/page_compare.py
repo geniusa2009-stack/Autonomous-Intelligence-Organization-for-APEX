@@ -227,6 +227,10 @@ def verdicts(result: dict[str, Any], native: str = "native-tournament") -> dict[
                 elif worse:
                     (safety_losses if m in SAFETY or m == "overflow_issues" else losses).append(f"{ptype}:{m} {a} vs {b}")
         out[system] = {"wins": wins, "losses": losses, "safety_losses": safety_losses,
-                       "decision": ("use only where it wins and never loses safety" if wins and not safety_losses
+                       # one unrepeated model sample per page type: its stability is NOT_MEASURED, so even a
+                       # loss-free lead is not a win — native stays until repeated samples measure stability
+                       "decision": ("KEEP NATIVE (model ahead on some metrics without a safety loss, but stability "
+                                    "NOT_MEASURED: needs repeated samples before any promotion)"
+                                    if wins and not safety_losses
                                     else "KEEP NATIVE (model page lost on safety metrics or never won)")}
     return out
