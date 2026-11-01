@@ -714,9 +714,17 @@ def _brand_pkg(d: Path, *, placeholder_logo: bool = False, missing_robot: bool =
         (d / "logo.svg").write_bytes((REPO_ROOT / "apex_one/assets/brand/apex_wordmark_placeholder.svg").read_bytes())
     (d / "fonts").mkdir(exist_ok=True)
     (d / "fonts" / "readex.woff2").write_bytes(b"wOF2fake")
+    import hashlib
+
+    def sha(name):
+        return hashlib.sha256((d / name).read_bytes()).hexdigest() if (d / name).exists() else "0" * 64
     (d / "brand.yaml").write_text(
         "approved_by: Director\napproved_at: '2026-10-12'\npalette: {navy_900: '#0A1A33', white: '#FFFFFF'}\n"
-        "fonts: {display: Readex Pro}\nfont_files: {Readex Pro: fonts/readex.woff2}\n")
+        "fonts: {display: Readex Pro}\nfont_files: {Readex Pro: fonts/readex.woff2}\n"
+        "font_licences: {Readex Pro: OFL-1.1}\n"
+        "usage: {min_logo_width_px: 96, clear_space_ratio: 0.5, allowed_backgrounds: [white, navy_900]}\n"
+        f"checksums: {{logo: {sha('logo.svg')}, logo_on_dark: {sha('logo-on-dark.svg')}, robot: {sha('robot.svg')}, "
+        f"'font:Readex Pro': {sha('fonts/readex.woff2')}}}\n")
     return d
 
 
@@ -742,8 +750,9 @@ def test_brand_import_validates_before_installing(tmp_path, monkeypatch):
     (home / "assets" / "apex" / "robot.svg").write_text(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect fill="#FFFFFF"/></svg>')
     A._CACHE.clear()
-    rep = A.validate_assets()                                          # edited after import -> gate fails
-    assert rep["production_ready"] is False and "brand_fingerprint" in rep["failures"]
+    rep = A.validate_assets()                  # edited after import -> the manifest checksum catches it first
+    assert rep["production_ready"] is False and "brand_manifest" in rep["failures"]
+    assert any("checksum mismatch for robot" in x for x in rep["assets"]["brand_manifest"]["problems"])
 
 
 def test_critical_date_arithmetic_is_deterministic(registry):
@@ -1050,3 +1059,70 @@ def test_native_vs_model_tie_keeps_native():
     lose = {**tie, "rtl": 95.0}
     row = [x for x in native_vs_model_md({"rows": [nat, lose]}) if x.startswith("| Checklist")][0]
     assert "**KEEP NATIVE**" in row
+
+
+def _cand(model, score, peak, contract=(500, 2), admit="ADMIT", licensed=True, latency=5.0):
+    return {"model": model, "score": score, "peak_gb": peak, "latency_s": latency, "licensed": licensed,
+            "licence_state": "PRODUCTION_ALLOWED (verified)" if licensed else "DECLARED_BUT_UNVERIFIED",
+            "production_admission": admit, "reliability": "0 errors",
+            "evidence": {"structured_json": {"score": score, "contract": contract, "latency_s": latency}}}
+
+
+def test_route_tie_goes_to_the_cheaper_model_and_needs_identical_measurements():
+    from apex_one.lab.final_reports import comparable, rank_route
+
+    small, big = _cand("small", 100, 7.3), _cand("big", 100, 12.5, latency=12.0)
+    ranked, why = rank_route([big, small])
+    assert ranked[0]["model"] == "small" and why.startswith("tie at 100 on identical measurements")
+    # a higher score on identical measurements wins even when the model is bigger
+    ranked, why = rank_route([small | {"score": 67, "evidence": {"structured_json": {"score": 67, "contract": (500, 2),
+                                                                                       "latency_s": 5}}}, big])
+    assert ranked[0]["model"] == "big" and "measured higher" in why
+    # contract not recorded -> never compared as identical; the order is labelled provisional
+    old = _cand("old", 100, 7.3, contract=None)
+    assert not comparable(old, big)
+    assert "NOT on identical measurements" in rank_route([old, big])[1]
+    # better but not admitted in PRODUCTION_MODE never outranks a model the machine admits
+    huge = _cand("huge", 100, 21.0, admit="RESOURCE_BLOCKED")
+    assert rank_route([huge, _cand("ok", 67, 7.3)])[0][0]["model"] == "ok"
+
+
+def test_routing_policy_md_marks_evaluation_only_and_never_names_a_global_winner():
+    from apex_one.lab.final_reports import policy_md
+
+    row = {"task": "editorial.write.egyptian_guide", "decision": "EVALUATION_ONLY", "primary": "gemma (50)",
+           "fallback": "APEX native engine", "why": "licence DECLARED_BUT_UNVERIFIED: NOT deployable",
+           "minimum_requirement": "≥ 50", "measured_evidence": "x", "licence_state": "DECLARED_BUT_UNVERIFIED",
+           "abstention": "native", "deployment": "EVALUATION_ONLY", "candidates": []}
+    md = "\n".join(policy_md({"frozen_at_commit": "abc", "evidence_sha256_12": {}, "rows": [row]}))
+    assert "**EVALUATION_ONLY**" in md and "| EVALUATION_ONLY |" in md
+    assert "overall winner" not in md.lower() and "best model overall" not in md.lower()
+
+
+def test_brand_validate_reports_valid_incomplete_invalid(tmp_path, monkeypatch):
+    import shutil
+
+    from apex_one.release import assets as A
+    from apex_one.settings import REPO_ROOT, reset_settings_cache
+
+    home = tmp_path / "home"
+    shutil.copytree(REPO_ROOT / "config", home / "config")
+    shutil.copytree(REPO_ROOT / "apex_one" / "assets", home / "apex_one" / "assets")
+    monkeypatch.setenv("APEX_HOME", str(home))
+    reset_settings_cache()
+    A._CACHE.clear()
+    assert A.brand_status()["status"] == "INCOMPLETE"                    # nothing installed yet
+    pkg = _brand_pkg(tmp_path / "p")
+    (pkg / "brand.yaml").write_text((pkg / "brand.yaml").read_text().replace("usage:", "usage_x:"))
+    bad = A.import_brand(pkg)                                            # usage constraints are mandatory
+    assert not bad["installed"] and any("usage" in p for p in bad["problems"])
+    pkg = _brand_pkg(tmp_path / "q")
+    (pkg / "robot.svg").write_text((pkg / "robot.svg").read_text() + " ")   # corrupted after checksums were taken
+    assert any("checksum mismatch for robot" in p for p in A.import_brand(pkg)["problems"])
+    assert A.import_brand(_brand_pkg(tmp_path / "r"))["installed"]
+    A._CACHE.clear()
+    assert A.brand_status()["status"] == "VALID"
+    (home / "assets" / "apex" / "logo.svg").write_bytes(
+        (REPO_ROOT / "apex_one/assets/brand/apex_wordmark_placeholder.svg").read_bytes())
+    A._CACHE.clear()
+    assert A.brand_status()["status"] == "INVALID"                       # a placeholder never validates

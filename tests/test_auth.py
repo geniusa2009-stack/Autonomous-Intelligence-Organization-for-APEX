@@ -105,3 +105,55 @@ def test_cli_approve_requires_token(monkeypatch):
     res = runner.invoke(cli, ["approve", r.job.job_id], env={"APEX_APPROVER_TOKEN": tok})
     assert res.exit_code == 0, res.stdout
     assert JobRunner.load(r.job.job_id).job.status.value == "FINAL"
+
+
+def test_approval_binds_identity_job_time_artifact_decision_and_comment(monkeypatch):
+    """The approver must approve the exact bytes they reviewed; after approval the artifact cannot change."""
+    import hashlib
+
+    from apex_one.core.governor.runner import JobRunner
+    from apex_one.release import approval_binding_problems
+
+    r = _candidate_job()
+    monkeypatch.setattr(JobRunner, "run", lambda self: self.job)
+    pdf = r.ws.root / "final.pdf"
+    pdf.write_bytes(b"%PDF-1.7 reviewed bytes")
+    sha = hashlib.sha256(pdf.read_bytes()).hexdigest()
+    tok = create_approver("Release Owner")
+    with pytest.raises(RuntimeError, match="artifact mismatch"):
+        r.approve(tok, "ok", artifact_sha256="0" * 64)                 # approving bytes they never saw
+    assert JobRunner.load(r.job.job_id).job.state == "HUMAN_APPROVAL"
+    JobRunner.load(r.job.job_id).approve(tok, "ship it", artifact_sha256=sha)
+    e = [json.loads(x) for x in (auth_dir() / "approval_ledger.jsonl").read_text().splitlines()][-1]
+    assert (e["decision"], e["job_id"], e["approver"], e["notes"], e["final_pdf_sha256"]) == \
+        ("APPROVED", r.job.job_id, "Release Owner", "ship it", sha)
+    assert e["approver_id"].startswith("AP-") and e["at"] and e["reviewed_sha256_stated"] is True
+    rec = json.loads((r.ws.root / "human_approval.json").read_text())
+    assert rec["final_pdf_sha256"] == sha and rec["job_id"] == r.job.job_id and rec["ledger_hash"] == e["hash"]
+    assert approval_binding_problems(r.ws.root) == []
+    pdf.write_bytes(b"%PDF-1.7 swapped after approval")              # tampering after approval
+    assert any("final.pdf changed after approval" in p for p in approval_binding_problems(r.ws.root))
+
+
+def test_rejection_is_bound_to_the_artifact_too(monkeypatch):
+    from apex_one.core.governor.runner import JobRunner
+
+    r = _candidate_job()
+    monkeypatch.setattr(JobRunner, "run", lambda self: self.job)
+    (r.ws.root / "final.pdf").write_bytes(b"%PDF-1.7 v1")
+    tok = create_approver("Reviewer")
+    r.reject(tok, "hierarchy is weak")
+    e = [json.loads(x) for x in (auth_dir() / "approval_ledger.jsonl").read_text().splitlines()][-1]
+    assert e["decision"] == "REJECTED" and e["final_pdf_sha256"] and e["approver"] == "Reviewer"
+
+
+def test_api_refuses_an_approval_for_a_different_artifact(monkeypatch):
+    from apex_one.apps.api.main import app
+    from apex_one.core.governor.runner import JobRunner
+
+    r = _candidate_job()
+    monkeypatch.setattr(JobRunner, "run", lambda self: self.job)
+    (r.ws.root / "final.pdf").write_bytes(b"%PDF-1.7 api")
+    h = {"Authorization": f"Bearer {create_approver('Api Approver')}"}
+    res = TestClient(app).post(f"/jobs/{r.job.job_id}/approve", json={"artifact_sha256": "f" * 64}, headers=h)
+    assert res.status_code == 409 and "artifact mismatch" in res.text

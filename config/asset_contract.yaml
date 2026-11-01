@@ -7,6 +7,16 @@ required:
   logo: {file: logo.svg, kind: svg}
   logo_on_dark: {file: logo-on-dark.svg, kind: svg}
   robot: {file: robot.svg, kind: svg}
-  brand_manifest: {file: brand.yaml, kind: manifest, required_keys: [approved_by, approved_at, palette, fonts]}
+  # brand.yaml: approved_by, approved_at, palette {name: '#RRGGBB'}, fonts {role: family},
+  #   font_licences {family: licence} (every family in fonts), usage {min_logo_width_px > 0,
+  #   0 < clear_space_ratio <= 1, allowed_backgrounds: non-empty list}, checksums {role: sha256} for logo,
+  #   logo_on_dark, robot (+ watermark if shipped) and font:<family> for each font file
+  brand_manifest: {file: brand.yaml, kind: manifest,
+                   required_keys: [approved_by, approved_at, palette, fonts, font_licences, usage, checksums]}
 optional:
   watermark: {file: watermark.svg, kind: svg}
+usage_constraints:      # what the release compiler may do with the assets
+  logo_min_width_px: from brand.yaml usage.min_logo_width_px
+  clear_space: from brand.yaml usage.clear_space_ratio (fraction of the logo height, every side)
+  backgrounds: only brand.yaml usage.allowed_backgrounds; logo_on_dark on navy pages, logo elsewhere
+  never: recolour, stretch, rotate, add effects, or embed a placeholder in a FINAL artifact

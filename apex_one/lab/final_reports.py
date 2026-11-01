@@ -364,70 +364,202 @@ def reliability_md(bench: Path) -> str:
 
 # ---------------------------------------------------------------- frozen production routing policy
 
+ROUTE_ABSTAIN = {
+    True: "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine "
+          "(deterministic); never a silent empty section",
+    False: "primary unavailable or its output fails validation → fallback model; both fail → the stage pauses "
+           "AWAITING_HUMAN (no native engine for this task); never a guessed answer",
+}
+
+
+def _contract(row: dict[str, Any] | None) -> tuple[Any, Any] | None:
+    """(token budget, checker version) a council row was measured under; None = not recorded (pre-contract run)."""
+    if not row or row.get("max_tokens") is None or row.get("checker_version") is None:
+        return None
+    return row["max_tokens"], row["checker_version"]
+
+
+def route_candidates(reg, task: str, rows: dict[tuple[str, str], dict[str, Any]], qstate: dict[str, Any],
+                     specs: dict[str, Any], installed: set[str]) -> list[dict[str, Any]]:
+    """Every measured, installed model that passes the task's floor on EVERY mandatory capability, with the exact
+    measurements behind it (score, contract, latency), its RAM, licence, reliability and production admission."""
+    from apex_one.compute.local.resources import PRODUCTION_MODE, admit, baseline_capacity_gb, measured_peak
+    from apex_one.compute.router.capability import rejection, required_scores, routing_config, task_evidence_score
+
+    caps = routing_config().get("capabilities", {})
+    by_model = {s.registry_model: s for s in specs.values()}
+    out = []
+    for m in reg.models.values():
+        if not m.benchmark_scores or m.id not in installed or not reg.research_allowed(m):
+            continue
+        sc = task_evidence_score(m, task)
+        if sc is None or rejection(m, task):
+            continue
+        ev = {}
+        for cap in required_scores(m, task):
+            t = caps.get(cap, cap)
+            r = rows.get((m.id, t))
+            ev[t] = {"score": None if r is None else r.get("score"), "contract": _contract(r),
+                     "latency_s": None if r is None else r.get("latency_s")}
+        spec = by_model.get(m.id)
+        ram = (((qstate.get("done") or {}).get(f"{spec.key}:ram") or {}).get("info") or {}) if spec else {}
+        mrows = [r for (mid, _), r in rows.items() if mid == m.id]
+        infra = sum(1 for r in mrows if r.get("outcome_class") == "INFRASTRUCTURE_ERROR")
+        cycles = ram.get("cycles") or []
+        prod = admit(spec, "live", qstate, mode=PRODUCTION_MODE, available=baseline_capacity_gb(), others=[]) \
+            if spec else None
+        lats = [e["latency_s"] for e in ev.values() if e["latency_s"] is not None]
+        out.append({"model": m.id, "score": sc, "evidence": ev, "licensed": reg.production_allowed(m),
+                    "licence_state": _licence_state(reg, m), "peak_gb": measured_peak(spec, qstate) if spec else None,
+                    "latency_s": round(sum(lats) / len(lats), 1) if lats else None,
+                    "reliability": f"{infra} infrastructure errors in {len(mrows)} council samples; "
+                                   f"{sum(1 for c in cycles if not c.get('flags'))}/{len(cycles)} scheduled cycles clean",
+                    "production_admission": prod.decision if prod else "NOT_MEASURED"})
+    return out
+
+
+def _licence_state(reg, m) -> str:
+    st = reg.license_for(m).production_state.value
+    return st + " (verified)" if reg.production_allowed(m) else st
+
+
+def comparable(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    """Two candidates may be ranked against each other only on identical measurements: the same council tasks, each
+    measured under the same recorded contract (token budget + checker version)."""
+    if set(a["evidence"]) != set(b["evidence"]):
+        return False
+    return all(a["evidence"][t]["contract"] is not None and a["evidence"][t]["contract"] == b["evidence"][t]["contract"]
+               for t in a["evidence"])
+
+
+def rank_route(cands: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], str]:
+    """Higher measured score first; an exact tie goes to the cheaper model (lower measured peak RAM, then lower
+    latency); a model the machine would not admit in PRODUCTION_MODE never ranks above one it would."""
+    def key(c):
+        return (c["production_admission"] != "ADMIT", -c["score"], c["peak_gb"] or 99.0, c["latency_s"] or 9e9,
+                c["model"])
+    ranked = sorted(cands, key=key)
+    if len(ranked) < 2:
+        return ranked, "single qualified candidate"
+    a, b = ranked[0], ranked[1]
+    if not comparable(a, b):
+        return ranked, (f"{a['model']} vs {b['model']}: NOT on identical measurements (contract differs or not "
+                        "recorded) — order is provisional")
+    if a["score"] == b["score"]:
+        return ranked, f"tie at {a['score']:.0f} on identical measurements → the cheaper model ({a['model']})"
+    return ranked, f"{a['model']} measured higher ({a['score']:.0f} vs {b['score']:.0f}) on identical measurements"
+
+
 def production_policy(reg, runs: list[dict[str, Any]], bench: Path) -> dict[str, Any]:
-    """PRIMARY / FALLBACK / NO_QUALIFIED_MODEL / DETERMINISTIC_ENGINE / HUMAN_REQUIRED per task, from evidence."""
+    """PRIMARY / FALLBACK / NO_QUALIFIED_MODEL / DETERMINISTIC_ENGINE / HUMAN_REQUIRED / EVALUATION_ONLY per task,
+    from evidence. Every row records: task, primary, fallback, minimum requirement, measured evidence, licence state,
+    reason and abstention behaviour."""
     from apex_one.compute.local import load_catalogue
-    from apex_one.compute.router.capability import rejection, routing_config, task_evidence_score
+    from apex_one.compute.router.capability import routing_config
     from apex_one.compute.router.fallback import has_native_fallback
     from apex_one.lab.benchmarks.page_compare import verdicts
     from apex_one.vision.council import judge_status, reliable_judges
 
     cfg = routing_config()
+    floor = cfg.get("default_min_score", 50)
     _, specs = load_catalogue()
     installed = {s.registry_model for s in specs.values() if (s.dir / "apex_manifest.json").exists()}
-    measured = [m for m in reg.models.values() if m.benchmark_scores]
+    rows_by = latest_rows(runs)
+    qstate = _load(bench / "queue_state.json") or {}
     rows: list[dict[str, Any]] = []
 
-    def add(task: str, decision: str, primary: str | None = None, fallback: str | None = None, why: str = "") -> None:
-        rows.append({"task": task, "decision": decision, "primary": primary, "fallback": fallback, "why": why})
+    def add(task: str, decision: str, primary: str | None = None, fallback: str | None = None, why: str = "", *,
+            minimum: str = "—", evidence: str = "—", licence: str = "n/a", abstain: str = "—",
+            deployment: str = "n/a", comparison: list[dict[str, Any]] | None = None) -> None:
+        rows.append({"task": task, "decision": decision, "primary": primary, "fallback": fallback, "why": why,
+                     "minimum_requirement": minimum, "measured_evidence": evidence, "licence_state": licence,
+                     "abstention": abstain, "deployment": deployment, "candidates": comparison or []})
 
     add("critical date arithmetic (date.*)", "DETERMINISTIC_ENGINE", "apex_one.core.dates", None,
-        "permanently outside model reasoning; the $0 firewall refuses date.* for every model")
+        "permanently outside model reasoning; the $0 firewall refuses date.* for every model",
+        minimum="exact calendar arithmetic", evidence="tests/test_dates.py; every model's date task is irrelevant here",
+        abstain="no model fallback exists by design", deployment="PRODUCTION")
     add("critical locked facts (deadline, eligibility, funding)", "DETERMINISTIC_ENGINE", "evidence system + fact locks",
-        "HUMAN_REQUIRED for single-source critical claims", "models may phrase a locked fact, never change it")
+        "HUMAN_REQUIRED for single-source critical claims", "models may phrase a locked fact, never change it",
+        minimum="≥ 2 independent sources or human confirmation", evidence="Fact Lock + deterministic QA",
+        abstain="unlockable fact → AWAITING_HUMAN", deployment="PRODUCTION")
     for task, rule in cfg.get("tasks", {}).items():
         if "requires" not in rule:
             continue
-        ok = []
-        for m in measured:
-            sc = task_evidence_score(m, task)
-            if sc is None or rejection(m, task) or not reg.production_allowed(m) or m.id not in installed:
-                continue
-            ok.append((sc, m.id))
-        ok.sort(key=lambda x: (-x[0], x[1]))
-        if ok:
-            add(task, "PRIMARY", f"{ok[0][1]} ({ok[0][0]:.0f})", f"{ok[1][1]} ({ok[1][0]:.0f})" if len(ok) > 1 else None,
-                f"requires {', '.join(rule['requires'])}; production-licensed, installed, ≥ floor")
+        minimum = f"≥ {rule.get('min_score', floor)} on each of {', '.join(rule['requires'])}"
+        native = has_native_fallback(task)
+        cands = route_candidates(reg, task, rows_by, qstate, specs, installed)
+        lic, why = rank_route([c for c in cands if c["licensed"]])
+        unlic, uwhy = rank_route([c for c in cands if not c["licensed"]])
+        ranked = lic + unlic
+
+        def ev(c):
+            return "; ".join(f"{c['model']} {t}={e['score']:.0f}" + (f" @{e['contract'][0]} tok/checker v{e['contract'][1]}"
+                                                                    if e["contract"] else " (contract not recorded)")
+                             for t, e in c["evidence"].items() if e["score"] is not None)
+        if lic:
+            p, f = lic[0], lic[1] if len(lic) > 1 else None
+            add(task, "PRIMARY", f"{p['model']} ({p['score']:.0f})", f"{f['model']} ({f['score']:.0f})" if f else
+                ("APEX native engine" if native else None), why, minimum=minimum,
+                evidence=" | ".join(ev(c) for c in lic[:2]),
+                licence=" / ".join(f"{c['model']}: {c['licence_state']}" for c in lic[:2]),
+                abstain=ROUTE_ABSTAIN[native], deployment="PRODUCTION", comparison=ranked)
+            if unlic and unlic[0]["score"] > p["score"]:
+                rows[-1]["why"] += (f"; evaluation-only {unlic[0]['model']} measured higher ({unlic[0]['score']:.0f}) "
+                                    f"but is {unlic[0]['licence_state']} — not deployable")
+        elif unlic:
+            p = unlic[0]
+            add(task, "EVALUATION_ONLY", f"{p['model']} ({p['score']:.0f})",
+                "APEX native engine" if native else None,
+                f"{p['model']} passes the floor but its licence is {p['licence_state']}: NOT deployable ({uwhy}). "
+                "In production " + ("the APEX native engine runs this task." if native else "no model runs this task."),
+                minimum=minimum, evidence=ev(p), licence=f"{p['model']}: {p['licence_state']}",
+                abstain=ROUTE_ABSTAIN[native], deployment="EVALUATION_ONLY", comparison=ranked)
         else:
-            add(task, "NO_QUALIFIED_MODEL", "APEX native engine" if has_native_fallback(task) else None, None,
-                f"no production-licensed model passes {', '.join(rule['requires'])} at the floor")
+            add(task, "NO_QUALIFIED_MODEL", "APEX native engine" if native else None, None,
+                f"no installed model passes {', '.join(rule['requires'])} at the floor", minimum=minimum,
+                abstain=ROUTE_ABSTAIN[native], deployment="PRODUCTION" if native else "n/a")
     pw = reliable_judges(mode="pairwise")[0]
     add("visual finalist comparison (A/B)", "PRIMARY" if pw else "NO_QUALIFIED_MODEL",
         f"{pw[0]} as SECONDARY_FINALIST_PAIRWISE_JUDGE ({judge_status(pw[0])[0]})" if pw else None,
         "deterministic tournament order",
-        "advisory only; canonical 640 px A4 renders of QA-passed finalists; never facts, dates, Arabic quality")
+        "advisory only; canonical 640 px A4 renders of QA-passed finalists; never facts, dates, Arabic quality",
+        minimum="pairwise ≥ 4/5, position bias ≤ 0.2, legible, stable repeats — at the canonical width",
+        evidence="VISION_JUDGE_ROBUSTNESS.md", licence="Apache-2.0 (PRODUCTION_ALLOWED)" if pw else "n/a",
+        abstain="judge unavailable or disagrees with itself across orders → deterministic tournament order",
+        deployment="PRODUCTION (advisory)" if pw else "n/a")
     ab = reliable_judges()[0]
     add("visual quality scores (absolute council)", "PRIMARY" if ab else "NO_QUALIFIED_MODEL", ab[0] if ab else None,
-        None, "needs absolute calibration ≥ 4/5 AND ROBUSTLY_CALIBRATED; otherwise Vision Quality = NOT_MEASURED")
+        None, "needs absolute calibration ≥ 4/5 AND ROBUSTLY_CALIBRATED; otherwise Vision Quality = NOT_MEASURED",
+        minimum="absolute ≥ 4/5 + ROBUSTLY_CALIBRATED", evidence="VISION_JUDGE_ROBUSTNESS.md",
+        abstain="Vision Quality = NOT_MEASURED (never a guessed score)", deployment="PRODUCTION" if ab else "n/a")
     add("SVG / vector assets", "NO_QUALIFIED_MODEL", "native SVG assets", None,
-        "specialist vector models (StarVector / OmniSVG) not activated: weights host egress-denied")
+        "specialist vector models (StarVector / OmniSVG) not activated: weights host egress-denied",
+        minimum="GDB svg tasks at n ≥ 20", abstain="native SVG assets", deployment="PRODUCTION")
     add("document layout", "DETERMINISTIC_ENGINE", "APEX native layout engine + tournament", None,
-        "specialist layout models not activated")
+        "specialist layout models not activated", minimum="—", evidence="golden ULTRA (deterministic)",
+        abstain="—", deployment="PRODUCTION")
     cmp_ = _load(bench / "apex_design" / "page_compare.json")
     v = verdicts(cmp_) if cmp_ else {}
     winners = [s for s, d in v.items() if not d["safety_losses"] and d["wins"]]
     add("page design (HTML writing)", "DETERMINISTIC_ENGINE", "APEX native engine",
         None, "no model page beat native without a safety loss" if not winners else
-        f"model wins without safety loss: {winners} (not yet promoted; needs the per-page-type comparison)")
-    add("release approval", "HUMAN_REQUIRED", "authenticated approver (token)", None, "hash-chained approval ledger")
-    add("brand assets", "HUMAN_REQUIRED", "apex-one brand import", None, "original APEX package; placeholders fail")
+        f"model wins without safety loss: {winners} (not promoted: run-to-run stability NOT_MEASURED)",
+        minimum="win without a safety loss AND measured stability", evidence="APEX_DESIGN_BENCH.md",
+        abstain="—", deployment="PRODUCTION")
+    add("release approval", "HUMAN_REQUIRED", "authenticated approver (token)", None, "hash-chained approval ledger",
+        minimum="token-authenticated approver bound to job id + artifact hash", abstain="job stays RELEASE_CANDIDATE",
+        deployment="PRODUCTION")
+    add("brand assets", "HUMAN_REQUIRED", "apex-one brand import", None, "original APEX package; placeholders fail",
+        minimum="`apex-one brand validate` = VALID", abstain="Brand Production Gate FAIL", deployment="PRODUCTION")
     evidence = {p.name: _sha(p) for p in (bench / "council_scores.json",
                                           bench / "vision_calibration" / "calibration_results.json",
                                           bench / "apex_design" / "page_compare.json")}
     for p in sorted((bench / "vision_robustness").glob("*.json")) if (bench / "vision_robustness").exists() else []:
         evidence[f"vision_robustness/{p.name}"] = _sha(p)
     return {"frozen_at_commit": _head(), "evidence_sha256_12": evidence, "rows": rows,
-            "rule": "no global best model; per-task evidence; licence + installation required for production"}
+            "rule": "no global best model; per-task evidence on identical measurements; ties go to the cheaper "
+                    "model; licence + installation + production admission required for deployment"}
 
 
 def policy_md(policy: dict[str, Any]) -> list[str]:
@@ -435,10 +567,49 @@ def policy_md(policy: dict[str, Any]) -> list[str]:
            f"Frozen at commit `{policy['frozen_at_commit']}` against evidence "
            + ", ".join(f"`{k}`={v}" for k, v in policy["evidence_sha256_12"].items())
            + " (`docs/evidence/production_routing_policy.json`). Any change to that evidence requires regenerating "
-           "and re-reviewing this table. A model is never routed to merely because it is installed.", "",
-           "| task | decision | primary | fallback | why |", "|---|---|---|---|---|"]
+           "and re-reviewing this table. A model is never routed to merely because it is installed. There is no "
+           "global best model: every route is decided on that task's mandatory capabilities only. "
+           "**EVALUATION_ONLY** = the best measured model is not production-licensed; production runs the native engine "
+           "(or nothing) instead.", "",
+           "| task | decision | primary | fallback | minimum requirement | licence state | deployment | reason |",
+           "|---|---|---|---|---|---|---|---|"]
     for r in policy["rows"]:
-        out.append(f"| {r['task']} | **{r['decision']}** | {r['primary'] or '—'} | {r['fallback'] or '—'} | {r['why']} |")
+        out.append(f"| {r['task']} | **{r['decision']}** | {r['primary'] or '—'} | {r['fallback'] or '—'} | "
+                   f"{r.get('minimum_requirement', '—')} | {r.get('licence_state', 'n/a')} | "
+                   f"{r.get('deployment', 'n/a')} | {r['why']} |")
+    out += ["", "### Measured evidence and abstention per route", "",
+            "| task | measured evidence (task=score @ token budget / checker) | abstention behaviour |", "|---|---|---|"]
+    out += [f"| {r['task']} | {r.get('measured_evidence', '—')} | {r.get('abstention', '—')} |" for r in policy["rows"]]
+    out += ["", *qwen_4b_vs_8b_md(policy)]
+    return out + [""]
+
+
+def qwen_4b_vs_8b_md(policy: dict[str, Any], a: str = "qwen-vl-current", b: str = "qwen3-vl-8b") -> list[str]:
+    """Every route where both Qwen3-VL builds qualify: identical-measurement comparison and the decision."""
+    out = ["### Qwen3-VL 4B vs Qwen3-VL 8B, per route (identical measurements only)", "",
+           "Rule: a higher measured score wins; an exact tie goes to the cheaper model (lower measured peak RAM, then "
+           "latency); a model the machine would not admit in PRODUCTION_MODE never ranks above one it would; scores "
+           "measured under different or unrecorded contracts are NOT compared (order provisional).", "",
+           "| task | 4B score | 8B score | identical measurements | 4B latency | 8B latency | 4B peak RAM | 8B peak RAM | "
+           "4B licence | 8B licence | 4B reliability | 8B reliability | production admission 4B / 8B | decision |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    n = 0
+    for r in policy["rows"]:
+        c = {x["model"]: x for x in r.get("candidates", [])}
+        if a not in c or b not in c:
+            continue
+        n += 1
+        x, y = c[a], c[b]
+        same = comparable(x, y)
+        prim = (r["primary"] or "").split(" ")[0]
+        dec = (f"{'4B' if prim == a else '8B' if prim == b else prim} primary"
+               + ("" if same else " (PROVISIONAL: not identical measurements)"))
+        out.append(f"| {r['task']} | {x['score']:.0f} | {y['score']:.0f} | {'yes' if same else 'NO'} | "
+                   f"{x['latency_s']} s | {y['latency_s']} s | {x['peak_gb']} GB | {y['peak_gb']} GB | "
+                   f"{x['licence_state']} | {y['licence_state']} | {x['reliability']} | {y['reliability']} | "
+                   f"{x['production_admission']} / {y['production_admission']} | {dec} |")
+    if not n:
+        out.append("| — | no route where both qualify |" + " |" * 12)
     return out + [""]
 
 

@@ -175,6 +175,42 @@ def _overlay_local_models(models: dict[str, ModelEntry], providers: dict[str, Pr
                                                           note="local llama-server process on 127.0.0.1")))
 
 
+def pins_path() -> Path:
+    return get_settings().artifacts_dir / "cache" / "pinned_routes.json"
+
+
+def read_pins() -> dict:
+    import json
+
+    try:
+        return json.loads(pins_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def write_pin(model_id: str, provider: str, provider_model_id: str, version: str | None, **extra) -> dict:
+    """Pin a remote model alias (e.g. gemini-flash-latest) to the CONCRETE model a calibration measured, so every
+    later call uses exactly that model and its calibration stamp (model_digest) stays tied to it."""
+    import json
+    from datetime import UTC, datetime
+
+    pins = read_pins()
+    pins[model_id] = {"provider": provider, "provider_model_id": provider_model_id, "version": version,
+                      "at": datetime.now(UTC).isoformat(), **extra}
+    pins_path().parent.mkdir(parents=True, exist_ok=True)
+    pins_path().write_text(json.dumps(pins, indent=2), encoding="utf-8")
+    return pins[model_id]
+
+
+def _overlay_pins(models: dict[str, ModelEntry]) -> None:
+    for mid, pin in read_pins().items():
+        if mid in models:
+            for r in models[mid].routes:
+                if r.provider == pin["provider"]:
+                    r.provider_model_id = pin["provider_model_id"]
+                    r.model_id_verified = True
+
+
 def _overlay_measured_scores(models: dict[str, ModelEntry]) -> None:
     """Router learns from REAL measured benchmark scores (artifacts/bench/council_scores.json)."""
     import os
@@ -220,6 +256,7 @@ def load_registry(config_dir: Path | None = None, *, db_url: str | None = None,
             raise RegistryError(f"design role {role} names unknown native engine {spec['native']}")
 
     _overlay_local_models(models, providers, cfg)
+    _overlay_pins(models)
     _overlay_measured_scores(models)
     _overlay_artifact_license_verifications(licenses, cfg)
     if with_db_overlay:

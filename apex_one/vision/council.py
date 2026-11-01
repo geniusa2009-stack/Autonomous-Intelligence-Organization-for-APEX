@@ -197,8 +197,15 @@ def calibrate(council: VisionCouncil, good_png: Path, bad_pngs: dict[str, Path],
 
 
 def model_digest(model_id: str) -> str | None:
-    """sha256 digest of the local GGUF serving `model_id` (None if it is not a local model)."""
+    """Identity of the exact model behind `model_id`: the sha256 of the local GGUF, or for a pinned remote model
+    `remote:<provider>/<concrete model>@<version>` (None if neither is known). A calibration stamped with one identity
+    never qualifies a different one."""
     from apex_one.compute.local import load_catalogue
+    from apex_one.compute.registry.loader import read_pins
+
+    pin = read_pins().get(model_id)
+    if pin:
+        return f"remote:{pin['provider']}/{pin['provider_model_id']}@{pin.get('version')}"
 
     try:
         _, specs = load_catalogue()

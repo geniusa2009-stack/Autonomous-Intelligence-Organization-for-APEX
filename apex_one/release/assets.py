@@ -65,6 +65,10 @@ def validate_assets(palette: list[str] | None = None) -> dict[str, Any]:
         else:
             m = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
             probs = [f"brand.yaml missing key {k}" for k in spec.get("required_keys", []) if k not in m]
+            if not probs:
+                files = {role: adir / contract["required"][role]["file"] for role in SVG_ROLES}
+                files |= {f"font:{fam}": adir / "fonts" / Path(f).name for fam, f in (m.get("font_files") or {}).items()}
+                probs = manifest_problems(m, files)
         report["assets"][name] = {"status": "VALID" if not probs else
                                   ("PLACEHOLDER" if any("PLACEHOLDER" in x for x in probs) else "INVALID"),
                                   "problems": probs, "sha256": _sha(p)}
@@ -140,6 +144,50 @@ def _svg_dims(path: Path) -> tuple[float, float] | None:
     return (parts[2], parts[3]) if len(parts) == 4 else None
 
 
+def manifest_problems(manifest: dict[str, Any], files: dict[str, Path]) -> list[str]:
+    """Font licences, usage constraints and checksums of brand.yaml (config/asset_contract.yaml)."""
+    probs = []
+    fams = set((manifest.get("fonts") or {}).values())
+    lic = manifest.get("font_licences") or {}
+    probs += [f"brand.yaml font_licences: no licence for font {f!r}" for f in sorted(fams) if not lic.get(f)]
+    u = manifest.get("usage") or {}
+    try:
+        if not float(u.get("min_logo_width_px", 0)) > 0:
+            probs.append("brand.yaml usage.min_logo_width_px must be > 0")
+        if not 0 < float(u.get("clear_space_ratio", 0)) <= 1:
+            probs.append("brand.yaml usage.clear_space_ratio must be in (0, 1]")
+    except (TypeError, ValueError):
+        probs.append("brand.yaml usage values must be numbers")
+    if not u.get("allowed_backgrounds"):
+        probs.append("brand.yaml usage.allowed_backgrounds must list at least one background")
+    sums = manifest.get("checksums") or {}
+    for role, path in files.items():
+        if not path.exists():
+            continue
+        want = sums.get(role)
+        if not want:
+            probs.append(f"brand.yaml checksums: no sha256 for {role}")
+        elif want.lower() != _sha(path):
+            probs.append(f"checksum mismatch for {role} ({path.name}): file changed or corrupted")
+    return probs
+
+
+def brand_status(report: dict[str, Any] | None = None) -> dict[str, Any]:
+    """VALID (production-ready) / INCOMPLETE (nothing wrong, something missing) / INVALID (something present is
+    wrong: placeholder, bad SVG, off-palette, bad manifest, checksum or fingerprint mismatch)."""
+    rep = report if report is not None else validate_assets()
+    reasons = [f"{n}: {r['status']} — {'; '.join(r['problems'])[:160]}" for n, r in rep["assets"].items()
+               if r["status"] != "VALID"] + list(rep.get("fingerprint_problems") or [])
+    states = {r["status"] for r in rep["assets"].values()}
+    if states & {"INVALID", "PLACEHOLDER"} or rep.get("fingerprint_problems"):
+        status = "INVALID"
+    elif "MISSING" in states:
+        status = "INCOMPLETE"
+    else:
+        status = "VALID" if rep["production_ready"] else "INVALID"
+    return {"status": status, "reasons": reasons, "report": rep}
+
+
 def fingerprint(adir: Path) -> dict[str, Any]:
     """Brand fingerprint = hashes of every installed asset + the approved palette and fonts."""
     files = {p.name: _sha(p) for p in sorted(adir.rglob("*")) if p.is_file()
@@ -203,6 +251,9 @@ def import_brand(src: Path, dry_run: bool = False) -> dict[str, Any]:
         if not fp.exists() or fp.suffix.lower() not in FONT_EXT:
             problems.append(f"font {fam}: file {fname} missing or not a font ({FONT_EXT})")
     report["fonts"] = {"roles": fonts, "files": font_files}
+    pkg_files = {role: src / names[role] for role in (*SVG_ROLES, "watermark") if (src / names[role]).exists()}
+    pkg_files |= {f"font:{fam}": src / f for fam, f in font_files.items()}
+    problems += manifest_problems(manifest, pkg_files)
     genome = yaml.safe_load((s.config_dir / "apex_brand.yaml").read_text(encoding="utf-8"))["invariants"]
     report["palette_vs_genome"] = {"only_in_package": sorted(set(map(str.upper, pal_values)) -
                                                              {v.upper() for v in genome["palette"].values()}),

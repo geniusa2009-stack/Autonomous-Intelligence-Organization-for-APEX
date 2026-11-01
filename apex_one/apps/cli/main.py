@@ -215,6 +215,22 @@ def brand_import(folder: Path, dry_run: bool = typer.Option(False, help="validat
     raise typer.Exit(0 if not rep.get("problems") else 1)
 
 
+@brand_app.command("validate")
+def brand_validate(as_json: bool = typer.Option(False, "--json")):
+    """VALID / INCOMPLETE / INVALID for the installed APEX brand package (config/asset_contract.yaml).
+    Exit 0 only for VALID: release stays blocked otherwise; placeholders never count."""
+    from apex_one.release.assets import brand_status
+
+    st = brand_status()
+    if as_json:
+        console.print_json(json.dumps({k: v for k, v in st.items() if k != "report"}))
+    else:
+        console.print(f"brand: [bold]{st['status']}[/]")
+        for r in st["reasons"]:
+            console.print(f"  - {r}")
+    raise typer.Exit(0 if st["status"] == "VALID" else 1)
+
+
 @assets_app.command("validate")
 def assets_validate(as_json: bool = typer.Option(False, "--json")):
     """Validate assets/apex against config/asset_contract.yaml. Exit code 1 when not production-ready."""
@@ -498,9 +514,19 @@ def _auth_guard(fn):
 
 @app.command()
 def approve(job_id: str, token: str = TOKEN_OPT, notes: str = typer.Option(""),
+            artifact_sha256: str = typer.Option(None, "--artifact-sha256",
+                                                help="sha256 of the final.pdf you reviewed; must match the file"),
             by: str = typer.Option(None, help="Optional: must match the token's approver (no impersonation)")):
-    """Human release approval: RELEASE_CANDIDATE -> FINAL (authenticated; recorded in the approval ledger)."""
-    _summary(_auth_guard(lambda: _runner(job_id).approve(token, notes, claimed_name=by)))
+    """Human release approval: RELEASE_CANDIDATE -> FINAL (authenticated; identity, job, time, artifact hash,
+    decision and comment recorded in the hash-chained approval ledger)."""
+    try:
+        _summary(_auth_guard(lambda: _runner(job_id).approve(token, notes, claimed_name=by,
+                                                              artifact_sha256=artifact_sha256)))
+    except typer.Exit:
+        raise
+    except RuntimeError as e:
+        console.print(f"[red]Refused[/]: {e}")
+        raise typer.Exit(4) from e
 
 
 @app.command()
@@ -673,6 +699,24 @@ def benchmark(suite: str = typer.Option("design", help="design | apex-design | m
         console.print_json(json.dumps(res["systems"], ensure_ascii=False))
     else:
         raise typer.BadParameter("suite must be design | apex-design | models | golden")
+
+
+vision_app = typer.Typer(help="Vision-judge validation (same calibration contracts as every local judge).")
+app.add_typer(vision_app, name="vision")
+
+
+@vision_app.command("validate-gemini")
+def vision_validate_gemini(model: str = typer.Option(None, help="Exact Gemini model (default: newest stable flash)"),
+                           force: bool = typer.Option(False, help="Start over instead of resuming")):
+    """Live-test Gemini, pin the exact model/version, run absolute + pairwise calibration, order inversion, repeat
+    stability and legibility at 640 px, the width sweep only if 640 qualifies, then regenerate the reports.
+    Exit 0 = completed (any verdict, UNQUALIFIED included), 2 = blocked on a human step, 3 = infrastructure error."""
+    from apex_one.vision.gemini_validation import validate_gemini
+
+    code, rep = validate_gemini(model=model, force=force)
+    console.print_json(json.dumps({k: rep.get(k) for k in ("status", "next", "model", "verdict", "verdict_reason")},
+                                  ensure_ascii=False))
+    raise typer.Exit(code)
 
 
 @app.command("reports")

@@ -291,8 +291,12 @@ def safety_multiplier(spec, estimates: dict[str, Any] | None = None) -> tuple[fl
 
 
 def measured_peak(spec, qstate: dict[str, Any] | None) -> float | None:
+    """The HIGHEST peak RSS ever measured for this artifact (any run, any scheduled cycle, the estimate record)."""
     rec = ((qstate or {}).get("done", {}).get(f"{spec.key}:ram") or {}).get("info") or {}
-    return rec.get("peak_rss_gb") or (load_estimates().get(spec.key) or {}).get("measured_peak_gb")
+    vals = [rec.get("peak_rss_gb"), *[c.get("peak_rss_gb") for c in rec.get("cycles") or []],
+            (load_estimates().get(spec.key) or {}).get("measured_peak_gb")]
+    vals = [float(v) for v in vals if v]
+    return max(vals) if vals else None
 
 
 def expected_peak(spec, qstate: dict[str, Any] | None = None) -> tuple[float, str]:

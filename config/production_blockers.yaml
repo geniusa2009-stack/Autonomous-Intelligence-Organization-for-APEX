@@ -1,0 +1,187 @@
+# AUTHORITATIVE production-blocker source. PRODUCTION_BLOCKERS.md and HUMAN_ACTIONS_REQUIRED.md are generated from
+# this file by `apex-one reports` (apex_one/lab/blockers.py); edit here, never in the Markdown.
+#
+# status is NOT written by hand: each blocker names a `probe` (apex_one/lab/blockers.py::PROBES) that checks the
+# live state (secret present, approver registered, brand package valid, load report passing, ...). A blocker is
+# RESOLVED only when its probe says so.
+#
+# severity: CRITICAL = blocks PRODUCTION_READY directly; HIGH = blocks a mandatory maturity dimension's evidence;
+#           MEDIUM = limits capability (a NOT_MEASURED area) but has a safe fallback; LOW = nice to have.
+schema_version: 1
+blockers:
+  - blocker_id: BRAND-ASSETS-MISSING
+    description: Original APEX brand package (logo, logo-on-dark, robot, brand.yaml with palette, fonts, font licences, usage constraints, checksums) is not installed; only bundled placeholders exist.
+    affected_subsystem: release / Brand Production Gate
+    owner: APEX brand owner (human)
+    requires_human_action: true
+    requires_external_access: false
+    can_be_solved_offline: false
+    severity: CRITICAL
+    maturity_dimension: BRAND_ASSETS_VALIDATED
+    probe: brand_valid
+    depends_on: []
+    exact_unblock_condition: "`apex-one brand validate` prints VALID (every required asset present, vector, on-palette, not a placeholder, checksums match, fingerprint recorded)"
+    next_executable_action: "apex-one brand import <folder> --dry-run, fix what it reports, then apex-one brand import <folder>"
+    human_action:
+      letter: B
+      title: Supply the official APEX brand package
+      why: Real guides cannot become release candidates with placeholder branding (Brand Production Gate FAIL), and placeholders are never embedded in FINAL artifacts.
+      what: "A folder with logo.svg, logo-on-dark.svg, robot.svg (vector SVG, viewBox, no raster, palette colours only), the font files, and brand.yaml declaring approved_by, approved_at, palette {name: '#RRGGBB'}, fonts {role: family}, font_files {family: file}, font_licences {family: licence}, usage {min_logo_width_px, clear_space_ratio, allowed_backgrounds} and checksums {file: sha256}. Contract: config/asset_contract.yaml."
+      command_after: "apex-one brand import <folder>  →  apex-one brand validate (VALID)"
+
+  - blocker_id: APPROVER-MISSING
+    description: No release approver is registered, so no release decision can be authenticated.
+    affected_subsystem: release / human approval
+    owner: APEX release owner (human)
+    requires_human_action: true
+    requires_external_access: false
+    can_be_solved_offline: false
+    severity: CRITICAL
+    maturity_dimension: HUMAN_APPROVAL_VALIDATED
+    probe: approver_registered
+    depends_on: []
+    exact_unblock_condition: "`apex-one auth list` shows at least one active release_approver AND `apex-one auth verify-ledger` reports the ledger intact"
+    next_executable_action: 'apex-one auth add-approver "<full name>"'
+    human_action:
+      letter: C
+      title: Create (or name) the authorised release approver
+      why: Approval identity comes only from an authenticated token; a typed name is never accepted. Without an approver no guide can reach FINAL.
+      what: The full name of the person who may approve releases, who then runs the command below themselves and stores the token (shown once) in a password manager.
+      command_after: 'APEX_APPROVER_TOKEN=<token> apex-one approve <job_id> --artifact-sha256 <sha of final.pdf>'
+
+  - blocker_id: REAL-OPPORTUNITY-UNVALIDATED
+    description: No real (non-synthetic) opportunity has reached RELEASE_CANDIDATE. Official sites are egress-denied here; the CNCF LFX 2027 job stopped AWAITING_HUMAN (single-source deadline; funding and eligibility pages unreachable).
+    affected_subsystem: research / Fact Lock / release
+    owner: APEX editor (human) supplying authoritative evidence
+    requires_human_action: true
+    requires_external_access: true
+    can_be_solved_offline: false
+    severity: CRITICAL
+    maturity_dimension: REAL_OPPORTUNITY_VALIDATED
+    probe: real_job_release_candidate
+    depends_on: [BRAND-ASSETS-MISSING]
+    exact_unblock_condition: "a non-synthetic job built from an evidence pack (`apex-one evidence run <pack>`) reaches RELEASE_CANDIDATE with every critical fact locked from ≥ 2 sources or human-confirmed"
+    next_executable_action: "apex-one evidence init <pack-dir>; save the official pages/PDFs into it; apex-one evidence check <pack-dir>"
+    human_action:
+      letter: D
+      title: Provide authoritative opportunity evidence
+      why: The guide's critical facts (deadline, eligibility, funding) must come from official sources; this container cannot reach them.
+      what: "For ONE opportunity: the official pages saved as HTML/PDF (deadline, eligibility, funding/stipend pages), their URLs, and — for any fact that only one source states — your written confirmation (name + date). Put them in an evidence pack (layout: `apex-one evidence init <dir>` creates it)."
+      command_after: "apex-one evidence run <pack-dir>  (source extraction → Fact Lock → validations → guide → QA → release candidate)"
+
+  - blocker_id: PRODUCTION-LOAD-UNVALIDATED
+    description: PRODUCTION_MODE has not been exercised under concurrent load with a real model and real renders.
+    affected_subsystem: compute scheduler / job queue
+    owner: Claude (autonomous)
+    requires_human_action: false
+    requires_external_access: false
+    can_be_solved_offline: true
+    severity: HIGH
+    maturity_dimension: PRODUCTION_LOAD_VALIDATED
+    probe: load_test_passed
+    depends_on: []
+    exact_unblock_condition: "artifacts/bench/load_test/report.json: every scenario PASS in PRODUCTION_MODE with the production text model (Qwen3-VL 4B) and real Chromium renders, zero OOM, zero swap, failure rate within the scenario's bound"
+    next_executable_action: "python -m apex_one.lab.load_test --model qwen3-vl-4b-q4kxl"
+
+  - blocker_id: GEMINI-KEY-MISSING
+    description: GEMINI_API_KEY is not set; Gemini (free tier) is the only legal $0 remote vision route that answers from this container.
+    affected_subsystem: vision gate / remote free compute
+    owner: account owner (human)
+    requires_human_action: true
+    requires_external_access: true
+    can_be_solved_offline: false
+    severity: MEDIUM
+    maturity_dimension: VISION_GATE
+    probe: gemini_key_present
+    depends_on: []
+    exact_unblock_condition: "GEMINI_API_KEY present, a free_tier_no_billing attestation recorded, AND `apex-one vision validate-gemini` passes its live test (the calibration outcome itself may be UNQUALIFIED — that still unblocks)"
+    next_executable_action: "apex-one vision validate-gemini  (prints BLOCKED_NO_KEY until the key exists)"
+    human_action:
+      letter: A
+      title: Create a Gemini free-tier API key
+      why: No local model is a robust visual judge (Qwen3-VL 8B is canonical-640-only; larger local judges do not fit 16 GB). Gemini is the only reachable free route left to test. It may still fail calibration.
+      what: "(1) A free-tier key from Google AI Studio in a project with NO billing account, stored as the environment secret GEMINI_API_KEY (environment settings → secrets). (2) Your attestation that it is free-tier with billing disabled — the $0 firewall refuses every remote route without one: apex-one providers attest gemini --by \"<your name>\" --note \"AI Studio key, no billing\"."
+      command_after: "apex-one vision validate-gemini  (exit 0 = completed with a verdict, 2 = still blocked, 3 = infrastructure error; re-run resumes)"
+
+  - blocker_id: REMOTE-PROVIDERS-EGRESS-DENIED
+    description: The environment's egress proxy denies NVIDIA NIM, Groq, OpenRouter, Cloudflare Workers AI, Hugging Face, Mistral and Together (CONNECT 403).
+    affected_subsystem: remote free compute / design specialists / GDB dataset
+    owner: environment administrator (human)
+    requires_human_action: true
+    requires_external_access: true
+    can_be_solved_offline: false
+    severity: MEDIUM
+    maturity_dimension: REMOTE_FREE_COMPUTE_VALIDATED
+    probe: remote_provider_live
+    depends_on: []
+    exact_unblock_condition: "at least one remote $0 provider LIVE_TESTED by `apex-one providers live-test` with a correct structured answer"
+    next_executable_action: "apex-one providers live-test"
+    human_action:
+      letter: F
+      title: Allow the free-provider hosts (optional)
+      why: Remote free models are a capacity and vision-judge fallback; every one is denied by the egress policy today.
+      what: "Environment settings → Network access → allowed domains: integrate.api.nvidia.com, api.groq.com, openrouter.ai, api.cloudflare.com, huggingface.co (and its CDN). Plus any provider key the provider requires (free tier only)."
+      command_after: "apex-one providers live-test"
+
+  - blocker_id: LICENCE-VERIFICATION-PENDING
+    description: Gemma 3 (4B, 12B) and Nemotron 3 Nano are DECLARED_BUT_UNVERIFIED; gpt-oss 20B is UNKNOWN. They may be evaluated, never deployed; routes they lead are EVALUATION_ONLY.
+    affected_subsystem: model routing / licence registry
+    owner: APEX legal / owner (human)
+    requires_human_action: true
+    requires_external_access: false
+    can_be_solved_offline: false
+    severity: MEDIUM
+    maturity_dimension: LOCAL_MODEL_ROUTING_VALIDATED
+    blocks_dimension: false        # unlicensed models are simply not deployed; their routes run the native engine
+    probe: licences_verified
+    depends_on: []
+    exact_unblock_condition: "each pending licence (lic-gemma, lic-gemma3-12b, lic-nvidia-nemotron-nano, lic-gpt-oss) recorded by a named human with `apex-one license verify` as PRODUCTION_ALLOWED or BLOCKED (BLOCKED also resolves the blocker: the decision is what is missing)"
+    next_executable_action: "read docs/evidence/licence_review_pack.md, then decide per model"
+    human_action:
+      letter: E
+      title: Decide the pending model licences
+      why: Gemma 3 4B is the only local model that clears the Egyptian-Arabic guide floor, and it cannot be deployed while its licence is unverified. The others only add fallbacks.
+      what: "A yes/no per model (Gemma 3 4B, Gemma 3 12B, Nemotron 3 Nano 4B, gpt-oss 20B) after reading the licence evidence prepared in docs/evidence/licence_review_pack.md — by a person entitled to make that call."
+      command_after: "apex-one license verify <licence-id> --license \"<licence name>\" --state PRODUCTION_ALLOWED --source <URL of the licence text you read> --by \"<name>\"  (or --state BLOCKED)"
+
+  - blocker_id: NO-ROBUST-VISION-JUDGE
+    description: No ROBUSTLY_CALIBRATED vision judge exists; absolute visual quality is NOT_MEASURED and the only judge (Qwen3-VL 8B) is canonical-640-only and advisory.
+    affected_subsystem: vision gate
+    owner: Claude (runs calibration) once a candidate is reachable
+    requires_human_action: false
+    requires_external_access: true
+    can_be_solved_offline: false
+    severity: MEDIUM
+    maturity_dimension: VISION_GATE
+    probe: robust_vision_judge
+    depends_on: [GEMINI-KEY-MISSING]
+    exact_unblock_condition: "a judge passes absolute ≥ 4/5, pairwise ≥ 4/5, position bias ≤ 0.2, legibility and repeat stability at every width (ROBUSTLY_CALIBRATED)"
+    next_executable_action: "apex-one vision validate-gemini (after GEMINI-KEY-MISSING), or a ≥ 24 GB machine for larger local judges"
+
+  - blocker_id: GDB-DATASET-PARTIAL
+    description: GraphicDesignBench runs 6 of 39 tasks offline (n=2); the full dataset is on huggingface.co (egress-denied).
+    affected_subsystem: design model validation
+    owner: environment administrator (human) for network access
+    requires_human_action: false
+    requires_external_access: true
+    can_be_solved_offline: false
+    severity: LOW
+    maturity_dimension: DESIGN_MODEL_VALIDATION
+    probe: gdb_full
+    depends_on: [REMOTE-PROVIDERS-EGRESS-DENIED]
+    exact_unblock_condition: "huggingface.co reachable and every GDB task runs at n ≥ 20 (UNSUPPORTED tasks stay UNSUPPORTED, never failures)"
+    next_executable_action: "after huggingface.co is allowed: re-run the queue's gdb steps"
+
+  - blocker_id: LARGE-MODELS-RESOURCE-BLOCKED
+    description: Qwen3-VL 8B Q8_K_XL (expected peak 21.0 GB) and gpt-oss 20B (21.1 GB) cannot be admitted on this 16 GB machine; they were not downloaded.
+    affected_subsystem: compute scheduler
+    owner: environment owner (hardware)
+    requires_human_action: false
+    requires_external_access: false
+    can_be_solved_offline: false
+    severity: LOW
+    maturity_dimension: VISION_GATE
+    probe: large_models_admitted
+    depends_on: []
+    exact_unblock_condition: "a machine whose idle MemAvailable admits the expected peak + reserves + the evaluation headroom (≥ ~24 GB RAM)"
+    next_executable_action: "on such a machine: APEX_RETRY_BLOCKED=1 scripts/snapshot_run.sh <commit> scripts/validation_queue.py --max-steps 3"

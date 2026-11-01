@@ -382,6 +382,18 @@ def build_reports(repo: Path | None = None) -> dict[str, str]:
     for src in (bench / "server_reliability" / "resources.jsonl",):
         if src.exists():
             shutil.copy(src, evidence / f"server_{src.name}")
+    from apex_one.lab.blockers import (blockers_md, evaluate, human_actions_md, licence_review_md, maturity,
+                                       update_current_state)
+
+    ev = evaluate()
+    mat = maturity(ev, policy)
+    files["PRODUCTION_BLOCKERS.md"] = blockers_md(ev, mat)
+    files["HUMAN_ACTIONS_REQUIRED.md"] = human_actions_md(ev)
+    (evidence / "licence_review_pack.md").write_text(licence_review_md(), encoding="utf-8")
+    (evidence / "maturity.json").write_text(json.dumps({"maturity": mat, "blockers": [
+        {k: b[k] for k in ("blocker_id", "status", "severity", "probe_evidence")} for b in ev]}, indent=2,
+        ensure_ascii=False), encoding="utf-8")
+    update_current_state(repo / "CURRENT_STATE.json", mat, ev)
     for name, text in files.items():
         (repo / name).write_text(text, encoding="utf-8")
     return {k: str(repo / k) for k in files}

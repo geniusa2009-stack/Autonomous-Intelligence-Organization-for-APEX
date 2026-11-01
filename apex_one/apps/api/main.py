@@ -31,6 +31,7 @@ class Approval(BaseModel):
     notes: str = ""
     approver: str | None = None      # optional restatement; must match the authenticated token (no impersonation)
     target: str = "CREATIVE_DIRECTIONS"
+    artifact_sha256: str | None = None   # sha256 of the final.pdf the approver reviewed; must match the current file
 
 
 class Preference(BaseModel):
@@ -132,7 +133,8 @@ def _decide(job_id: str, body: Approval, authorization: str | None, approve: boo
         raise HTTPException(401 if token is None or "invalid" in str(e) else 403, str(e)) from e
     r = _load(job_id)
     try:
-        job = r.approve(token, body.notes, claimed_name=body.approver) if approve else \
+        job = r.approve(token, body.notes, claimed_name=body.approver, artifact_sha256=body.artifact_sha256) \
+            if approve else \
             r.reject(token, body.notes, body.target, claimed_name=body.approver)
         return _summary(job)
     except RuntimeError as e:

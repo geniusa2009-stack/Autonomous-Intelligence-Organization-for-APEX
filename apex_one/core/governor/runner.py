@@ -1029,10 +1029,19 @@ class JobRunner:
             return S.FINAL
         if gate.status == "REJECTED":
             return S.LEARN
-        raise Pause(JobStatus.RELEASE_CANDIDATE, f"RELEASE_CANDIDATE ready: review final.pdf and run "
-                                              f"`apex-one approve {self.job.job_id} --by <name>`")
+        from apex_one.core.auth import file_sha256
+
+        sha = file_sha256(self.ws.root / "final.pdf")
+        raise Pause(JobStatus.RELEASE_CANDIDATE, f"RELEASE_CANDIDATE ready: review final.pdf (sha256 {sha}) and run "
+                                              f"`APEX_APPROVER_TOKEN=<token> apex-one approve {self.job.job_id} "
+                                              f"--artifact-sha256 {sha}`")
 
     def h_final(self) -> S:
+        from apex_one.release import approval_binding_problems
+
+        probs = approval_binding_problems(self.ws.root)
+        if probs:   # the artifact must be byte-identical to what the authenticated approver approved
+            raise Pause(JobStatus.BLOCKED, "FINAL refused: " + "; ".join(probs))
         self.job.status = JobStatus.FINAL
         return S.LEARN
 
@@ -1064,9 +1073,12 @@ class JobRunner:
         self.save()
 
     # ================================================================== human actions
-    def approve(self, token: str | None, notes: str = "", claimed_name: str | None = None) -> Job:
+    def approve(self, token: str | None, notes: str = "", claimed_name: str | None = None,
+                artifact_sha256: str | None = None) -> Job:
         """Human release approval. The approver is whoever the TOKEN authenticates; a claimed name that differs
-        is rejected as forged. The decision is appended to the hash-chained approval ledger."""
+        is rejected as forged. `artifact_sha256` (the final.pdf the approver reviewed) must match the current file,
+        so nobody approves bytes they did not see. The decision — identity, job id, timestamp, artifact hashes,
+        decision, comment — is appended to the hash-chained approval ledger."""
         from apex_one.core.auth import append_ledger, authenticate, check_claimed_name, file_sha256
         from apex_one.release import write_approval
 
@@ -1075,10 +1087,15 @@ class JobRunner:
         if self.sm.state != S.HUMAN_APPROVAL or self.job.status not in (JobStatus.RELEASE_CANDIDATE,
                                                                          JobStatus.AWAITING_HUMAN):
             raise RuntimeError(f"job is in {self.sm.state.value}/{self.job.status.value}; nothing to approve")
+        pdf_sha = file_sha256(self.ws.root / "final.pdf")
+        if artifact_sha256 is not None and artifact_sha256.strip().lower() != pdf_sha:
+            raise RuntimeError(f"artifact mismatch: approver reviewed {artifact_sha256[:12]}, final.pdf is "
+                               f"{str(pdf_sha)[:12]} — review the current file and approve again")
         entry = append_ledger({"event": "release_decision", "decision": "APPROVED", "job_id": self.job.job_id,
                                "approver": ident.name, "approver_id": ident.approver_id, "notes": notes,
                                "final_html_sha256": file_sha256(self.ws.root / "final.html"),
-                               "final_pdf_sha256": file_sha256(self.ws.root / "final.pdf")})
+                               "final_pdf_sha256": pdf_sha,
+                               "reviewed_sha256_stated": artifact_sha256 is not None})
         gate = next(g for g in self.job.gates if g.name == "release-approval")
         gate.status, gate.approver, gate.decided_at, gate.notes = "APPROVED", ident.name, datetime.now(UTC), notes
         write_approval(self.ws.root, ident.name, "APPROVED", notes, ledger=entry)
@@ -1090,7 +1107,7 @@ class JobRunner:
 
     def reject(self, token: str | None, notes: str, target: str = "CREATIVE_DIRECTIONS",
                claimed_name: str | None = None) -> Job:
-        from apex_one.core.auth import append_ledger, authenticate, check_claimed_name
+        from apex_one.core.auth import append_ledger, authenticate, check_claimed_name, file_sha256
         from apex_one.release import write_approval
 
         ident = authenticate(token)
@@ -1100,7 +1117,8 @@ class JobRunner:
             raise RuntimeError("job is not awaiting approval")
         entry = append_ledger({"event": "release_decision", "decision": "REJECTED", "job_id": self.job.job_id,
                                "approver": ident.name, "approver_id": ident.approver_id, "notes": notes,
-                               "return_to": target})
+                               "return_to": target, "final_html_sha256": file_sha256(self.ws.root / "final.html"),
+                               "final_pdf_sha256": file_sha256(self.ws.root / "final.pdf")})
         approver = ident.name
         gate.status, gate.approver, gate.decided_at, gate.notes = "PENDING", approver, datetime.now(UTC), notes
         write_approval(self.ws.root, approver, "REJECTED", notes, ledger=entry)

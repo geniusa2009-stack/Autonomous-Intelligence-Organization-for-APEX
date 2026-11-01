@@ -31,6 +31,7 @@ import time
 import traceback
 from pathlib import Path
 
+from apex_one.lab.benchmarks.vision_calibration import stamp_calibration
 from apex_one.settings import get_settings
 
 ROBUST_WIDTHS = ("640", "320", "480", "768", "native", "1024")   # canonical first, then the sweep
@@ -102,20 +103,6 @@ class State:
         if not failed:
             self.data["failed"].pop(key, None)
         self.path.write_text(json.dumps(self.data, indent=2, default=str))
-
-
-def stamp_calibration(calib: Path, section: str, model_id: str, result: dict) -> None:
-    from datetime import UTC, datetime
-
-    from apex_one.core.schemas.common import stable_hash
-    from apex_one.vision.council import model_digest
-
-    path = calib / "calibration_results.json"
-    data = json.loads(path.read_text()) if path.exists() else {"models": {}}
-    result.update({"at": datetime.now(UTC).isoformat(), "model_digest": model_digest(model_id),
-                   "pages_hash": stable_hash((calib / "calibration_pages.json").read_text(encoding="utf-8"))})
-    data.setdefault(section, {})[model_id] = result
-    path.write_text(json.dumps(data, indent=2))
 
 
 def server_memory(srv) -> dict[str, float] | None:

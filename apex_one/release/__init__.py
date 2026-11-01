@@ -81,7 +81,38 @@ def export_bundle(job_dir: Path, out: Path) -> Path:
 
 
 def write_approval(job_dir: Path, approver: str, decision: str, notes: str, ledger: dict | None = None) -> dict:
-    rec = {"approver": approver, "decision": decision, "notes": notes, "at": datetime.now(UTC).isoformat(),
-           "authenticated": True, "ledger_seq": (ledger or {}).get("seq"), "ledger_hash": (ledger or {}).get("hash")}
+    """The job-side copy of a release decision: who (authenticated), which job, when, which artifact bytes
+    (sha256 of final.pdf / final.html at decision time), what, and the ledger entry that proves it."""
+    led = ledger or {}
+    rec = {"job_id": led.get("job_id"), "approver": approver, "approver_id": led.get("approver_id"),
+           "decision": decision, "notes": notes, "at": led.get("at") or datetime.now(UTC).isoformat(),
+           "authenticated": True, "final_pdf_sha256": led.get("final_pdf_sha256"),
+           "final_html_sha256": led.get("final_html_sha256"), "ledger_seq": led.get("seq"),
+           "ledger_hash": led.get("hash")}
     (job_dir / "human_approval.json").write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
     return rec
+
+
+def approval_binding_problems(job_dir: Path) -> list[str]:
+    """A FINAL artifact must be byte-identical to what the authenticated approver approved, and the approval must
+    exist, unaltered, in the hash-chained ledger."""
+    from apex_one.core.auth import _entries, file_sha256, verify_ledger
+
+    p = job_dir / "human_approval.json"
+    if not p.exists():
+        return ["no human_approval.json: never approved"]
+    rec = json.loads(p.read_text(encoding="utf-8"))
+    probs = []
+    if rec.get("decision") != "APPROVED":
+        probs.append(f"decision is {rec.get('decision')}, not APPROVED")
+    for name, key in (("final.pdf", "final_pdf_sha256"), ("final.html", "final_html_sha256")):
+        now = file_sha256(job_dir / name)
+        if rec.get(key) != now:
+            probs.append(f"{name} changed after approval (approved {str(rec.get(key))[:12]}, now {str(now)[:12]})")
+    ok, chain = verify_ledger()
+    if not ok:
+        probs.append(f"approval ledger broken: {chain[:2]}")
+    led = next((e for e in _entries() if e.get("seq") == rec.get("ledger_seq")), None)
+    if not led or led.get("hash") != rec.get("ledger_hash") or led.get("job_id") != rec.get("job_id"):
+        probs.append("approval record does not match its ledger entry")
+    return probs

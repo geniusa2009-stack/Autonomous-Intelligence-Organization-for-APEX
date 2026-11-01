@@ -73,3 +73,18 @@ def run_calibration(model_ids: list[str], out_dir: Path, intent: str = "one-page
     prev.setdefault("models" if mode == "absolute" else "pairwise_models", {}).update(res["models"])
     (out_dir / "calibration_results.json").write_text(json.dumps(prev, indent=2), encoding="utf-8")
     return res
+
+
+def stamp_calibration(calib: Path, section: str, model_id: str, result: dict) -> None:
+    """Record a calibration result stamped with time, the exact model identity (model_digest) and the page hash."""
+    from datetime import UTC, datetime
+
+    from apex_one.core.schemas.common import stable_hash
+    from apex_one.vision.council import model_digest
+
+    path = calib / "calibration_results.json"
+    data = json.loads(path.read_text()) if path.exists() else {"models": {}}
+    result.update({"at": datetime.now(UTC).isoformat(), "model_digest": model_digest(model_id),
+                   "pages_hash": stable_hash((calib / "calibration_pages.json").read_text(encoding="utf-8"))})
+    data.setdefault(section, {})[model_id] = result
+    path.write_text(json.dumps(data, indent=2))
