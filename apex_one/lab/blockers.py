@@ -271,11 +271,13 @@ def blockers_md(ev: list[dict[str, Any]], mat: dict[str, dict[str, Any]]) -> str
                    f"{yn[b['requires_external_access']]} | {yn[b['can_be_solved_offline']]} | "
                    f"{b['exact_unblock_condition']} | `{b['next_executable_action']}` | {b['probe_evidence']} |")
     out += ["", "## Blocker graph", "",
-            "Blockers → the maturity dimension each one holds open → PRODUCTION_READY (mandatory dimensions only).", "",
+            "Blockers → the maturity dimension each one holds open (dashed: limits capability, has a safe fallback, "
+            "does not hold it open) → PRODUCTION_READY (mandatory dimensions only).", "",
             "```mermaid", "flowchart LR"]
     for b in ev:
-        if b["status"] == "OPEN":
-            out.append(f"  {b['blocker_id'].replace('-', '_')}[\"{b['blocker_id']} ({b['severity']})\"] --> "
+        if b["status"] == "OPEN":     # dashed = limits capability (safe fallback), does not hold the dimension open
+            edge = "-->" if b.get("blocks_dimension", True) else "-. limits .->"
+            out.append(f"  {b['blocker_id'].replace('-', '_')}[\"{b['blocker_id']} ({b['severity']})\"] {edge} "
                        f"{b['maturity_dimension']}")
             out += [f"  {d.replace('-', '_')} --> {b['blocker_id'].replace('-', '_')}" for d in b.get("depends_on") or []]
     for dim, v in mat.items():
