@@ -1,6 +1,6 @@
 # Human actions required
 
-_Generated 2026-11-02 13:12 UTC by `apex-one reports` at commit `9b7b854` from measured artifacts._
+_Generated 2026-11-02 13:18 UTC by `apex-one reports` at commit `daab43f` from measured artifacts._
 
 Only what a person must do. Everything Claude can still do autonomously is in NEXT_ACTIONS.md. Generated from `config/production_blockers.yaml`; an action disappears when its probe sees it done.
 

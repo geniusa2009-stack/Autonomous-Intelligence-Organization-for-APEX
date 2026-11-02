@@ -1,6 +1,6 @@
 # Production blockers
 
-_Generated 2026-11-02 13:12 UTC by `apex-one reports` at commit `9b7b854` from measured artifacts._
+_Generated 2026-11-02 13:18 UTC by `apex-one reports` at commit `daab43f` from measured artifacts._
 
 Authoritative source: `config/production_blockers.yaml`. Status comes from a live probe (`apex_one/lab/blockers.py`), never from hand-written text. PRODUCTION_READY is **NO** — unmet mandatory dimensions: ['REAL_OPPORTUNITY_VALIDATED', 'BRAND_ASSETS_VALIDATED', 'HUMAN_APPROVAL_VALIDATED'].
 
@@ -19,7 +19,7 @@ Authoritative source: `config/production_blockers.yaml`. Status comes from a liv
 
 ## Blocker graph
 
-Blockers → the maturity dimension each one holds open → PRODUCTION_READY (mandatory dimensions only).
+Blockers → the maturity dimension each one holds open (dashed: limits capability, has a safe fallback, does not hold it open) → PRODUCTION_READY (mandatory dimensions only).
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
   REAL_OPPORTUNITY_UNVALIDATED["REAL-OPPORTUNITY-UNVALIDATED (CRITICAL)"] --> REAL_OPPORTUNITY_VALIDATED
   BRAND_ASSETS_MISSING --> REAL_OPPORTUNITY_UNVALIDATED
   GEMINI_KEY_MISSING["GEMINI-KEY-MISSING (MEDIUM)"] --> VISION_GATE
-  LICENCE_VERIFICATION_PENDING["LICENCE-VERIFICATION-PENDING (MEDIUM)"] --> LOCAL_MODEL_ROUTING_VALIDATED
+  LICENCE_VERIFICATION_PENDING["LICENCE-VERIFICATION-PENDING (MEDIUM)"] -. limits .-> LOCAL_MODEL_ROUTING_VALIDATED
   NO_ROBUST_VISION_JUDGE["NO-ROBUST-VISION-JUDGE (MEDIUM)"] --> VISION_GATE
   GEMINI_KEY_MISSING --> NO_ROBUST_VISION_JUDGE
   REMOTE_PROVIDERS_EGRESS_DENIED["REMOTE-PROVIDERS-EGRESS-DENIED (MEDIUM)"] --> REMOTE_FREE_COMPUTE_VALIDATED
