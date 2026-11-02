@@ -1,5 +1,5 @@
 {
-  "frozen_at_commit": "bdc6bce",
+  "frozen_at_commit": "2a5fbdb",
   "evidence_sha256_12": {
     "council_scores.json": "7b6e9f78349f",
     "calibration_results.json": "858592959e12",
@@ -13,162 +13,1265 @@
       "decision": "DETERMINISTIC_ENGINE",
       "primary": "apex_one.core.dates",
       "fallback": null,
-      "why": "permanently outside model reasoning; the $0 firewall refuses date.* for every model"
+      "why": "permanently outside model reasoning; the $0 firewall refuses date.* for every model",
+      "minimum_requirement": "exact calendar arithmetic",
+      "measured_evidence": "tests/test_dates.py; every model's date task is irrelevant here",
+      "licence_state": "n/a",
+      "abstention": "no model fallback exists by design",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "critical locked facts (deadline, eligibility, funding)",
       "decision": "DETERMINISTIC_ENGINE",
       "primary": "evidence system + fact locks",
       "fallback": "HUMAN_REQUIRED for single-source critical claims",
-      "why": "models may phrase a locked fact, never change it"
+      "why": "models may phrase a locked fact, never change it",
+      "minimum_requirement": "≥ 2 independent sources or human confirmation",
+      "measured_evidence": "Fact Lock + deterministic QA",
+      "licence_state": "n/a",
+      "abstention": "unlockable fact → AWAITING_HUMAN",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "editorial.write.egyptian_guide",
-      "decision": "NO_QUALIFIED_MODEL",
-      "primary": "APEX native engine",
-      "fallback": null,
-      "why": "no production-licensed model passes editorial.write.egyptian_arabic, editorial.write.fact_preserving at the floor"
+      "decision": "EVALUATION_ONLY",
+      "primary": "gemma-multimodal (50)",
+      "fallback": "APEX native engine",
+      "why": "gemma-multimodal passes the floor but its licence is DECLARED_BUT_UNVERIFIED: NOT deployable (single qualified candidate). In production the APEX native engine runs this task.",
+      "minimum_requirement": "≥ 50 on each of editorial.write.egyptian_arabic, editorial.write.fact_preserving",
+      "measured_evidence": "gemma-multimodal egyptian_arabic=0 (contract not recorded); gemma-multimodal fact_preservation=50 (contract not recorded)",
+      "licence_state": "gemma-multimodal: DECLARED_BUT_UNVERIFIED",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "EVALUATION_ONLY",
+      "candidates": [
+        {
+          "model": "gemma-multimodal",
+          "score": 50.0,
+          "evidence": {
+            "egyptian_arabic": {
+              "score": 0.0,
+              "contract": null,
+              "latency_s": 3.5
+            },
+            "fact_preservation": {
+              "score": 50.0,
+              "contract": null,
+              "latency_s": 6.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 5.1,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        }
+      ]
     },
     {
       "task": "editorial.write.english",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires editorial.write.general; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of editorial.write.general",
+      "measured_evidence": "qwen-vl-current english_factual_writing=100 @500 tok/checker v2 | qwen3-vl-8b english_factual_writing=100 @500 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "english_factual_writing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 5.0
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 5.0,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "english_factual_writing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 12.3
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 12.3,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "english_factual_writing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 38.9
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 38.9,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "english_factual_writing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 7.3
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 7.3,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "english_factual_writing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 15.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 15.7,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "editorial.write.bilingual",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (67)",
-      "why": "requires editorial.write.bilingual, editorial.write.fact_preserving; production-licensed, installed, ≥ floor"
+      "why": "qwen-vl-current measured higher (100 vs 67) on identical measurements",
+      "minimum_requirement": "≥ 50 on each of editorial.write.bilingual, editorial.write.fact_preserving",
+      "measured_evidence": "qwen-vl-current en_ar_mixing=100 @500 tok/checker v2; qwen-vl-current fact_preservation=100 @500 tok/checker v2 | qwen3-vl-8b en_ar_mixing=67 @500 tok/checker v2; qwen3-vl-8b fact_preservation=100 @500 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "en_ar_mixing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 8.7
+            },
+            "fact_preservation": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 5.2
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 6.9,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 66.66666666666667,
+          "evidence": {
+            "en_ar_mixing": {
+              "score": 66.66666666666667,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 22.4
+            },
+            "fact_preservation": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 12.4
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 17.4,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "en_ar_mixing": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 54.0
+            },
+            "fact_preservation": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 20.9
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 37.5,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 50.0,
+          "evidence": {
+            "en_ar_mixing": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 14.3
+            },
+            "fact_preservation": {
+              "score": 50.0,
+              "contract": null,
+              "latency_s": 6.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 10.5,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "en_ar_mixing": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 28.1
+            },
+            "fact_preservation": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 17.5
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 22.8,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "editorial.write.checklist",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires editorial.write.structured; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of editorial.write.structured",
+      "measured_evidence": "qwen-vl-current structured_editorial=100 @500 tok/checker v2 | qwen3-vl-8b structured_editorial=100 @500 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "structured_editorial": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 6.0
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 6.0,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "structured_editorial": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 11.4
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 11.4,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "structured_editorial": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 25.0
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 25.0,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "structured_editorial": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 5.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 5.7,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "structured_editorial": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 17.0
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 17.0,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "editorial.write",
-      "decision": "NO_QUALIFIED_MODEL",
-      "primary": "APEX native engine",
-      "fallback": null,
-      "why": "no production-licensed model passes editorial.write.egyptian_arabic, editorial.write.fact_preserving at the floor"
+      "decision": "EVALUATION_ONLY",
+      "primary": "gemma-multimodal (50)",
+      "fallback": "APEX native engine",
+      "why": "gemma-multimodal passes the floor but its licence is DECLARED_BUT_UNVERIFIED: NOT deployable (single qualified candidate). In production the APEX native engine runs this task.",
+      "minimum_requirement": "≥ 50 on each of editorial.write.egyptian_arabic, editorial.write.fact_preserving",
+      "measured_evidence": "gemma-multimodal egyptian_arabic=0 (contract not recorded); gemma-multimodal fact_preservation=50 (contract not recorded)",
+      "licence_state": "gemma-multimodal: DECLARED_BUT_UNVERIFIED",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "EVALUATION_ONLY",
+      "candidates": [
+        {
+          "model": "gemma-multimodal",
+          "score": 50.0,
+          "evidence": {
+            "egyptian_arabic": {
+              "score": 0.0,
+              "contract": null,
+              "latency_s": 3.5
+            },
+            "fact_preservation": {
+              "score": 50.0,
+              "contract": null,
+              "latency_s": 6.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 5.1,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        }
+      ]
     },
     {
       "task": "editorial.critique",
-      "decision": "NO_QUALIFIED_MODEL",
-      "primary": "APEX native engine",
-      "fallback": null,
-      "why": "no production-licensed model passes editorial.write.egyptian_arabic at the floor"
+      "decision": "EVALUATION_ONLY",
+      "primary": "gemma-multimodal (75)",
+      "fallback": "APEX native engine",
+      "why": "gemma-multimodal passes the floor but its licence is DECLARED_BUT_UNVERIFIED: NOT deployable (single qualified candidate). In production the APEX native engine runs this task.",
+      "minimum_requirement": "≥ 50 on each of editorial.write.egyptian_arabic",
+      "measured_evidence": "gemma-multimodal egyptian_arabic=0 (contract not recorded)",
+      "licence_state": "gemma-multimodal: DECLARED_BUT_UNVERIFIED",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "EVALUATION_ONLY",
+      "candidates": [
+        {
+          "model": "gemma-multimodal",
+          "score": 75.0,
+          "evidence": {
+            "egyptian_arabic": {
+              "score": 0.0,
+              "contract": null,
+              "latency_s": 3.5
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 3.5,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        }
+      ]
     },
     {
       "task": "evidence.extract",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires extract.structured_json; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of extract.structured_json",
+      "measured_evidence": "qwen-vl-current structured_json=100 @500 tok/checker v2 | qwen3-vl-8b structured_json=100 @500 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 10.1
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 10.1,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 19.8
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 19.8,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 39.1
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 39.1,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 11.1
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 11.1,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 29.4
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 29.4,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "live.structured",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires extract.structured_json; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of extract.structured_json",
+      "measured_evidence": "qwen-vl-current structured_json=100 @500 tok/checker v2 | qwen3-vl-8b structured_json=100 @500 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → the stage pauses AWAITING_HUMAN (no native engine for this task); never a guessed answer",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 10.1
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 10.1,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 19.8
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 19.8,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 39.1
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 39.1,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 11.1
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 11.1,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "structured_json": {
+              "score": 100.0,
+              "contract": [
+                500,
+                2
+              ],
+              "latency_s": 29.4
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 29.4,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "retrieval.long",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires editorial.write.long_context; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of editorial.write.long_context",
+      "measured_evidence": "qwen-vl-current long_context=100 @300 tok/checker v2 | qwen3-vl-8b long_context=100 @300 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → the stage pauses AWAITING_HUMAN (no native engine for this task); never a guessed answer",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "long_context": {
+              "score": 100.0,
+              "contract": [
+                300,
+                2
+              ],
+              "latency_s": 112.6
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 112.6,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "long_context": {
+              "score": 100.0,
+              "contract": [
+                300,
+                2
+              ],
+              "latency_s": 271.4
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 271.4,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "long_context": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 140.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 140.7,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "long_context": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 61.0
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 61.0,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "long_context": {
+              "score": 100.0,
+              "contract": [
+                300,
+                2
+              ],
+              "latency_s": 191.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 191.7,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "mission.analyze",
       "decision": "NO_QUALIFIED_MODEL",
       "primary": "APEX native engine",
       "fallback": null,
-      "why": "no production-licensed model passes reasoning.general at the floor"
+      "why": "no installed model passes reasoning.general at the floor",
+      "minimum_requirement": "≥ 50 on each of reasoning.general",
+      "measured_evidence": "—",
+      "licence_state": "n/a",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "opportunity.model",
       "decision": "NO_QUALIFIED_MODEL",
       "primary": "APEX native engine",
       "fallback": null,
-      "why": "no production-licensed model passes reasoning.general at the floor"
+      "why": "no installed model passes reasoning.general at the floor",
+      "minimum_requirement": "≥ 50 on each of reasoning.general",
+      "measured_evidence": "—",
+      "licence_state": "n/a",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "design.html",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires design.html_css; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of design.html_css",
+      "measured_evidence": "qwen-vl-current html_css=100 @700 tok/checker v2 | qwen3-vl-8b html_css=100 @700 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "html_css": {
+              "score": 100.0,
+              "contract": [
+                700,
+                2
+              ],
+              "latency_s": 10.7
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 10.7,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "html_css": {
+              "score": 100.0,
+              "contract": [
+                700,
+                2
+              ],
+              "latency_s": 20.3
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 20.3,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "html_css": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 37.1
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 37.1,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "html_css": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 15.0
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 15.0,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 100.0,
+          "evidence": {
+            "html_css": {
+              "score": 100.0,
+              "contract": [
+                700,
+                2
+              ],
+              "latency_s": 38.9
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 38.9,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "design.reward",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires design.criticism; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of design.criticism",
+      "measured_evidence": "qwen-vl-current design_criticism=100 @600 tok/checker v2 | qwen3-vl-8b design_criticism=100 @600 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → APEX native engine (deterministic); never a silent empty section",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": [
+                600,
+                2
+              ],
+              "latency_s": 86.5
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 86.5,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": [
+                600,
+                2
+              ],
+              "latency_s": 164.9
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 164.9,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 84.5
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 84.5,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 78.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 78.7,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 50.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 50.0,
+              "contract": [
+                600,
+                2
+              ],
+              "latency_s": 229.8
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 229.8,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "design.critique",
       "decision": "PRIMARY",
       "primary": "qwen-vl-current (100)",
       "fallback": "qwen3-vl-8b (100)",
-      "why": "requires design.criticism; production-licensed, installed, ≥ floor"
+      "why": "tie at 100 on identical measurements → the cheaper model (qwen-vl-current)",
+      "minimum_requirement": "≥ 50 on each of design.criticism",
+      "measured_evidence": "qwen-vl-current design_criticism=100 @600 tok/checker v2 | qwen3-vl-8b design_criticism=100 @600 tok/checker v2",
+      "licence_state": "qwen-vl-current: PRODUCTION_ALLOWED (verified) / qwen3-vl-8b: PRODUCTION_ALLOWED (verified)",
+      "abstention": "primary unavailable or its output fails validation → fallback model; both fail → the stage pauses AWAITING_HUMAN (no native engine for this task); never a guessed answer",
+      "deployment": "PRODUCTION",
+      "candidates": [
+        {
+          "model": "qwen-vl-current",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": [
+                600,
+                2
+              ],
+              "latency_s": 86.5
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 7.55,
+          "latency_s": 86.5,
+          "reliability": "0 infrastructure errors in 11 council samples; 3/3 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "qwen3-vl-8b",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": [
+                600,
+                2
+              ],
+              "latency_s": 164.9
+            }
+          },
+          "licensed": true,
+          "licence_state": "PRODUCTION_ALLOWED (verified)",
+          "peak_gb": 12.51,
+          "latency_s": 164.9,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "nemotron-nano-omni",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 84.5
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 4.9,
+          "latency_s": 84.5,
+          "reliability": "0 infrastructure errors in 10 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma-multimodal",
+          "score": 100.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 100.0,
+              "contract": null,
+              "latency_s": 78.7
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 6.35,
+          "latency_s": 78.7,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "ADMIT"
+        },
+        {
+          "model": "gemma3-12b",
+          "score": 50.0,
+          "evidence": {
+            "design_criticism": {
+              "score": 50.0,
+              "contract": [
+                600,
+                2
+              ],
+              "latency_s": 229.8
+            }
+          },
+          "licensed": false,
+          "licence_state": "DECLARED_BUT_UNVERIFIED",
+          "peak_gb": 14.08,
+          "latency_s": 229.8,
+          "reliability": "0 infrastructure errors in 11 council samples; 1/1 scheduled cycles clean",
+          "production_admission": "RESOURCE_BLOCKED"
+        }
+      ]
     },
     {
       "task": "visual finalist comparison (A/B)",
       "decision": "PRIMARY",
       "primary": "qwen3-vl-8b as SECONDARY_FINALIST_PAIRWISE_JUDGE (CANONICAL_640_ONLY)",
       "fallback": "deterministic tournament order",
-      "why": "advisory only; canonical 640 px A4 renders of QA-passed finalists; never facts, dates, Arabic quality"
+      "why": "advisory only; canonical 640 px A4 renders of QA-passed finalists; never facts, dates, Arabic quality",
+      "minimum_requirement": "pairwise ≥ 4/5, position bias ≤ 0.2, legible, stable repeats — at the canonical width",
+      "measured_evidence": "VISION_JUDGE_ROBUSTNESS.md",
+      "licence_state": "Apache-2.0 (PRODUCTION_ALLOWED)",
+      "abstention": "judge unavailable or disagrees with itself across orders → deterministic tournament order",
+      "deployment": "PRODUCTION (advisory)",
+      "candidates": []
     },
     {
       "task": "visual quality scores (absolute council)",
       "decision": "NO_QUALIFIED_MODEL",
       "primary": null,
       "fallback": null,
-      "why": "needs absolute calibration ≥ 4/5 AND ROBUSTLY_CALIBRATED; otherwise Vision Quality = NOT_MEASURED"
+      "why": "needs absolute calibration ≥ 4/5 AND ROBUSTLY_CALIBRATED; otherwise Vision Quality = NOT_MEASURED",
+      "minimum_requirement": "absolute ≥ 4/5 + ROBUSTLY_CALIBRATED",
+      "measured_evidence": "VISION_JUDGE_ROBUSTNESS.md",
+      "licence_state": "n/a",
+      "abstention": "Vision Quality = NOT_MEASURED (never a guessed score)",
+      "deployment": "n/a",
+      "candidates": []
     },
     {
       "task": "SVG / vector assets",
       "decision": "NO_QUALIFIED_MODEL",
       "primary": "native SVG assets",
       "fallback": null,
-      "why": "specialist vector models (StarVector / OmniSVG) not activated: weights host egress-denied"
+      "why": "specialist vector models (StarVector / OmniSVG) not activated: weights host egress-denied",
+      "minimum_requirement": "GDB svg tasks at n ≥ 20",
+      "measured_evidence": "—",
+      "licence_state": "n/a",
+      "abstention": "native SVG assets",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "document layout",
       "decision": "DETERMINISTIC_ENGINE",
       "primary": "APEX native layout engine + tournament",
       "fallback": null,
-      "why": "specialist layout models not activated"
+      "why": "specialist layout models not activated",
+      "minimum_requirement": "—",
+      "measured_evidence": "golden ULTRA (deterministic)",
+      "licence_state": "n/a",
+      "abstention": "—",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "page design (HTML writing)",
       "decision": "DETERMINISTIC_ENGINE",
       "primary": "APEX native engine",
       "fallback": null,
-      "why": "no model page beat native without a safety loss"
+      "why": "no model page beat native without a safety loss",
+      "minimum_requirement": "win without a safety loss AND measured stability",
+      "measured_evidence": "APEX_DESIGN_BENCH.md",
+      "licence_state": "n/a",
+      "abstention": "—",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "release approval",
       "decision": "HUMAN_REQUIRED",
       "primary": "authenticated approver (token)",
       "fallback": null,
-      "why": "hash-chained approval ledger"
+      "why": "hash-chained approval ledger",
+      "minimum_requirement": "token-authenticated approver bound to job id + artifact hash",
+      "measured_evidence": "—",
+      "licence_state": "n/a",
+      "abstention": "job stays RELEASE_CANDIDATE",
+      "deployment": "PRODUCTION",
+      "candidates": []
     },
     {
       "task": "brand assets",
       "decision": "HUMAN_REQUIRED",
       "primary": "apex-one brand import",
       "fallback": null,
-      "why": "original APEX package; placeholders fail"
+      "why": "original APEX package; placeholders fail",
+      "minimum_requirement": "`apex-one brand validate` = VALID",
+      "measured_evidence": "—",
+      "licence_state": "n/a",
+      "abstention": "Brand Production Gate FAIL",
+      "deployment": "PRODUCTION",
+      "candidates": []
     }
   ],
-  "rule": "no global best model; per-task evidence; licence + installation required for production"
+  "rule": "no global best model; per-task evidence on identical measurements; ties go to the cheaper model; licence + installation + production admission required for deployment"
 }

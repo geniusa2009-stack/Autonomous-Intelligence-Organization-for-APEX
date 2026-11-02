@@ -39,7 +39,7 @@ def test_qwen3_vl_8b_is_never_called_a_general_vision_judge():
         low = line.lower()
         if "judge" not in low or "q8" in low or "posterreward" in low or "reward weights" in low:
             continue
-        if not re.search(r"640|canonical|secondary|never a general", low):
+        if not re.search(r"640|canonical|secondary|never a general|not a judge", low):
             bad.append((f, i, line[:120]))
     assert not bad, bad
     assert not [(f, i) for f, i, line in _lines(r"general vision judge") if not NEGATION.search(line)]
@@ -79,7 +79,8 @@ def test_test_counts_are_one_number_and_current():
     assert progress and int(progress[-1]) == n
     out = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
                          cwd=REPO_ROOT, capture_output=True, text=True, timeout=300).stdout
-    collected = int(re.search(r"(\d+) tests? collected", out).group(1))
+    per_file = re.findall(r"^tests/\S+\.py: (\d+)$", out, re.M)       # `-q --collect-only`: one count per file
+    collected = sum(map(int, per_file)) if per_file else int(re.search(r"(\d+) tests? collected", out).group(1))
     assert collected == n, f"CURRENT_STATE says {n} passed but {collected} tests exist: re-run the suite"
 
 

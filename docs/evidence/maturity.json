@@ -1,0 +1,161 @@
+{
+  "maturity": {
+    "ARCHITECTURE_COMPLETE": {
+      "status": "YES",
+      "mandatory": true,
+      "why_mandatory_or_not": "every stage exists, is wired and tested",
+      "evidence": "state machine, $0 compute, research, editorial, design, QA, release, learning",
+      "open_blockers": []
+    },
+    "OFFLINE_PIPELINE_VALIDATED": {
+      "status": "YES",
+      "mandatory": true,
+      "why_mandatory_or_not": "golden ULTRA reaches the human gate with all quality targets PASS",
+      "evidence": "golden ULTRA: comprehension 98.9, rhythm 94.0, Arabic typography 100; tests/test_pipeline.py::test_golden_ultra_quality_never_regresses",
+      "open_blockers": []
+    },
+    "LOCAL_MODEL_ROUTING_VALIDATED": {
+      "status": "YES",
+      "mandatory": true,
+      "why_mandatory_or_not": "every model route is decided on identical measurements, licence-gated",
+      "evidence": "9 production model routes, all on identical measurements with verified licences; EVALUATION_ONLY (native in production): ['editorial.write.egyptian_guide', 'editorial.write', 'editorial.critique']",
+      "open_blockers": []
+    },
+    "DESIGN_MODEL_VALIDATION": {
+      "status": "PARTIAL",
+      "mandatory": false,
+      "why_mandatory_or_not": "native APEX design is primary on every page type; model design is optional",
+      "evidence": "GDB 6/39 tasks offline (n=2); native wins or ties every page type",
+      "open_blockers": [
+        "GDB-DATASET-PARTIAL"
+      ]
+    },
+    "VISION_GATE": {
+      "status": "PARTIAL",
+      "mandatory": false,
+      "why_mandatory_or_not": "absolute visual quality is reported NOT_MEASURED on the release candidate and the human approver reviews the final PDF; no release decision depends on a model judge",
+      "evidence": "robust judges none; canonical-only pairwise judges ['qwen3-vl-8b']; absolute visual quality NOT_MEASURED",
+      "open_blockers": [
+        "GEMINI-KEY-MISSING",
+        "NO-ROBUST-VISION-JUDGE",
+        "LARGE-MODELS-RESOURCE-BLOCKED"
+      ]
+    },
+    "REMOTE_FREE_COMPUTE_VALIDATED": {
+      "status": "NO",
+      "mandatory": false,
+      "why_mandatory_or_not": "the $0 local route serves every production model task",
+      "evidence": "remote providers LIVE_TESTED: none (cloudflare=NETWORK_BLOCKED, gemini=CREDENTIALS_REQUIRED, groq=NETWORK_BLOCKED, huggingface=NETWORK_BLOCKED, llamacpp=LIVE_FAILED, llamacpp_local=LIVE_TESTED, llamacpp_local=UNKNOWN, mlx=LIVE_FAILED, nvidia_nim=NETWORK_BLOCKED, ollama=LIVE_FAILED, openrouter=NETWORK_BLOCKED, sglang=CREDENTIALS_REQUIRED, vllm=CREDENTIALS_REQUIRED)",
+      "open_blockers": [
+        "REMOTE-PROVIDERS-EGRESS-DENIED"
+      ]
+    },
+    "REAL_OPPORTUNITY_VALIDATED": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "a real guide must reach RELEASE_CANDIDATE from authoritative evidence",
+      "evidence": "no non-synthetic job has reached RELEASE_CANDIDATE",
+      "open_blockers": [
+        "REAL-OPPORTUNITY-UNVALIDATED"
+      ]
+    },
+    "PRODUCTION_LOAD_VALIDATED": {
+      "status": "YES",
+      "mandatory": true,
+      "why_mandatory_or_not": "PRODUCTION_MODE must throttle, not OOM, under real concurrent load",
+      "evidence": "load test PASS (model qwen3-vl-4b-q4kxl, real model: True)",
+      "open_blockers": []
+    },
+    "BRAND_ASSETS_VALIDATED": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "no FINAL artifact may carry placeholder branding",
+      "evidence": "apex-one brand validate → INCOMPLETE: logo: MISSING — logo.svg not found; logo_on_dark: MISSING — logo-on-dark.svg not found; robot: MISSING — robot.svg not found",
+      "open_blockers": [
+        "BRAND-ASSETS-MISSING"
+      ]
+    },
+    "HUMAN_APPROVAL_VALIDATED": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "a release needs an authenticated approver bound to the artifact hash",
+      "evidence": "0 active approver(s); ledger intact",
+      "open_blockers": [
+        "APPROVER-MISSING"
+      ]
+    },
+    "PRODUCTION_READY": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "YES only when every mandatory dimension is YES",
+      "evidence": "unmet mandatory dimensions: ['REAL_OPPORTUNITY_VALIDATED', 'BRAND_ASSETS_VALIDATED', 'HUMAN_APPROVAL_VALIDATED']",
+      "open_blockers": [
+        "REAL_OPPORTUNITY_VALIDATED",
+        "BRAND_ASSETS_VALIDATED",
+        "HUMAN_APPROVAL_VALIDATED"
+      ]
+    }
+  },
+  "blockers": [
+    {
+      "blocker_id": "BRAND-ASSETS-MISSING",
+      "status": "OPEN",
+      "severity": "CRITICAL",
+      "probe_evidence": "apex-one brand validate → INCOMPLETE: logo: MISSING — logo.svg not found; logo_on_dark: MISSING — logo-on-dark.svg not found; robot: MISSING — robot.svg not found"
+    },
+    {
+      "blocker_id": "APPROVER-MISSING",
+      "status": "OPEN",
+      "severity": "CRITICAL",
+      "probe_evidence": "0 active approver(s); ledger intact"
+    },
+    {
+      "blocker_id": "REAL-OPPORTUNITY-UNVALIDATED",
+      "status": "OPEN",
+      "severity": "CRITICAL",
+      "probe_evidence": "no non-synthetic job has reached RELEASE_CANDIDATE"
+    },
+    {
+      "blocker_id": "PRODUCTION-LOAD-UNVALIDATED",
+      "status": "RESOLVED",
+      "severity": "HIGH",
+      "probe_evidence": "load test PASS (model qwen3-vl-4b-q4kxl, real model: True)"
+    },
+    {
+      "blocker_id": "GEMINI-KEY-MISSING",
+      "status": "OPEN",
+      "severity": "MEDIUM",
+      "probe_evidence": "GEMINI_API_KEY not set"
+    },
+    {
+      "blocker_id": "REMOTE-PROVIDERS-EGRESS-DENIED",
+      "status": "OPEN",
+      "severity": "MEDIUM",
+      "probe_evidence": "remote providers LIVE_TESTED: none (cloudflare=NETWORK_BLOCKED, gemini=CREDENTIALS_REQUIRED, groq=NETWORK_BLOCKED, huggingface=NETWORK_BLOCKED, llamacpp=LIVE_FAILED, llamacpp_local=LIVE_TESTED, llamacpp_local=UNKNOWN, mlx=LIVE_FAILED, nvidia_nim=NETWORK_BLOCKED, ollama=LIVE_FAILED, openrouter=NETWORK_BLOCKED, sglang=CREDENTIALS_REQUIRED, vllm=CREDENTIALS_REQUIRED)"
+    },
+    {
+      "blocker_id": "LICENCE-VERIFICATION-PENDING",
+      "status": "OPEN",
+      "severity": "MEDIUM",
+      "probe_evidence": "awaiting a human decision: ['lic-gemma', 'lic-gemma3-12b', 'lic-nvidia-nemotron-nano', 'lic-gpt-oss']"
+    },
+    {
+      "blocker_id": "NO-ROBUST-VISION-JUDGE",
+      "status": "OPEN",
+      "severity": "MEDIUM",
+      "probe_evidence": "ROBUSTLY_CALIBRATED judges: none"
+    },
+    {
+      "blocker_id": "GDB-DATASET-PARTIAL",
+      "status": "OPEN",
+      "severity": "LOW",
+      "probe_evidence": "6/39 tasks runnable offline (n=2); full dataset on huggingface.co"
+    },
+    {
+      "blocker_id": "LARGE-MODELS-RESOURCE-BLOCKED",
+      "status": "OPEN",
+      "severity": "LOW",
+      "probe_evidence": "RESOURCE_BLOCKED on this machine: ['gpt-oss-20b-mxfp4', 'qwen3-vl-8b-q8kxl']"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Vision Calibration Analysis
 
-_Generated 2026-10-31 02:19 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-11-02 13:07 UTC by `apex-one reports build` from measured artifacts._
 
 **Question.** Qwen3-VL 4B scored 100 on the council's visual-hierarchy benchmark but passed only 1/5 absolute calibration cases. Which is right, and why do they disagree?
 
@@ -254,7 +254,7 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | gemma-multimodal | image scaling | pairwise 640 px 0/5 vs native 794 px 0/5 | **RULED OUT** |
 | gemma-multimodal | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | gemma-multimodal | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
-| gemma-multimodal | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 1/5 | **NO — stays out of every gate** |
+| gemma-multimodal | passes the 4/5 calibration bar in at least one tested mode | best mode 1/5 | **NO — stays out of every gate** |
 | gemma3-12b | scoring schema: absolute scores tie | ties on targeted role 3/5, inversions 1/5 | **CONFIRMED** |
 | gemma3-12b | model ranks broken pages HIGHER | inversions 1/5 | **no** |
 | gemma3-12b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
@@ -267,7 +267,7 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | gemma3-12b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
 | gemma3-12b | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | gemma3-12b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
-| gemma3-12b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 2/5 | **NO — stays out of every gate** |
+| gemma3-12b | passes the 4/5 calibration bar in at least one tested mode | best mode 2/5 | **NO — stays out of every gate** |
 | qwen-vl-current | scoring schema: absolute scores tie | ties on targeted role 4/5, inversions 0/5 | **CONFIRMED** |
 | qwen-vl-current | model ranks broken pages HIGHER | inversions 0/5 | **no** |
 | qwen-vl-current | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
@@ -279,7 +279,7 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | qwen-vl-current | image scaling | pairwise 640 px 0/5 vs native 794 px 2/5 | **CONFIRMED (helps)** |
 | qwen-vl-current | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen-vl-current | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
-| qwen-vl-current | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 3/5 | **NO — stays out of every gate** |
+| qwen-vl-current | passes the 4/5 calibration bar in at least one tested mode | best mode 3/5 | **NO — stays out of every gate** |
 | qwen3-vl-8b | scoring schema: absolute scores tie | ties on targeted role 2/5, inversions 0/5 | **CONFIRMED** |
 | qwen3-vl-8b | model ranks broken pages HIGHER | inversions 0/5 | **no** |
 | qwen3-vl-8b | output parser / truncation | 0 review(s) with parse/execution errors | **RULED OUT** |
@@ -292,7 +292,7 @@ An investigation EXPLAINS a calibration failure; it never overrides it. The cali
 | qwen3-vl-8b | multimodal perception (can it read the page at 640 px?) | legibility probe: deadline and tuition read correctly | **RULED OUT — perception works; the failure is judgement** |
 | qwen3-vl-8b | model instability (temperature 0) | 5/5 cases identical on repeat | **RULED OUT** |
 | qwen3-vl-8b | prompt leakage | rubric text never contains the case name or the expected answer | **RULED OUT by construction** |
-| qwen3-vl-8b | qualifies as a judge in ANY tested mode (>= 4/5) | best mode 4/5 | **YES** |
+| qwen3-vl-8b | passes the 4/5 calibration bar in at least one tested mode | best mode 4/5 | **YES at the calibration input only — the production role is set by resolution robustness (VISION_JUDGE_ROBUSTNESS.md), never a general vision judge** |
 
 | hypothesis | evidence used |
 |---|---|

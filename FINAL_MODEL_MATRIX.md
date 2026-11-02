@@ -1,6 +1,6 @@
 # Final model matrix
 
-_Generated 2026-10-31 02:19 UTC by `apex-one reports` at commit `bdc6bce` from measured artifacts._
+_Generated 2026-11-02 13:07 UTC by `apex-one reports` at commit `2a5fbdb` from measured artifacts._
 
 One normalized table for the six local models. Every cell is ONE measured task under the same contract (same prompt, checker version, temperature 0, 500-token budget unless a cell says otherwise). **There is no overall score and no overall winner**: the models were not all measured on the same task set, and an average would hide a 0 behind unrelated 100s. Cells that did not measure say why (NOT_MEASURED / ERROR <kind>); none is ever counted as 0. GraphicDesignBench ran 2 samples per task — enough to show a model runs end to end, never enough to rank models.
 
@@ -10,7 +10,7 @@ One normalized table for the six local models. Every cell is ONE measured task u
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Gemma 3 4B | 100 | 100 | 75 | 50 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 11 s (common set) | 6.2 loaded / 6.2 peak GB | DECLARED_BUT_UNVERIFIED |
 | Gemma 3 12B | 100 | 100 | 25 | 100 | 100 | 100 | 100 | 50 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 29 s (common set) | 13.5 loaded / 13.9 peak GB | DECLARED_BUT_UNVERIFIED |
-| Qwen3-VL 4B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 9 s (common set) | 7.1 loaded / 7.2 peak GB | PRODUCTION_ALLOWED (verified) |
+| Qwen3-VL 4B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 1/5, pair 0/5 → **UNQUALIFIED** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 10 s (common set) | 7.1 loaded / 7.4 peak GB | PRODUCTION_ALLOWED (verified) |
 | Qwen3-VL 8B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO | abs 3/5, pair 4/5 → **CANONICAL_640_ONLY** | 6 measured (n=2 each); 9 UNSUPPORTED; 24 SKIPPED | 20 s (common set) | 11.7 loaded / 12.2 peak GB | PRODUCTION_ALLOWED (verified) |
 | Nemotron 3 Nano 4B | 100 | 100 | 0 QUALITY_ZERO | 100 | 100 | 100 | 100 | 100 | 0 QUALITY_ZERO (re-run budget 4096) | UNSUPPORTED (text-only artifact) | NOT_RUN | 39 s (common set) | 4.2 loaded / 4.8 peak GB | DECLARED_BUT_UNVERIFIED |
 | gpt-oss 20B | 100 | NOT_MEASURED | 50 | 100 (re-run budget 4096) | NOT_MEASURED | 100 | 100 | 100 | 100 (re-run budget 4096) | UNSUPPORTED (text-only artifact) | NOT_RUN | 77 s (common set) | NOT_MEASURED | UNKNOWN |
@@ -23,7 +23,7 @@ Scores are 0–100 per deterministic checker (checker version 2). `abs` = absolu
 |---|---|---|---|---|---|---|
 | Gemma 3 4B | 4b-q4_K_M | `sha256:04a43a22e8d2` | 500 | 11/11 tasks scored | none | bdc6bce |
 | Gemma 3 12B | 12b-q4_K_M | `sha256:15b8fd9d8672` | 300, 500, 600, 700, 900 | 11/11 tasks scored | none | 0463a23, b61868b |
-| Qwen3-VL 4B | 4B-UD-Q4_K_XL | `sha256:a5563711a524` | 500 | 11/11 tasks scored | none | bdc6bce |
+| Qwen3-VL 4B | 4B-UD-Q4_K_XL | `sha256:a5563711a524` | 300, 500, 600, 700, 900 | 11/11 tasks scored | none | 24f88a4, bdc6bce |
 | Qwen3-VL 8B | 8B-UD-Q4_K_XL | `sha256:e3d1a6e87c5c` | 300, 500, 600, 700, 900 | 11/11 tasks scored | none | bdc6bce |
 | Nemotron 3 Nano 4B | 4b | `sha256:e515c9ceb10a` | 500, 4096 | 10/10 tasks scored | none | bdc6bce |
 | gpt-oss 20B | latest | `weights not on disk` | 4096 | 8/8 tasks scored | none | before commit tracking |
@@ -39,6 +39,7 @@ Available memory (GB) at each point; recovery = available after stabilisation / 
 | Gemma 3 12B | pre-scheduler record (partial) | 16.14 | — | — | — | — | — | 16.09 | — | 14.08 | — / — | — | 14.0 / — / 2.6 s | — | — |
 | Qwen3-VL 4B | pre-scheduler record (partial) | 15.68 | — | — | — | — | — | 16.08 | — | — | — / — | — | 251.2 / — / 33.0 s | — | — |
 | Qwen3-VL 4B | EVALUATION_MODE | 15.78 | 11.34 | 11.34 | 11.3 | 11.3 | 16.01 | 16.03 | 1.016 | 7.32 | 0.0 / 0.0 | 0 | 5.4 / 0.33 / 2.3 s | 0.7 | — |
+| Qwen3-VL 4B | EVALUATION_MODE | 16.31 | 11.49 | 11.49 | 11.09 | 11.09 | 16.11 | 16.11 | 0.988 | 7.55 | 0.0 / 0.0 | 240 | 261.0 / 0.28 / 2.3 s | 1.21 | — |
 | Qwen3-VL 8B | EVALUATION_MODE | 15.6 | 8.5 | 8.51 | 7.86 | 8.21 | 15.43 | 15.45 | 0.99 | 12.51 | 0.0 / 0.0 | 98 | 254.1 / 0.53 / 2.4 s | 1.45 | — |
 | Nemotron 3 Nano 4B | EVALUATION_MODE | 15.66 | 14.38 | 14.2 | 13.55 | 13.63 | 15.85 | 15.86 | 1.013 | 4.9 | 0.0 / 0.0 | 12 | 209.4 / 0.96 / 2.3 s | 0.97 | — |
 

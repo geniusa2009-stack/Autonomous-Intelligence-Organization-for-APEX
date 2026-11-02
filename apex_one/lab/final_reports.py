@@ -633,7 +633,8 @@ def native_vs_model_md(cmp_: dict[str, Any] | None, golden_deterministic: Path |
     out += ["Best candidate = the model page with the fewest losses to native on these dimensions (ties: more wins). "
             "Stability: the native engine is deterministic (same inputs → byte-identical pages, "
             "`docs/evidence/golden_ultra_deterministic.json`); a model page is ONE sample, so its run-to-run stability "
-            "is NOT_MEASURED and counts against promotion. Native stays primary unless the model wins without a loss.", "",
+            "is NOT_MEASURED and counts against promotion. Native stays primary unless a model page beats it without a "
+            "single loss AND its stability has been measured.", "",
             "| page type | best model | " + " | ".join(d for d, _, _ in DIMENSIONS) + " | stability | decision |",
             "|---|---|" + "---|" * (len(DIMENSIONS) + 2)]
     for ptype, systems in sorted(by.items()):

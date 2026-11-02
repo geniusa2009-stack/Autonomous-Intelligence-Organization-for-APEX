@@ -1,6 +1,6 @@
 # Model Comparison Matrix
 
-_Generated 2026-10-31 02:19 UTC by `apex-one reports build` from measured artifacts._
+_Generated 2026-11-02 13:07 UTC by `apex-one reports build` from measured artifacts._
 
 One row per (model, task). **No overall ranking**: models were measured on different task sets (text-only models cannot run the vision task; some outputs were empty because the token budget ran out inside hidden reasoning), so averages across tasks are not comparable. Winners are declared per task, only among models measured on that same task.
 
@@ -40,14 +40,14 @@ Hardware for every row: 4 vCPU x86-64, 16.5 GB RAM, no GPU, llama.cpp CPU. Check
 | nemotron-nano-omni | design_criticism | yes | 100 | 84.5 s | yes | v1 | 600 (task default) | {"hierarchy": true, "contrast": true, "line_length": true, "cards": true} |
 | nemotron-nano-omni | visual_hierarchy | no | — | — | — | — | — | text-only model: vision task not applicable |
 | nemotron-nano-omni | reasoning | yes | 0 | 146.1 s | yes | v2 | 4096 | expected 2026-10-17, got 2026-10-21 |
-| qwen-vl-current | structured_json | yes | 100 | 8.9 s | yes | v1 | 500 (task default) | 4/4 fields exact |
-| qwen-vl-current | fact_preservation | yes | 100 | 5.0 s | yes | v1 | 500 (task default) | dates=['2026-11-01'] money=[('USD', 50.0)] |
-| qwen-vl-current | egyptian_arabic | yes | 0 | 3.8 s | yes | v1 | 500 (task default) | dialect_markers=0 msa=0 number_kept=True |
-| qwen-vl-current | html_css | yes | 100 | 10.7 s | yes | v1 | 700 (task default) | {"rtl": true, "h2": true, "p": true, "no_script": true, "no_gradient": true, "bdi_or_ltr": |
-| qwen-vl-current | long_context | yes | 100 | 90.8 s | yes | v1 | 300 (task default) | got 2027-01-20 |
-| qwen-vl-current | design_criticism | yes | 100 | 80.3 s | truncated in log | v1 | 600 (task default) | {"hierarchy": true, "contrast": true, "line_length": true, "cards": true} |
+| qwen-vl-current | structured_json | yes | 100 | 10.1 s | yes | v2 | 500 | 4/4 fields exact |
+| qwen-vl-current | fact_preservation | yes | 100 | 5.2 s | yes | v2 | 500 | dates=['2026-11-01'] money=[('USD', 50.0)] |
+| qwen-vl-current | egyptian_arabic | yes | 0 | 5.1 s | yes | v2 | 500 | dialect_markers=0 msa=1 number_kept=True |
+| qwen-vl-current | html_css | yes | 100 | 10.7 s | yes | v2 | 700 | {"rtl": true, "h2": true, "p": true, "no_script": true, "no_gradient": true, "bdi_or_ltr": |
+| qwen-vl-current | long_context | yes | 100 | 112.6 s | yes | v2 | 300 | got 2027-01-20 |
+| qwen-vl-current | design_criticism | yes | 100 | 86.5 s | truncated in log | v2 | 600 | {"hierarchy": true, "contrast": true, "line_length": true, "cards": true} |
 | qwen-vl-current | visual_hierarchy | yes | 100 | 63.6 s | n/a (vision A/B) | v1 | 60 (A/B) | order-swapped answers correct=[True, True] |
-| qwen-vl-current | reasoning | yes | 0 | 3.8 s | yes | v1 | 900 (task default) | expected 2026-10-17, got 2026-10-02 |
+| qwen-vl-current | reasoning | yes | 0 | 3.5 s | yes | v2 | 900 | expected 2026-10-17, got 2026-10-03 |
 | qwen3-vl-8b | structured_json | yes | 100 | 19.8 s | yes | v2 | 500 | 4/4 fields exact |
 | qwen3-vl-8b | fact_preservation | yes | 100 | 12.4 s | yes | v2 | 500 | dates=['2026-11-01'] money=[('USD', 50.0)] |
 | qwen3-vl-8b | egyptian_arabic | yes | 0 | 8.6 s | yes | v2 | 500 | dialect_markers=0 msa=0 number_kept=True |

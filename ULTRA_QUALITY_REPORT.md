@@ -1,76 +1,98 @@
-# APEX ONE ULTRA — Quality Report (model validation phase)
+# APEX ONE ULTRA — Quality Report (shortest path to a production candidate)
 
-_Updated 2026-10-31. Every number comes from an artifact produced in this container (`docs/evidence/`). The
-generated reports are FINAL_MODEL_MATRIX, PRODUCTION_ROUTING_MATRIX, VISION_JUDGE_ROBUSTNESS,
-MODEL_SERVER_RELIABILITY, LOCAL_MODEL_RESOURCE_MATRIX, APEX_DESIGN_BENCH and MODEL_ACTIVATION_REPORT. Regenerate
-them with `apex-one reports`._
+_Updated 2026-11-02. Every number comes from an artifact produced in this container (`docs/evidence/`). The
+authoritative blocker list is PRODUCTION_BLOCKERS.md (live probes). Human-only work is in HUMAN_ACTIONS_REQUIRED.md.
+Regenerate with `apex-one reports`._
 
-## Maturity (each level separate — not "finished")
+## Maturity (independent dimensions; PRODUCTION_READY is computed from the mandatory ones)
 
-| Level | Status | Why |
-|---|---|---|
-| ARCHITECTURE_COMPLETE | **YES** | Every stage exists, is wired and is tested. |
-| OFFLINE_PIPELINE_VALIDATED | **YES** | Golden ULTRA: all 10 targets PASS (comprehension 98.9, rhythm 94.0, Arabic typography 100). A hard test guards against regression. |
-| LOCAL_MODEL_ROUTING_VALIDATED | **YES (evaluation scope)** | 6 local models measured per task under one contract. The routing policy is frozen. A model is routed only when it passes the task's floor and its licence allows production. |
-| DESIGN_MODEL_VALIDATION | **PARTIAL** | GraphicDesignBench: 6/39 tasks run offline (n=2 smoke). Specialist checkpoints are network- or hardware-blocked. Native wins or ties every page type. |
-| VISION_GATE | **PARTIAL** | No ROBUSTLY_CALIBRATED judge. Qwen3-VL 8B is CANONICAL_640_ONLY, so it serves only as an advisory secondary finalist judge. Absolute VisionCouncil = NOT_MEASURED. |
-| REMOTE_FREE_COMPUTE_VALIDATED | **NO** | Remote free tiers are egress-denied (proxy CONNECT 403). Gemini is reachable, but there is no key. |
-| REAL_OPPORTUNITY_VALIDATED | **NO (research stage)** | The CNCF LFX 2027 job is AWAITING_HUMAN: a single-source deadline, and the funding and eligibility pages are unreachable. |
-| PRODUCTION_READY | **NO** | Brand assets are missing, there is no approver, no real job has reached release candidate, and the vision gate is partial. |
+| dimension | status | mandatory | why |
+|---|---|---|---|
+| ARCHITECTURE_COMPLETE | **YES** | yes | Every stage exists, is wired and tested. |
+| OFFLINE_PIPELINE_VALIDATED | **YES** | yes | Golden ULTRA: comprehension 98.9, rhythm 94.0, Arabic typography 100; a hard regression test guards it. |
+| LOCAL_MODEL_ROUTING_VALIDATED | **YES** | yes | 9 production model routes, all decided on identical measurements with verified licences. Three routes are EVALUATION_ONLY; production runs the native engine there. |
+| DESIGN_MODEL_VALIDATION | **PARTIAL** | no | GDB 6/39 tasks offline (n=2). Native wins or ties every page type. |
+| VISION_GATE | **PARTIAL** | no | No robust judge. Qwen3-VL 8B is an advisory 640 px finalist judge only. Absolute visual quality is NOT_MEASURED. |
+| REMOTE_FREE_COMPUTE_VALIDATED | **NO** | no | Remote free tiers are egress-denied; Gemini has no key. |
+| REAL_OPPORTUNITY_VALIDATED | **NO** | yes | No real job has reached RELEASE_CANDIDATE. The offline evidence-pack path is ready and tested. |
+| PRODUCTION_LOAD_VALIDATED | **YES** | yes | 10/10 load scenarios PASS in PRODUCTION_MODE with the real production model and real Chromium. |
+| BRAND_ASSETS_VALIDATED | **NO** | yes | `apex-one brand validate` → INCOMPLETE (no official package installed). |
+| HUMAN_APPROVAL_VALIDATED | **NO** | yes | Authentication and artifact binding are complete and tested. No approver exists yet. |
+| PRODUCTION_READY | **NO** | — | Unmet mandatory dimensions: REAL_OPPORTUNITY_VALIDATED, BRAND_ASSETS_VALIDATED, HUMAN_APPROVAL_VALIDATED. All three need a person. |
 
-## What each model is actually good at (measured)
+Why VISION_GATE, DESIGN_MODEL_VALIDATION and REMOTE_FREE_COMPUTE_VALIDATED are not mandatory:
+- **Vision gate:** no release decision depends on a model judge. The release candidate states that visual quality is NOT_MEASURED, and the human approver reviews the PDF.
+- **Design models:** native design is primary everywhere.
+- **Remote compute:** the $0 local route serves every production model task.
 
-Full table: FINAL_MODEL_MATRIX.md. There is no overall score.
+## Memory safety
 
-* **Qwen3-VL 4B** (Apache-2.0, PRODUCTION_ALLOWED; peak 7.3 GB). Scores 100 on structured JSON, English writing,
-  checklist, fact preservation, HTML/CSS, long context and design criticism. Fastest model (9 s).
-  - Egyptian Arabic: 0. Date reasoning: 0. Vision judging: position bias 1.0, UNQUALIFIED.
-  - **Role:** PRIMARY for the English, checklist, extraction, retrieval and design-text tasks.
-* **Qwen3-VL 8B** (Apache-2.0; peak 12.5 GB). Same text profile as the 4B. It is the only model that is a usable
-  visual judge, and only at canonical 640 px (4/4/4, bias 0.0; every other width 3/5).
-  - **Role:** FALLBACK for the 4B, plus SECONDARY_FINALIST_PAIRWISE_JUDGE.
-* **Gemma 3 12B** (DECLARED_BUT_UNVERIFIED; peak 14.1 GB). Scores 100 on structured JSON, English, editorial,
-  fact preservation, HTML/CSS, long context and EN/AR mixing.
-  - Design criticism: 50. Egyptian Arabic: 25 (below the floor). Date reasoning: 0, a QUALITY_ZERO (it answered
-    2026-10-24 for 2026-10-17).
-  - Vision judging: UNQUALIFIED. It answered "A" in 10 of 10 pairwise calls, so its position bias is 1.0.
-  - **Role:** evaluation only. Parameter count bought nothing measurable over the Qwen 4B.
-* **Gemma 3 4B** (peak 6.4 GB). Egyptian Arabic 75 is the best local result, but still below the floor. Fact
-  preservation: 50. **Role:** evaluation only.
-* **Nemotron 3 Nano 4B** (peak 4.9 GB). Strong on text; Egyptian Arabic 0. Text-only. **Role:** evaluation only.
-* **gpt-oss 20B**. The only model with 100 on date reasoning (budget 4096) and 50 on Egyptian Arabic. Its licence
-  is UNKNOWN, and it no longer fits the scheduler's admission (expected peak 21.1 GB). **Role:** none.
+- **Evaluation headroom: 1.4 GB.** Previously 0.5 GB, which was smaller than a miss that had already happened. It is derived, not chosen: ceil_0.1(worst measured miss 1.06 GB + run-to-run peak spread 0.30 GB). The 1.06 GB miss is Qwen3-VL 8B, admitted at 11.45 GB and measured at 12.51 GB.
+- **The requirement only rises.** New evidence can raise it, never lower it.
+- **Production headroom: 2.02 GB** = max(2.0 GB, 12% of MemTotal, evaluation + 0.5 GB). It is always stricter than evaluation.
+- **Consequence:** Gemma 3 12B (peak 14.1 GB) no longer fits this machine even for evaluation. Its earlier benchmarks ran under the old rule.
+- **Peak used for admission:** the scheduler now uses the highest peak ever measured for an artifact.
 
-Deterministic engines own dates, locked facts, layout and page design. Humans own release and brand.
-Egyptian-Arabic guide writing has NO_QUALIFIED_MODEL, so the native engine writes it.
+## Routing (capability-specific; no global best model)
 
-## Phase results
+Qwen3-VL 4B vs 8B, on identical measurements only. The 4B's older rows were re-measured under the 8B's exact
+contract.
 
-* **Resource scheduler.** Every load and stage is admitted before it starts (ADMIT / DEFER / RESOURCE_BLOCKED, with
-  a reason). There are two modes: EVALUATION (≥ 0.5 GB headroom) and PRODUCTION (≥ 2.0 GB and ≥ 12%). The full
-  memory lifecycle is recorded for every cycle.
-  - All five scheduled cycles recovered (ratio 0.99 to 1.02) with zero swap.
-  - Peak-memory estimates were low on the first model of each family, by up to 4.4 GB. The multiplier now uses the
-    worst measured same-family ratio (1.54 for Qwen3-VL).
-* **Q8_K_XL.** RESOURCE_BLOCKED before download. The multiplicative estimate gives 21.0 GB. An additive
-  cross-check gives 18.2 GB: the Q4 build's measured 12.5 GB plus 5.7 GB of extra weights. Both exceed the 16.1 GB
-  machine. Nothing about quantization was measured, so no claim is made.
-* **Server reliability.** The 14-mode fault drill passes. No supervisor incident occurred in real runs. One queue
-  incident (two queue processes) failed closed, and is now prevented by a lock and a same-port DEFER.
-* **Native vs model pages.** KEEP NATIVE on every page type. Qwen3-VL 8B's Checklist page ties native on every
-  dimension. A tie is not a win while the model's stability is NOT_MEASURED.
+| route | 4B | 8B | 4B / 8B latency | decision |
+|---|---|---|---|---|
+| English, checklist, extraction, live, long retrieval, HTML, design reward/critique | 100 | 100 | 5–113 s / 11–271 s | **tie → 4B (7.55 GB vs 12.51 GB, 2–2.4× faster)** |
+| bilingual (EN/AR mixing) | 100 | 67 | 6.9 s / 17.4 s | **4B (measured higher)** |
+
+- **Licences:** both Apache-2.0, verified.
+- **Reliability:** 0 infrastructure errors in 11 samples each.
+- **Admission:** both admitted in PRODUCTION_MODE.
+- **The 8B** stays the fallback and the canonical-640 advisory finalist judge.
+
+Routes whose best model is unlicensed are EVALUATION_ONLY; the native engine runs them in production:
+- Egyptian guide: Gemma 3 4B, 50 (its weakest required capability is fact preservation 50, at the floor).
+- Critique: Gemma 3 4B, 75.
+
+## Load test (PRODUCTION_MODE, Qwen3-VL 4B, real Chromium renders, SQLite)
+
+**10/10 PASS**, 0 failed jobs, no swap, memory floor held in every scenario.
+
+| scenario | key results |
+|---|---|
+| saturation | 14 jobs rejected with back-pressure, never as failures |
+| model busy | one server slot: model requests queue; no failures |
+| database busy | 8 s exclusive lock; writes waited up to 4.1 s |
+| server crash | our own SIGKILL classified MODEL_SERVER_CRASH; supervisor restarted once; recovered in 8.9 s; 4/4 jobs done |
+| restart recovery | a fresh queue resumed in 10.8 s; exactly-once side effects |
+| memory pressure | 63 DEFERs; renders waited instead of starting; at least 2.69 GB free throughout; all jobs completed after release |
+| all scenarios | throughput ≈ 17 jobs/min, CPU-bound on the model |
+
+Fixes the harness forced:
+- **Supervisor recovery is serialized.** Concurrent workers restart a dead server exactly once.
+- **OOM needs evidence:** the kernel `oom_kill` counter or an allocator failure in the log. A bare SIGKILL is not evidence.
+- **Render admission reserves memory before Chromium allocates.**
+
+## Release control and evidence
+
+- **Approval binding.** An approval binds the token identity, job id, timestamp, final PDF/HTML hashes, decision and comment in the hash-chained ledger.
+  - An approval for bytes the approver did not review is refused.
+  - FINAL refuses an artifact changed after approval.
+  - A typed name never authenticates.
+- **Brand contract.** It now requires font licences, usage constraints and per-asset checksums. `apex-one brand validate` → VALID / INCOMPLETE / INVALID. Placeholders are never VALID.
+- **Evidence packs.** `apex-one evidence init|check|run` validates a real opportunity from saved official pages/PDFs offline.
+  - A test pack runs the whole pipeline. It stops only at the brand gate.
+  - Packs on reserved test domains never count as real.
+- **Gemini.** `apex-one vision validate-gemini` is ready and resumable. It exits 2 (BLOCKED_NO_KEY) today.
 
 ## Quality rule (never lowered)
 
-Reader comprehension ≥ 95 · rhythm ≥ 93 · Arabic typography ≥ 98. These are enforced by
+Reader comprehension ≥ 95 · rhythm ≥ 93 · Arabic typography ≥ 98 — enforced by
 `tests/test_pipeline.py::test_golden_ultra_quality_never_regresses`.
 
 ## NOT_MEASURED
 
-* Absolute visual quality (VisionCouncil).
-* Qwen3-VL 8B Q8_K_XL and gpt-oss 20B under the scheduler (RESOURCE_BLOCKED).
-* gpt-oss English writing and editorial.
-* GDB on 33 of 39 tasks (Hugging Face dataset unreachable).
-* Run-to-run stability of model-written pages.
-* Every remote free provider.
-* PRODUCTION_MODE behaviour under real concurrent load.
+- Absolute visual quality.
+- Any Gemini or remote judge.
+- Qwen3-VL 8B Q8_K_XL and gpt-oss 20B: RESOURCE_BLOCKED, never downloaded.
+- 33/39 GDB tasks.
+- Model-page run-to-run stability.
+- Long-duration (soak) production load.

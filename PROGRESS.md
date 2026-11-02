@@ -1,6 +1,6 @@
 # APEX ONE ULTRA — Progress log
 
-Last updated: 2026-10-31 (session 4: model validation, resource scheduler)
+Last updated: 2026-11-02 (session 5: shortest path to a production candidate)
 
 **Overall maturity: ARCHITECTURE_COMPLETE + OFFLINE_PIPELINE_VALIDATED; LOCAL_MODEL_ROUTING_VALIDATED (evaluation
 scope); DESIGN_MODEL_VALIDATION and VISION_GATE PARTIAL; remote compute, real opportunity and production NOT
@@ -14,10 +14,10 @@ validated.** See ULTRA_QUALITY_REPORT.md for the per-level reasons.
 |---|---|---|
 | 14 Live providers | DONE (honest statuses) | LIVE_PROVIDER_REPORT.md; `apex-one providers live-test`; 5 cloud providers NETWORK_BLOCKED, Gemini CREDENTIALS_REQUIRED, local llama.cpp LIVE_TESTED per model (stored in artifacts/live/local_live_results.json) |
 | 14b Local inference | DONE | llama.cpp built from source; 4 GGUF models acquired from Docker Hub `ai/` (sha256 verified): Gemma 3 4B, Qwen3-VL 4B, Nemotron 3 Nano 4B, gpt-oss 20B; `apex-one local status|acquire|serve|stop` |
-| 15 General council benchmark | RUNNING (CPU, sequential) | apex_one/compute/benchmark/council.py, scripts/run_local_council.py; results → artifacts/bench/council_scores.json → registry overlay (`capability_source: apex-benchmark`) |
+| 15 General council benchmark | DONE (6 local models; see FINAL_MODEL_MATRIX.md) | apex_one/compute/benchmark/council.py, scripts/run_local_council.py; results → artifacts/bench/council_scores.json → registry overlay (`capability_source: apex-benchmark`) |
 | 16 Design arsenal activation | DONE (evidence per system) | DESIGN_MODEL_ACTIVATION.md, config/design_activation.yaml — 30 systems; none of the specialist checkpoints is reachable (HF denied) |
-| 17 APEX design bench (15 page types) | NATIVE DONE, LLM RUNNING | APEX_DESIGN_BENCH.md, apex_one/lab/benchmarks/apex_design_bench.py; native baseline vs tournament measured on all 15 types; local LLM page writers queued (5 key types each) |
-| 18 Vision Council | WIRED; JUDGE CALIBRATION RUNNING | apex_one/vision/council.py; VISION_QA runs only calibrated-reliable judges (stamped by model digest), else NOT_MEASURED; weak pages → MUTATION |
+| 17 APEX design bench (15 page types) | DONE (native + 6 model page writers; KEEP NATIVE everywhere) | APEX_DESIGN_BENCH.md, apex_one/lab/benchmarks/apex_design_bench.py; native baseline vs tournament measured on all 15 types; local LLM page writers queued (5 key types each) |
+| 18 Vision Council | WIRED; calibration DONE: no robust judge (absolute quality NOT_MEASURED) | apex_one/vision/council.py; VISION_QA runs only calibrated-reliable judges (stamped by model digest), else NOT_MEASURED; weak pages → MUTATION |
 | 19 PosterReward | PROTOCOL_REIMPLEMENTED (weights unreachable) | apex_one/vision/pairwise.py: order-swapped, consistency-required, strict-majority pairwise; disagreements + failures stored |
 | 20 Comprehension ≥ 95, rhythm ≥ 93 | DONE | golden ULTRA J-9aee654ead70: comprehension 98.9, rhythm 94.0, all 10 targets PASS (incl. new arabic_typography 100) |
 | 21 Genome extraction | DONE (no approved APEX documents supplied yet) | apex_one/design/genome_extraction.py, `apex-one genome ingest|principles`; tested on our own PDF only |
@@ -25,7 +25,7 @@ validated.** See ULTRA_QUALITY_REPORT.md for the per-level reasons.
 | 23 Ultra evolution | DONE | ULTRA = 64 seeded candidates for important pages (APEX_ULTRA_CANDIDATES ≤ 256), 844 candidates in golden ULTRA; pairwise finalists when reliable judges exist |
 | 24 Mixture of design experts | DONE | apex_one/design/models/moe.py: semantic gate (type → reading family → default), measured evidence, margin rule, licence-gated |
 | 25 A/B/C preference dataset | DONE (no human labels yet) | `apex-one preference sheet|record`; winner, ranking, reason, controlled tags; never auto-trained |
-| 26 GraphicDesignBench | PACKAGE + PROVIDER DONE; LOCAL RUN QUEUED | lica-gdb 0.2.1; apex_one/lab/benchmarks/gdb_provider.py via the $0 broker; full dataset on HF is unreachable → smoke bundle only |
+| 26 GraphicDesignBench | DONE offline (6/39 tasks, n=2); full dataset unreachable | lica-gdb 0.2.1; apex_one/lab/benchmarks/gdb_provider.py via the $0 broker; full dataset on HF is unreachable → smoke bundle only |
 | 27 Asset contracts | DONE; ASSETS MISSING | assets/apex/, config/asset_contract.yaml, `apex-one assets validate`; compiler embeds what validates; Brand Production Gate blocks real jobs (currently 4 assets MISSING) |
 | 28 Arabic typography | DONE (deterministic) + council TypographyJudge when calibrated | qa/typography: letter-spacing, italics, leading, punctuation, tatweel; rendered detect cases 4/4 |
 | 29 Real opportunity job | BLOCKED (environment) | `create-guide "Berea College Fall 2027"` → BLOCKED at SOURCE_DISCOVERY; berea.edu, educationusa, studyinthestates, commonapp, travel.state.gov all denied by egress proxy (403) |
@@ -39,15 +39,15 @@ Push status: pushed to origin/claude/charming-archimedes-2guzc9.
 
 | Item | Status | Evidence |
 |---|---|---|
-| 1 Background evaluations | RUNNING (resumable queue) | scripts/validation_queue.py, artifacts/bench/queue_state.json; restarted after a container move (native llama.cpp build died with SIGILL → portable rebuild) |
+| 1 Background evaluations | DONE (queue ALL DONE; Q8_K_XL / gpt-oss RESOURCE_BLOCKED) | scripts/validation_queue.py, artifacts/bench/queue_state.json; restarted after a container move (native llama.cpp build died with SIGILL → portable rebuild) |
 | 2 No blind overall ranking | DONE | MODEL_COMPARISON_MATRIX.md (per task, same-task winners only); router has no "overall" fallback |
-| 3 Qwen3-VL contradiction | INVESTIGATING | VISION_CALIBRATION_ANALYSIS.md; experiments E0–E4 in the queue |
-| 4 Stronger vision judge | RUNNING | remote vision routes all blocked/keyless; Qwen3-VL 8B and Gemma 3 12B queued with the same 5-case calibration + pairwise order inversion |
+| 3 Qwen3-VL contradiction | DONE (VISION_CALIBRATION_ANALYSIS.md; position bias / judgement, not perception) | VISION_CALIBRATION_ANALYSIS.md; experiments E0–E4 in the queue |
+| 4 Stronger vision judge | DONE in session 4: none found | remote vision routes all blocked/keyless; Qwen3-VL 8B ended CANONICAL_640_ONLY (advisory 640 px finalist judge only), Gemma 3 12B UNQUALIFIED |
 | 5 Design activation states | DONE | DESIGN_MODEL_ACTIVATION.md: one final_state per system (LIVE_TESTED 1, ADAPTER_TESTED_ONLY 1, NETWORK_BLOCKED 6, HARDWARE_BLOCKED 7, DEPENDENCY_MISSING 6, RESEARCH_ONLY 8, NOT_IMPLEMENTED 1) |
 | 6 Licence verification | DONE | config/license_verifications.yaml (`apex-one license verify-local`): Qwen3-VL 4B Apache-2.0 allowed; others blocked with reasons |
 | 7 Authentication | DONE | apex_one/core/auth.py, tests/test_auth.py; token identity, forged-name rejection, hash-chained ledger |
 | 8 Brand asset gate | DONE (assets still missing → FAIL) | `apex-one brand import`, brand fingerprint |
-| 9 Model writing vs native | NATIVE MEASURED, MODELS RUNNING | apex_one/lab/benchmarks/page_compare.py, APEX_DESIGN_BENCH.md |
+| 9 Model writing vs native | DONE (KEEP NATIVE on every page type) | apex_one/lab/benchmarks/page_compare.py, APEX_DESIGN_BENCH.md |
 | 10 Date reasoning | DONE | apex_one/core/dates.py; firewall blocks date.* for models; regression test |
 | 11 Task-specific routing | DONE | config/task_routing.yaml |
 | 12 GraphicDesignBench | DONE (n=2 smoke) | 6/39 tasks runnable offline; 33 skipped (HF dataset) — not scored as zero |
@@ -72,3 +72,20 @@ Push status: pushed to origin/claude/charming-archimedes-2guzc9.
 | Queue concurrency incident (01:04) | FIXED | bdc6bce: queue lock + same-port DEFER. Recorded in artifacts/bench/server_reliability/queue_incidents.json. |
 
 Test status: `.venv/bin/python -m pytest` → 197 passed, 0 failed (code identical to 65e962f).
+
+## Session 5 — shortest path to a production candidate (2026-11-01 → 02)
+
+| Item | Status | Evidence |
+|---|---|---|
+| Memory headroom from measured error | DONE | Evaluation 1.4 GB = ceil(1.06 GB miss + 0.30 GB spread); production 2.02 GB; tests/test_server_reliability.py::test_evaluation_headroom_exceeds_the_measured_prediction_error_bound |
+| Routing freeze v2 | DONE | Full route records with EVALUATION_ONLY; 4B vs 8B on identical measurements (4B re-measured under the 8B contract); see PRODUCTION_ROUTING_MATRIX.md |
+| Authoritative blockers + maturity | DONE | config/production_blockers.yaml with live probes; PRODUCTION_BLOCKERS.md, HUMAN_ACTIONS_REQUIRED.md, docs/evidence/maturity.json; PRODUCTION_READY computed |
+| Gemini validation path | DONE (blocked on key) | `apex-one vision validate-gemini`: exact-model pin, all calibration steps, resumable; tests/test_gemini_validation.py |
+| Approval binding | DONE | identity + job + time + artifact hash + decision + comment; refuses unreviewed bytes; FINAL refuses post-approval changes |
+| Brand validation | DONE (assets missing) | `apex-one brand validate` → INCOMPLETE; contract adds font licences, usage, checksums |
+| Offline real-opportunity harness | DONE | `apex-one evidence init/check/run`; a test pack runs the whole pipeline and stops only at the brand gate |
+| Production load test | DONE: 10/10 PASS | apex_one/lab/load_test.py, real Qwen3-VL 4B + Chromium; MODEL_SERVER_RELIABILITY.md |
+| Bugs found and fixed | DONE | supervisor double restart under concurrency; SIGKILL mislabelled OOM; render admission race; tie counted as win; vacuous routing validation |
+| Report consistency audit | DONE | tests/test_report_consistency.py |
+
+Test status: `.venv/bin/python -m pytest` → 230 passed, 0 failed (code identical to the final commit of 2026-11-02).

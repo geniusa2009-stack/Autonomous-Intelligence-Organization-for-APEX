@@ -1,6 +1,6 @@
 # Model server reliability
 
-_Generated 2026-10-31 02:19 UTC by `apex-one reports` at commit `bdc6bce` from measured artifacts._
+_Generated 2026-11-02 13:07 UTC by `apex-one reports` at commit `2a5fbdb` from measured artifacts._
 
 A local model server can crash, hang, run out of memory, return nothing or return garbage. None of these is a wrong answer. `apex_one/compute/local/supervisor.py` classifies every failed call into exactly one failure kind, recovers the server when that is safe, and the benchmark records the sample as **ERROR** (never a score). Result states are kept separate: PASSED · FAILED (measured) · UNSUPPORTED · SKIPPED · ERROR.
 
@@ -78,6 +78,26 @@ No supervisor event (restart, crash, timeout, empty output) was recorded in a re
 |---|---|---|---|---|---|
 | 2026-10-31T01:04:30 | qwen3-vl-4b-q4kxl (port 8093) | a second validation-queue process (snapshot d28e25e) started while the first (b61868b) was loading the same model on the same port; the second llama-server exited (1) on the busy port and its unload assertion found a 1.47 GB server it had not started | SchedulerViolation raised (fail-closed); no OOM, no swap, no process killed; the first queue finished normally | bdc6bce: exclusive queue lock (a second queue exits with code 3) + a server we did not start on our port DEFERs the load | `tests/test_server_reliability.py::test_only_one_queue_process_may_run, ::test_a_server_on_our_port_that_we_did_not_start_defers_the_load` |
 
+## Production load test (PRODUCTION_MODE, real model, real Chromium)
+
+**Verdict: PASS** — model `qwen3-vl-4b-q4kxl` (real: True), run 2026-11-01T19:52:38 at commit `e14c610`. A job = one supervised production model call + one memory-admitted Chromium render to PDF + one idempotent SQLite write, through a bounded journalled queue. Required production headroom 2.02 GB. Provenance: 8 scenarios from the full run at cb34d4a; memory_pressure re-run at cbfb77d (the first version never engaged the throttle); server_crash re-run at e14c610 (OOM-evidence classification and per-run event log). Earlier results are superseded, not averaged.
+
+| scenario | verdict | jobs (done / failed / rejected) | failure rate | throughput (jobs/min) | queue delay p50 / p95 s | latency p50 / p95 s | model p50 s | render p50 s | min free RAM GB | server peak RSS GB | CPU avg / max % | swap GB | render admissions (ADMIT / DEFER) | recovery | commit | notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| single_job | **PASS** | 1 / 0 / 0 | 0.0 | 13.02 | 0.0 / 0.0 | 4.53 / 4.53 | 3.06 | 1.47 | 11.24 | 7.31 | 76.3 / 100.0 | 0.0 | 1 / 0 | — | `cb34d4a` | — |
+| small_burst | **PASS** | 5 / 0 / 0 | 0.0 | 16.64 | 3.93 / 10.88 | 7.14 / 7.5 | 6.25 | 1.03 | 11.19 | 7.32 | 95.8 / 100.0 | 0.0 | 5 / 0 | — | `cb34d4a` | — |
+| concurrent_safe | **PASS** | 6 / 0 / 0 | 0.0 | 16.78 | 0.07 / 11.59 | 9.83 / 11.55 | 9.03 | 1.13 | 11.04 | 7.39 | 96.0 / 100.0 | 0.0 | 6 / 0 | — | `cb34d4a` | — |
+| queue_saturation | **PASS** | 6 / 0 / 14 | 0.0 | 16.94 | 4.06 / 14.38 | 6.85 / 7.52 | 5.81 | 1.06 | 10.96 | 7.45 | 96.5 / 100.0 | 0.0 | 6 / 0 | — | `cb34d4a` | — |
+| model_busy | **PASS** | 4 / 0 / 0 | 0.0 | 17.61 | 0.0 / 0.0 | 10.42 / 13.57 | 9.34 | 1.03 | 10.94 | 7.5 | 95.5 / 100.0 | 0.0 | 4 / 0 | — | `cb34d4a` | — |
+| renderer_busy | **PASS** | 4 / 0 / 0 | 0.0 | 17.37 | 0.0 / 0.0 | 10.67 / 13.69 | 9.42 | 1.16 | 10.82 | 7.54 | 95.4 / 100.0 | 0.0 | 4 / 0 | — | `cb34d4a` | — |
+| database_busy | **PASS** | 3 / 0 / 0 | 0.0 | 17.63 | 0.0 / 0.0 | 8.21 / 10.14 | 6.21 | 1.05 | 10.81 | 7.58 | 95.3 / 100.0 | 0.0 | 3 / 0 | — | `cb34d4a` | — |
+| restart_recovery | **PASS** | 5 / 0 / 0 | 0.0 | 16.83 | 3.34 / 6.9 | 3.5 / 3.56 | 2.72 | 0.77 | 11.07 | 7.35 | 82.9 / 100.0 | 0.0 | 3 / 0 | 10.8 s | `cb34d4a` | db_rows=5; duplicate_side_effects=0 |
+| memory_pressure | **PASS** | 4 / 0 / 0 | 0.0 | 13.93 | 0.0 / 0.01 | 16.23 / 17.04 | 8.37 | 11.27 | 2.69 | 5.52 | 72.9 / 100.0 | 0.0 | 4 / 63 | — | `cbfb77d` | ballast_gb=8.61 |
+| server_crash | **PASS** | 4 / 0 / 0 | 0.0 | 8.31 | 17.74 / 21.74 | 17.73 / 21.73 | 15.69 | 1.59 | 11.08 | 7.31 | 75.8 / 100.0 | 0.0 | 4 / 0 | 8.9 s | `e14c610` | server_killed=True; restarts=1; recovery_events=1 |
+
+Rejected = back-pressure (queue full: the caller retries later), never a failure. Failures are classified by kind and are INFRASTRUCTURE_ERROR, never a quality score. DEFER = the render waited for memory instead of starting (throttle, not OOM).
+
+
 ## Memory lifecycle per load / unload cycle (resource scheduler)
 
 Available memory (GB) at each point; recovery = available after stabilisation / available before load (< 0.95 → MEMORY_LEAK_OR_RESIDUAL, and no next large model loads).
@@ -88,6 +108,7 @@ Available memory (GB) at each point; recovery = available after stabilisation / 
 | Gemma 3 12B | pre-scheduler record (partial) | 16.14 | — | — | — | — | — | 16.09 | — | 14.08 | — / — | — | 14.0 / — / 2.6 s | — | — |
 | Qwen3-VL 4B | pre-scheduler record (partial) | 15.68 | — | — | — | — | — | 16.08 | — | — | — / — | — | 251.2 / — / 33.0 s | — | — |
 | Qwen3-VL 4B | EVALUATION_MODE | 15.78 | 11.34 | 11.34 | 11.3 | 11.3 | 16.01 | 16.03 | 1.016 | 7.32 | 0.0 / 0.0 | 0 | 5.4 / 0.33 / 2.3 s | 0.7 | — |
+| Qwen3-VL 4B | EVALUATION_MODE | 16.31 | 11.49 | 11.49 | 11.09 | 11.09 | 16.11 | 16.11 | 0.988 | 7.55 | 0.0 / 0.0 | 240 | 261.0 / 0.28 / 2.3 s | 1.21 | — |
 | Qwen3-VL 8B | EVALUATION_MODE | 15.6 | 8.5 | 8.51 | 7.86 | 8.21 | 15.43 | 15.45 | 0.99 | 12.51 | 0.0 / 0.0 | 98 | 254.1 / 0.53 / 2.4 s | 1.45 | — |
 | Nemotron 3 Nano 4B | EVALUATION_MODE | 15.66 | 14.38 | 14.2 | 13.55 | 13.63 | 15.85 | 15.86 | 1.013 | 4.9 | 0.0 / 0.0 | 12 | 209.4 / 0.96 / 2.3 s | 0.97 | — |
 
