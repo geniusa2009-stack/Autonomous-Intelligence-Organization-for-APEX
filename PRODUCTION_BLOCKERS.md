@@ -1,6 +1,6 @@
 # Production blockers
 
-_Generated 2026-11-02 13:08 UTC by `apex-one reports` at commit `2a5fbdb` from measured artifacts._
+_Generated 2026-11-02 13:12 UTC by `apex-one reports` at commit `9b7b854` from measured artifacts._
 
 Authoritative source: `config/production_blockers.yaml`. Status comes from a live probe (`apex_one/lab/blockers.py`), never from hand-written text. PRODUCTION_READY is **NO** — unmet mandatory dimensions: ['REAL_OPPORTUNITY_VALIDATED', 'BRAND_ASSETS_VALIDATED', 'HUMAN_APPROVAL_VALIDATED'].
 

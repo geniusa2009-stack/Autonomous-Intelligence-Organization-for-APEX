@@ -1,6 +1,6 @@
 # Model server reliability
 
-_Generated 2026-11-02 13:07 UTC by `apex-one reports` at commit `2a5fbdb` from measured artifacts._
+_Generated 2026-11-02 13:11 UTC by `apex-one reports` at commit `9b7b854` from measured artifacts._
 
 A local model server can crash, hang, run out of memory, return nothing or return garbage. None of these is a wrong answer. `apex_one/compute/local/supervisor.py` classifies every failed call into exactly one failure kind, recovers the server when that is safe, and the benchmark records the sample as **ERROR** (never a score). Result states are kept separate: PASSED · FAILED (measured) · UNSUPPORTED · SKIPPED · ERROR.
 
@@ -49,7 +49,7 @@ Before a model loads: expected peak (measured, else weights + KV + compute) + re
 
 ## Fault-injection drill (fake model server, real broker + council path)
 
-Result: **ALL PASS** — 12/12 modes classified as expected.
+Result: **ALL PASS** — 14/14 modes classified as expected.
 
 | fake server mode | sample state | failure kind | in score table | restarts | supervisor events | expected | pass |
 |---|---|---|---|---|---|---|---|
@@ -58,13 +58,15 @@ Result: **ALL PASS** — 12/12 modes classified as expected.
 | hang | ERROR | MODEL_TIMEOUT | no | 2 | call_failed:MODEL_TIMEOUT, restart, warmup_failed, restart, warmup_failed, restart_budget_exhausted | ERROR/MODEL_TIMEOUT | PASS |
 | crash | ERROR | MODEL_SERVER_CRASH | no | 2 | call_failed:MODEL_SERVER_CRASH, restart, warmup_failed, restart, warmup_failed, restart_budget_exhausted | ERROR/MODEL_SERVER_CRASH | PASS |
 | oom | ERROR | OOM | no | 2 | call_failed:OOM, restart, warmup_failed, restart, warmup_failed, restart_budget_exhausted | ERROR/OOM | PASS |
-| malformed | ERROR | MALFORMED_RESPONSE | no | 0 | call_failed:MALFORMED_RESPONSE | ERROR/MALFORMED_RESPONSE | PASS |
-| disconnect | ERROR | CONNECTION_DROPPED | no | 0 | call_failed:CONNECTION_DROPPED, call_failed:CONNECTION_DROPPED | ERROR/CONNECTION_DROPPED | PASS |
+| malformed | ERROR | MALFORMED_OUTPUT | no | 0 | call_failed:MALFORMED_OUTPUT | ERROR/MALFORMED_OUTPUT | PASS |
+| disconnect | ERROR | STREAM_INTERRUPTED | no | 0 | call_failed:STREAM_INTERRUPTED, call_failed:STREAM_INTERRUPTED | ERROR/STREAM_INTERRUPTED | PASS |
 | unhealthy | ERROR | HEALTHCHECK_FAILED | no | 2 | unhealthy_before_call:HEALTHCHECK_FAILED, restart, start_failed, restart, start_failed, restart_budget_exhausted | ERROR/HEALTHCHECK_FAILED | PASS |
+| refused | ERROR | CONNECTION_REFUSED | no | 2 | unhealthy_before_call:CONNECTION_REFUSED, restart, start_failed, restart, start_failed, restart_budget_exhausted | ERROR/CONNECTION_REFUSED | PASS |
+| resource_blocked | ERROR | RESOURCE_BLOCKED | no | 1 | unhealthy_before_call:CONNECTION_REFUSED, restart, start_failed | ERROR/RESOURCE_BLOCKED | PASS |
 | crash_once | FAILED | — | yes | 1 | call_failed:MODEL_SERVER_CRASH, restart, recovered | MEASURED/— | PASS |
 | hang_once | FAILED | — | yes | 1 | call_failed:MODEL_TIMEOUT, restart, recovered | MEASURED/— | PASS |
 | oom_once | FAILED | — | yes | 1 | call_failed:OOM, restart, recovered | MEASURED/— | PASS |
-| disconnect_once | FAILED | — | yes | 0 | call_failed:CONNECTION_DROPPED | MEASURED/— | PASS |
+| disconnect_once | FAILED | — | yes | 0 | call_failed:STREAM_INTERRUPTED | MEASURED/— | PASS |
 
 Every row also carries its outcome class: persistent faults are INFRASTRUCTURE_ERROR. `ok` and the `*_once` modes are real measurements of the fake server's fixed answer (the checker scores it FAILED because the fake answer is not the task's answer) — the point is that they were MEASURED after recovery, while every persistent fault is ERROR and never enters the score table.
 

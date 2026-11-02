@@ -4,6 +4,7 @@
     {
       "mode": "ok",
       "state": "FAILED",
+      "outcome_class": "QUALITY_ZERO",
       "failure_kind": null,
       "score": 0.0,
       "in_score_table": true,
@@ -20,6 +21,7 @@
     {
       "mode": "empty",
       "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
       "failure_kind": "EMPTY_OUTPUT",
       "score": null,
       "in_score_table": false,
@@ -38,6 +40,7 @@
     {
       "mode": "hang",
       "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
       "failure_kind": "MODEL_TIMEOUT",
       "score": null,
       "in_score_table": false,
@@ -61,6 +64,7 @@
     {
       "mode": "crash",
       "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
       "failure_kind": "MODEL_SERVER_CRASH",
       "score": null,
       "in_score_table": false,
@@ -84,6 +88,7 @@
     {
       "mode": "oom",
       "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
       "failure_kind": "OOM",
       "score": null,
       "in_score_table": false,
@@ -107,17 +112,18 @@
     {
       "mode": "malformed",
       "state": "ERROR",
-      "failure_kind": "MALFORMED_RESPONSE",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
+      "failure_kind": "MALFORMED_OUTPUT",
       "score": null,
       "in_score_table": false,
       "restarts": 0,
       "server_starts": 1,
       "events": [
-        "call_failed:MALFORMED_RESPONSE"
+        "call_failed:MALFORMED_OUTPUT"
       ],
       "expected": {
         "state": "ERROR",
-        "failure_kind": "MALFORMED_RESPONSE",
+        "failure_kind": "MALFORMED_OUTPUT",
         "restart": false
       },
       "pass": true
@@ -125,18 +131,19 @@
     {
       "mode": "disconnect",
       "state": "ERROR",
-      "failure_kind": "CONNECTION_DROPPED",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
+      "failure_kind": "STREAM_INTERRUPTED",
       "score": null,
       "in_score_table": false,
       "restarts": 0,
       "server_starts": 1,
       "events": [
-        "call_failed:CONNECTION_DROPPED",
-        "call_failed:CONNECTION_DROPPED"
+        "call_failed:STREAM_INTERRUPTED",
+        "call_failed:STREAM_INTERRUPTED"
       ],
       "expected": {
         "state": "ERROR",
-        "failure_kind": "CONNECTION_DROPPED",
+        "failure_kind": "STREAM_INTERRUPTED",
         "restart": false
       },
       "pass": true
@@ -144,6 +151,7 @@
     {
       "mode": "unhealthy",
       "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
       "failure_kind": "HEALTHCHECK_FAILED",
       "score": null,
       "in_score_table": false,
@@ -165,8 +173,54 @@
       "pass": true
     },
     {
+      "mode": "refused",
+      "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
+      "failure_kind": "CONNECTION_REFUSED",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 2,
+      "server_starts": 3,
+      "events": [
+        "unhealthy_before_call:CONNECTION_REFUSED",
+        "restart",
+        "start_failed",
+        "restart",
+        "start_failed",
+        "restart_budget_exhausted"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "CONNECTION_REFUSED",
+        "restart": true
+      },
+      "pass": true
+    },
+    {
+      "mode": "resource_blocked",
+      "state": "ERROR",
+      "outcome_class": "INFRASTRUCTURE_ERROR",
+      "failure_kind": "RESOURCE_BLOCKED",
+      "score": null,
+      "in_score_table": false,
+      "restarts": 1,
+      "server_starts": 2,
+      "events": [
+        "unhealthy_before_call:CONNECTION_REFUSED",
+        "restart",
+        "start_failed"
+      ],
+      "expected": {
+        "state": "ERROR",
+        "failure_kind": "RESOURCE_BLOCKED",
+        "restart": true
+      },
+      "pass": true
+    },
+    {
       "mode": "crash_once",
       "state": "FAILED",
+      "outcome_class": "QUALITY_ZERO",
       "failure_kind": null,
       "score": 0.0,
       "in_score_table": true,
@@ -187,6 +241,7 @@
     {
       "mode": "hang_once",
       "state": "FAILED",
+      "outcome_class": "QUALITY_ZERO",
       "failure_kind": null,
       "score": 0.0,
       "in_score_table": true,
@@ -207,6 +262,7 @@
     {
       "mode": "oom_once",
       "state": "FAILED",
+      "outcome_class": "QUALITY_ZERO",
       "failure_kind": null,
       "score": 0.0,
       "in_score_table": true,
@@ -227,13 +283,14 @@
     {
       "mode": "disconnect_once",
       "state": "FAILED",
+      "outcome_class": "QUALITY_ZERO",
       "failure_kind": null,
       "score": 0.0,
       "in_score_table": true,
       "restarts": 0,
       "server_starts": 1,
       "events": [
-        "call_failed:CONNECTION_DROPPED"
+        "call_failed:STREAM_INTERRUPTED"
       ],
       "expected": {
         "state": "MEASURED",
