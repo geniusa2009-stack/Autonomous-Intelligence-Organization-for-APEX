@@ -458,6 +458,9 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
     finally:
         unregister(spec.registry_model)
         cycle = sched.unload()
+    for r in results:              # provenance per scenario: --only reruns mix runs from different commits
+        r.setdefault("commit", os.environ.get("APEX_RUN_COMMIT"))
+        r.setdefault("run_at", time.strftime("%Y-%m-%dT%H:%M:%S"))
     prev = json.loads((out_dir() / "report.json").read_text()) if only and (out_dir() / "report.json").exists() else {}
     if prev.get("scenarios"):      # --only re-runs a scenario: replace it, keep the others' measured results
         fresh = {r["scenario"] for r in results}

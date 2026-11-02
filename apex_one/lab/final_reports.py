@@ -805,11 +805,12 @@ def load_test_md(rep: dict[str, Any] | None) -> list[str]:
     out += [f"**Verdict: {rep['verdict']}** — model `{rep['model']}` (real: {rep['real_model']}), run {rep.get('at')} "
             f"at commit `{rep.get('commit')}`. A job = one supervised production model call + one memory-admitted "
             "Chromium render to PDF + one idempotent SQLite write, through a bounded journalled queue. Required "
-            f"production headroom {rep['scenarios'][0]['required_production_headroom_gb'] if rep['scenarios'] else '?'} GB.",
+            f"production headroom {rep['scenarios'][0]['required_production_headroom_gb'] if rep['scenarios'] else '?'} GB."
+            + (f" Provenance: {rep['provenance_note']}" if rep.get("provenance_note") else ""),
             "", "| scenario | verdict | jobs (done / failed / rejected) | failure rate | throughput (jobs/min) | queue "
             "delay p50 / p95 s | latency p50 / p95 s | model p50 s | render p50 s | min free RAM GB | server peak "
-            "RSS GB | CPU avg / max % | swap GB | render admissions (ADMIT / DEFER) | recovery | notes |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+            "RSS GB | CPU avg / max % | swap GB | render admissions (ADMIT / DEFER) | recovery | commit | notes |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rep["scenarios"]:
         notes = "; ".join(f"{k}={v}" for k, v in r.items() if k in (
             "server_killed", "restarts", "recovery_events", "db_rows", "duplicate_side_effects", "ballast_gb",
@@ -821,7 +822,7 @@ def load_test_md(rep: dict[str, Any] | None) -> list[str]:
                    f"{r['latency_s']['p95']} | {r['model_s_p50']} | {r['render_s_p50']} | {r['min_available_gb']} | "
                    f"{r['server_peak_rss_gb']} | {r['cpu_avg_pct']} / {r['cpu_max_pct']} | {r['swap_peak_gb']} | "
                    f"{r['admissions'].get('ADMIT', 0)} / {r['admissions'].get('DEFER', 0)} | "
-                   f"{'—' if rec is None else f'{rec} s'} | {notes or '—'} |")
+                   f"{'—' if rec is None else f'{rec} s'} | `{r.get('commit', '?')}` | {notes or '—'} |")
     out += ["", "Rejected = back-pressure (queue full: the caller retries later), never a failure. Failures are "
             "classified by kind and are INFRASTRUCTURE_ERROR, never a quality score. DEFER = the render waited for "
             "memory instead of starting (throttle, not OOM).", ""]
