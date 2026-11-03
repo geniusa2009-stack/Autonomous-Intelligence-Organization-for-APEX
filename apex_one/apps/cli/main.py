@@ -183,10 +183,17 @@ def local_acquire(key: str):
 
 @local_app.command("serve")
 def local_serve(key: str):
-    """Start llama-server for an acquired model (OpenAI-compatible on 127.0.0.1)."""
+    """Start llama-server for an acquired model (OpenAI-compatible on 127.0.0.1) — only if the resource scheduler
+    admits it in PRODUCTION_MODE with renders beside it (MODEL_PLUS_CHROMIUM); otherwise refuse with the reason."""
     from apex_one.compute.local import LocalServer, load_catalogue
+    from apex_one.compute.local.resources import PRODUCTION_MODE, admit
 
     _, specs = load_catalogue()
+    dec = admit(specs[key], "pages", mode=PRODUCTION_MODE)
+    if dec.decision != "ADMIT":
+        console.print(f"[red]{dec.decision}[/]: {dec.reason}")
+        raise typer.Exit(1)
+    console.print(f"admitted ({dec.reason})")
     console.print(f"serving {key} at {LocalServer(specs[key]).start()}")
 
 
@@ -213,6 +220,14 @@ def brand_import(folder: Path, dry_run: bool = typer.Option(False, help="validat
     rep = import_brand(folder, dry_run=dry_run)
     console.print_json(json.dumps(rep, ensure_ascii=False, default=str))
     raise typer.Exit(0 if not rep.get("problems") else 1)
+
+
+@brand_app.command("checksums")
+def brand_checksums(folder: Path):
+    """Print the `checksums:` block for the package's manifest.yaml (computed from the files the manifest names)."""
+    from apex_one.release.assets import checksums_block
+
+    print(checksums_block(folder), end="")
 
 
 @brand_app.command("validate")
@@ -565,6 +580,24 @@ def auth_revoke(name: str):
     console.print(f"revoked {name}")
 
 
+@auth_app.command("history")
+def auth_history(job: str = typer.Option(None, help="Only this job's decisions"), as_json: bool = typer.Option(False, "--json")):
+    """The approval ledger (approver created/revoked, every release decision with its artifact hashes)."""
+    from apex_one.core.auth import _entries
+
+    rows = [e for e in _entries() if job is None or e.get("job_id") == job]
+    if as_json:
+        console.print_json(json.dumps(rows))
+        return
+    t = Table(title="approval ledger")
+    for c in ("seq", "at", "event", "who", "job", "decision", "final.pdf sha256"):
+        t.add_column(c)
+    for e in rows:
+        t.add_row(str(e["seq"]), e["at"][:19], e["event"], e.get("approver") or e.get("name", ""), e.get("job_id", ""),
+                  e.get("decision", ""), (e.get("final_pdf_sha256") or "")[:16])
+    console.print(t)
+
+
 @auth_app.command("verify-ledger")
 def auth_verify():
     """Verify the hash chain of the approval ledger (exit 1 if any entry was altered, removed or reordered)."""
@@ -699,6 +732,82 @@ def benchmark(suite: str = typer.Option("design", help="design | apex-design | m
         console.print_json(json.dumps(res["systems"], ensure_ascii=False))
     else:
         raise typer.BadParameter("suite must be design | apex-design | models | golden")
+
+
+release_app = typer.Typer(help="Production release: acceptance check, FINAL export, release-hash verification.")
+app.add_typer(release_app, name="release")
+
+
+@release_app.command("check")
+def release_check_cmd():
+    """READY or BLOCKED under config/production_acceptance.yaml; prints only the required dimensions that block
+    production, each with its next action (experimental improvements are never listed). Exit 0 = READY."""
+    from apex_one.lab.blockers import release_check
+
+    verdict, lines = release_check()
+    print(verdict)
+    for x in lines:
+        print(f"* {x}")
+    raise typer.Exit(0 if verdict == "READY" else 1)
+
+
+@release_app.command("baseline")
+def release_baseline(write: bool = typer.Option(False, "--write", help="Re-record the baseline (deliberate change)"),
+                     reason: str = typer.Option("", help="Why the validated system changed (required with --write)"),
+                     commit: str = typer.Option(None, help="Code commit the baseline describes (default: HEAD)"),
+                     tests: int = typer.Option(0, help="Full-suite pass count at that commit (required with --write)")):
+    """Compare the system with APEX_ONE_OFFLINE_VALIDATED_BASELINE (exit 1 on drift), or re-record it on purpose."""
+    import subprocess
+
+    from apex_one.release import baseline as B
+
+    if write:
+        if not reason or tests <= 0:
+            raise typer.BadParameter("--write needs --reason and --tests (the passing full-suite count)")
+        commit = commit or subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True,
+                                          text=True).stdout.strip()
+        console.print_json(json.dumps(B.write(commit, tests, reason)))
+        return
+    d = B.drift()
+    rec = B.recorded() or {}
+    print(f"{B.BASELINE_ID} @ {rec.get('baseline_commit')} ({rec.get('test_count')} tests): "
+          + ("UNCHANGED" if not d else "DRIFT"))
+    for x in d:
+        print(f"* {x}")
+    raise typer.Exit(0 if not d else 1)
+
+
+@release_app.command("verify")
+def release_verify(job_id: str):
+    """The FINAL artifact is byte-identical to what the authenticated approver approved, and the approval is intact in
+    the hash-chained ledger. Exit 0 = verified."""
+    from apex_one.core.auth import file_sha256
+    from apex_one.release import approval_binding_problems
+
+    r = _runner(job_id)
+    probs = approval_binding_problems(r.ws.root)
+    rec = json.loads((r.ws.root / "human_approval.json").read_text()) if (r.ws.root / "human_approval.json").exists() \
+        else {}
+    console.print_json(json.dumps({"job_id": job_id, "status": r.job.status.value, "verified": not probs,
+                                   "approved_by": rec.get("approver"), "approved_at": rec.get("at"),
+                                   "approved_final_pdf_sha256": rec.get("final_pdf_sha256"),
+                                   "current_final_pdf_sha256": file_sha256(r.ws.root / "final.pdf"),
+                                   "problems": probs}))
+    raise typer.Exit(0 if not probs else 1)
+
+
+@release_app.command("export")
+def release_export(job_id: str, out: Path = typer.Option(None)):
+    """Export a FINAL release (refused unless FINAL with an intact approval binding); writes <zip>.sha256."""
+    from apex_one.release import export_final
+
+    r = _runner(job_id)
+    dest = out or (r.ws.root.parent.parent / "exports" / f"{job_id}-FINAL.zip")
+    try:
+        console.print_json(json.dumps(export_final(r.ws.root, dest)))
+    except RuntimeError as e:
+        console.print(f"[red]Refused[/]: {e}")
+        raise typer.Exit(1) from e
 
 
 evidence_app = typer.Typer(help="Evidence packs: validate a real opportunity from saved official pages/PDFs offline.")

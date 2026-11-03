@@ -2,7 +2,8 @@
 
 Every blocker's status comes from a live PROBE, never from hand-written text, so the generated
 PRODUCTION_BLOCKERS.md / HUMAN_ACTIONS_REQUIRED.md / CURRENT_STATE.json cannot drift from the system's real state.
-PRODUCTION_READY is computed: YES only when every MANDATORY maturity dimension is satisfied.
+PRODUCTION_READY is computed from config/production_acceptance.yaml: YES only when every REQUIRED dimension is YES.
+Blockers are RELEASE (production depends on them) or EXPERIMENTAL (optional improvement, never a release blocker).
 """
 
 from __future__ import annotations
@@ -22,20 +23,26 @@ REQUIRED_FIELDS = ("blocker_id", "description", "affected_subsystem", "owner", "
 SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
 PENDING_LICENCES = ("lic-gemma", "lic-gemma3-12b", "lic-nvidia-nemotron-nano", "lic-gpt-oss")
 
-# dimension -> (mandatory for PRODUCTION_READY, why)
-DIMENSIONS: dict[str, tuple[bool, str]] = {
-    "ARCHITECTURE_COMPLETE": (True, "every stage exists, is wired and tested"),
-    "OFFLINE_PIPELINE_VALIDATED": (True, "golden ULTRA reaches the human gate with all quality targets PASS"),
-    "LOCAL_MODEL_ROUTING_VALIDATED": (True, "every model route is decided on identical measurements, licence-gated"),
-    "DESIGN_MODEL_VALIDATION": (False, "native APEX design is primary on every page type; model design is optional"),
-    "VISION_GATE": (False, "absolute visual quality is reported NOT_MEASURED on the release candidate and the human "
-                           "approver reviews the final PDF; no release decision depends on a model judge"),
-    "REMOTE_FREE_COMPUTE_VALIDATED": (False, "the $0 local route serves every production model task"),
-    "REAL_OPPORTUNITY_VALIDATED": (True, "a real guide must reach RELEASE_CANDIDATE from authoritative evidence"),
-    "PRODUCTION_LOAD_VALIDATED": (True, "PRODUCTION_MODE must throttle, not OOM, under real concurrent load"),
-    "BRAND_ASSETS_VALIDATED": (True, "no FINAL artifact may carry placeholder branding"),
-    "HUMAN_APPROVAL_VALIDATED": (True, "a release needs an authenticated approver bound to the artifact hash"),
-}
+CATEGORIES = ("RELEASE", "EXPERIMENTAL")   # EXPERIMENTAL = optional improvement; never a production blocker
+
+
+def acceptance() -> dict[str, Any]:
+    """The production acceptance rule (config/production_acceptance.yaml)."""
+    return yaml.safe_load((get_settings().config_dir / "production_acceptance.yaml").read_text(encoding="utf-8"))
+
+
+def required_dimensions() -> list[str]:
+    return list(acceptance()["required"])
+
+
+def _dimensions() -> dict[str, tuple[bool, str]]:
+    """dimension -> (required for PRODUCTION_READY, why) — straight from the acceptance rule."""
+    acc = acceptance()
+    return {**{d: (True, v["why"]) for d, v in acc["required"].items()},
+            **{d: (False, why) for d, why in acc["not_required"].items()}}
+
+
+DIMENSIONS = _dimensions() if (get_settings().config_dir / "production_acceptance.yaml").exists() else {}
 
 
 def _bench() -> Path:
@@ -164,6 +171,11 @@ def validate_blockers(blockers: list[dict[str, Any]]) -> list[str]:
             problems.append(f"{bid}: severity {b.get('severity')} not in {SEVERITIES}")
         if b.get("probe") not in PROBES:
             problems.append(f"{bid}: unknown probe {b.get('probe')}")
+        if b.get("category") not in CATEGORIES:
+            problems.append(f"{bid}: category {b.get('category')} not in {CATEGORIES}")
+        if b.get("category") == "EXPERIMENTAL" and b.get("maturity_dimension") in required_dimensions() \
+                and b.get("blocks_dimension", True):
+            problems.append(f"{bid}: EXPERIMENTAL but holds a required dimension open")
         if b.get("maturity_dimension") not in DIMENSIONS:
             problems.append(f"{bid}: unknown maturity dimension {b.get('maturity_dimension')}")
         problems += [f"{bid}: depends on unknown {d}" for d in b.get("depends_on") or [] if d not in ids]
@@ -228,7 +240,7 @@ def maturity(evaluated: list[dict[str, Any]] | None = None,
                         "absolute visual quality " + ("measured" if ab else "NOT_MEASURED")),
     }
     out: dict[str, dict[str, Any]] = {}
-    for dim, (mandatory, why) in DIMENSIONS.items():
+    for dim, (mandatory, why) in _dimensions().items():
         if dim in fixed:
             status, evidence = fixed[dim]
             if status == "YES" and open_by_dim.get(dim):
@@ -240,10 +252,19 @@ def maturity(evaluated: list[dict[str, Any]] | None = None,
                     "open_blockers": open_by_dim.get(dim, [])}
     unmet = [d for d, v in out.items() if v["mandatory"] and v["status"] != "YES"]
     out["PRODUCTION_READY"] = {"status": "NO" if unmet else "YES", "mandatory": True,
-                               "why_mandatory_or_not": "YES only when every mandatory dimension is YES",
+                               "why_mandatory_or_not": acceptance()["rule"] + " (config/production_acceptance.yaml)",
                                "evidence": f"unmet mandatory dimensions: {unmet}" if unmet else "all mandatory met",
                                "open_blockers": unmet}
     return out
+
+
+def release_check(mat: dict[str, dict[str, Any]] | None = None) -> tuple[str, list[str]]:
+    """READY / BLOCKED under the acceptance rule; only the required dimensions that are not YES, each with the one
+    action that moves it. Experimental improvements never appear here."""
+    mat = mat if mat is not None else maturity()
+    acc = acceptance()["required"]
+    lines = [f"{d}: {mat[d]['status']} — next: {acc[d]['action']}" for d in acc if mat[d]["status"] != "YES"]
+    return ("BLOCKED" if lines else "READY"), lines
 
 
 # ---------------------------------------------------------------- Markdown
@@ -257,19 +278,26 @@ def _stamp() -> str:
 def blockers_md(ev: list[dict[str, Any]], mat: dict[str, dict[str, Any]]) -> str:
     order = {s: i for i, s in enumerate(SEVERITIES)}
     ev = sorted(ev, key=lambda b: (b["status"] == "RESOLVED", order[b["severity"]], b["blocker_id"]))
+    verdict, lines = release_check(mat)
     out = ["# Production blockers", "", _stamp(), "",
-           "Authoritative source: `config/production_blockers.yaml`. Status comes from a live probe "
-           "(`apex_one/lab/blockers.py`), never from hand-written text. PRODUCTION_READY is "
-           f"**{mat['PRODUCTION_READY']['status']}** — {mat['PRODUCTION_READY']['evidence']}.", "",
-           "| blocker_id | status | severity | description | affected subsystem | owner | human action | external "
-           "access | solvable offline | exact unblock condition | next executable action | probe evidence |",
-           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+           "Authoritative source: `config/production_blockers.yaml`; the acceptance rule is "
+           "`config/production_acceptance.yaml`. Status comes from a live probe (`apex_one/lab/blockers.py`), never "
+           f"from hand-written text. PRODUCTION_READY is **{mat['PRODUCTION_READY']['status']}** — "
+           f"{mat['PRODUCTION_READY']['evidence']}.", "",
+           f"`apex-one release check` → **{verdict}**", "", *(f"* {x}" for x in lines), ""]
     yn = {True: "yes", False: "no"}
-    for b in ev:
-        out.append(f"| {b['blocker_id']} | **{b['status']}** | {b['severity']} | {b['description']} | "
-                   f"{b['affected_subsystem']} | {b['owner']} | {yn[b['requires_human_action']]} | "
-                   f"{yn[b['requires_external_access']]} | {yn[b['can_be_solved_offline']]} | "
-                   f"{b['exact_unblock_condition']} | `{b['next_executable_action']}` | {b['probe_evidence']} |")
+    head = ["| blocker_id | status | severity | description | affected subsystem | owner | human action | external "
+            "access | solvable offline | exact unblock condition | next executable action | probe evidence |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for cat, title in (("RELEASE", "## Release blockers (production depends on these)"),
+                       ("EXPERIMENTAL", "## EXPERIMENTAL / OPTIONAL IMPROVEMENT (never a production blocker)")):
+        out += [title, "", *head]
+        for b in (x for x in ev if x["category"] == cat):
+            out.append(f"| {b['blocker_id']} | **{b['status']}** | {b['severity']} | {b['description']} | "
+                       f"{b['affected_subsystem']} | {b['owner']} | {yn[b['requires_human_action']]} | "
+                       f"{yn[b['requires_external_access']]} | {yn[b['can_be_solved_offline']]} | "
+                       f"{b['exact_unblock_condition']} | `{b['next_executable_action']}` | {b['probe_evidence']} |")
+        out.append("")
     out += ["", "## Blocker graph", "",
             "Blockers → the maturity dimension each one holds open (dashed: limits capability, has a safe fallback, "
             "does not hold it open) → PRODUCTION_READY (mandatory dimensions only).", "",
@@ -284,7 +312,7 @@ def blockers_md(ev: list[dict[str, Any]], mat: dict[str, dict[str, Any]]) -> str
         if dim != "PRODUCTION_READY" and v["mandatory"]:
             out.append(f"  {dim} --> PRODUCTION_READY")
     out += ["```", "", "## Maturity matrix (independent dimensions)", "",
-            "| dimension | status | mandatory for production | why | evidence | open blockers |", "|---|---|---|---|---|---|"]
+            "| dimension | status | required for production | why | evidence | open blockers |", "|---|---|---|---|---|---|"]
     out += [f"| {d} | **{v['status']}** | {'yes' if v['mandatory'] else 'no'} | {v['why_mandatory_or_not']} | "
             f"{v['evidence']} | {', '.join(v['open_blockers']) or '—'} |" for d, v in mat.items()]
     return "\n".join(out) + "\n"
@@ -296,14 +324,18 @@ def human_actions_md(ev: list[dict[str, Any]]) -> str:
     out = ["# Human actions required", "", _stamp(), "",
            "Only what a person must do. Everything Claude can still do autonomously is in NEXT_ACTIONS.md. Generated "
            "from `config/production_blockers.yaml`; an action disappears when its probe sees it done.", ""]
-    for b in acts:
-        h = b["human_action"]
-        out += [f"## {h['letter']}. {h['title']}  (`{b['blocker_id']}`, {b['severity']})", "",
-                f"**WHY** — {h['why']}", "", f"**WHAT EXACTLY IS NEEDED** — {h['what']}", "",
-                f"**COMMAND AVAILABLE AFTERWARD** — `{h['command_after']}`", "",
-                f"_Done when:_ {b['exact_unblock_condition']}", ""]
-    if not acts:
-        out.append("None — every human action is done.")
+    for cat, title in (("RELEASE", "# Required for production (in this order)"),
+                       ("EXPERIMENTAL", "# EXPERIMENTAL / OPTIONAL IMPROVEMENT (not needed for production)")):
+        out += [title, ""]
+        sel = [b for b in acts if b["category"] == cat]
+        for b in sel:
+            h = b["human_action"]
+            out += [f"## {h['letter']}. {h['title']}  (`{b['blocker_id']}`, {b['severity']})", "",
+                    f"**WHY** — {h['why']}", "", f"**WHAT EXACTLY IS NEEDED** — {h['what']}", "",
+                    f"**COMMAND AVAILABLE AFTERWARD** — `{h['command_after']}`", "",
+                    f"_Done when:_ {b['exact_unblock_condition']}", ""]
+        if not sel:
+            out += ["None open.", ""]
     return "\n".join(out) + "\n"
 
 
@@ -312,6 +344,8 @@ def update_current_state(path: Path, mat: dict[str, dict[str, Any]], ev: list[di
     data = _load(path) or {}
     data["maturity"] = {d: v["status"] for d, v in mat.items()}
     data["maturity_mandatory"] = [d for d, v in mat.items() if v["mandatory"] and d != "PRODUCTION_READY"]
+    data["acceptance_rule"] = "config/production_acceptance.yaml"
+    data["release_check"] = dict(zip(("verdict", "blockers"), release_check(mat), strict=True))
     data["blockers"] = [f"{b['blocker_id']} ({b['severity']}, {b['status']})" for b in ev]
     data["blockers_source"] = "config/production_blockers.yaml → PRODUCTION_BLOCKERS.md (probe-evaluated)"
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

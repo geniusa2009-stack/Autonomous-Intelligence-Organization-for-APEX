@@ -1,7 +1,7 @@
 """Phase 14+ reports, generated from measured artifacts only.
 
 Every number in these reports is read from an artifact produced by a real run in this environment; anything not
-run is printed as NOT_MEASURED / PENDING with the reason. Regenerate with `apex-one reports build`.
+run is printed as NOT_MEASURED / PENDING with the reason. Regenerate with `apex-one reports`.
 """
 
 from __future__ import annotations
@@ -31,7 +31,10 @@ def _fmt(v: Any, nd: int = 1) -> str:
 
 
 def _stamp() -> str:
-    return f"_Generated {datetime.now(UTC):%Y-%m-%d %H:%M} UTC by `apex-one reports build` from measured artifacts._\n"
+    """One stamp for every generated report: time and the commit of the code that rendered it."""
+    from apex_one.lab.final_reports import _stamp as stamp
+
+    return stamp() + "\n"
 
 
 # ---------------------------------------------------------------- LIVE_PROVIDER_REPORT

@@ -1,0 +1,32 @@
+# PRODUCTION ACCEPTANCE RULE (machine-readable; read by apex_one/lab/blockers.py and `apex-one release check`).
+#
+# PRODUCTION_READY = YES  only if EVERY dimension under `required` has status YES.
+# Each status comes from a live probe (config/production_blockers.yaml), never from hand-written text.
+# Dimensions under `not_required` may stay PARTIAL / NO: no release decision depends on them. Moving a dimension
+# between the two lists is a policy change: it needs a reason here, a regenerated report set and passing tests.
+schema_version: 1
+rule: "PRODUCTION_READY = YES iff every required dimension = YES"
+required:
+  BRAND_ASSETS_VALIDATED:
+    why: no FINAL artifact may carry placeholder branding
+    action: "apex-one brand import <folder>   (spec: BRAND_PACKAGE_INTAKE.md)"
+  AUTHORIZED_APPROVER_CONFIGURED:
+    why: a release needs a token-authenticated approver whose decision is bound to the artifact hash
+    action: 'apex-one auth add-approver "<full name>"   (spec: APPROVER_SETUP.md)'
+  REAL_OPPORTUNITY_VALIDATED:
+    why: one real guide must reach RELEASE_CANDIDATE from authoritative evidence
+    action: "apex-one evidence init <pack>   (spec: REAL_OPPORTUNITY_PILOT.md)"
+  PRODUCTION_LOAD_VALIDATED:
+    why: PRODUCTION_MODE must throttle, never OOM, under concurrent load
+    action: "python -m apex_one.lab.load_test --model qwen3-vl-4b-q4kxl"
+  OFFLINE_PIPELINE_VALIDATED:
+    why: golden ULTRA reaches the human gate with every quality target PASS
+    action: ".venv/bin/python -m pytest tests/test_pipeline.py"
+  LOCAL_MODEL_ROUTING_VALIDATED:
+    why: every deployed model route rests on identical measurements and a verified licence
+    action: "apex-one reports   (regenerates the frozen routing policy from evidence)"
+not_required:
+  ARCHITECTURE_COMPLETE: structural; already YES and covered by the test suite
+  DESIGN_MODEL_VALIDATION: native APEX design is primary on every page type; model design is optional
+  VISION_GATE: absolute visual quality is reported NOT_MEASURED on the release candidate and the human approver reviews the final PDF; no release decision depends on a model judge
+  REMOTE_FREE_COMPUTE_VALIDATED: the $0 local route serves every production model task

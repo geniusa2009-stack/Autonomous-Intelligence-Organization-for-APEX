@@ -27,6 +27,7 @@ from urllib.parse import urlparse
 
 import yaml
 
+EVIDENCE_PACK_VERSION = 1      # pack.yaml + sources.yaml + files + confirmations.yaml (module docstring)
 RESERVED = re.compile(r"(\.invalid|\.test|\.example|\.localhost|(^|\.)example\.(com|org|net))$", re.IGNORECASE)
 KINDS = {".html": "html", ".htm": "html", ".pdf": "pdf"}
 

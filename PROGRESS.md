@@ -1,6 +1,6 @@
 # APEX ONE ULTRA — Progress log
 
-Last updated: 2026-11-02 (session 5: shortest path to a production candidate)
+Last updated: 2026-11-03 (session 6: production closure)
 
 **Overall maturity: ARCHITECTURE_COMPLETE + OFFLINE_PIPELINE_VALIDATED; LOCAL_MODEL_ROUTING_VALIDATED (evaluation
 scope); DESIGN_MODEL_VALIDATION and VISION_GATE PARTIAL; remote compute, real opportunity and production NOT
@@ -89,3 +89,21 @@ Test status: `.venv/bin/python -m pytest` → 197 passed, 0 failed (code identic
 | Report consistency audit | DONE | tests/test_report_consistency.py |
 
 Test status: `.venv/bin/python -m pytest` → 230 passed, 0 failed (code identical to the final commit of 2026-11-02).
+
+## Session 6 — production closure (2026-11-03)
+
+| Item | Status | Evidence |
+|---|---|---|
+| Repository consistency | DONE | 7 reports carried a commit-less stamp; every report is now stamped with the generating commit and the test enforces it |
+| Validated baseline | DONE | docs/evidence/APEX_ONE_OFFLINE_VALIDATED_BASELINE.json; `apex-one release baseline`; drift fails the tests |
+| Routing freeze | DONE | routing-decision hash in the baseline; changes need evidence, contract, licence, tests, regeneration, a reasoned baseline update |
+| Acceptance rule (machine-readable) | DONE | config/production_acceptance.yaml; PRODUCTION_ACCEPTANCE.md; `apex-one release check` |
+| Release vs experimental blockers | DONE | every blocker categorised; experimental never shown by `release check` |
+| Brand intake | DONE | BRAND_PACKAGE_INTAKE.md; structured package; licence evidence; corrupted-font, unlisted-file, symlink and traversal rejection; staged install; `apex-one brand checksums` |
+| Approver setup | DONE | APPROVER_SETUP.md; `apex-one auth history` |
+| Real opportunity pilot | DONE | REAL_OPPORTUNITY_PILOT.md |
+| FINAL export and release verification | DONE | `apex-one release export` (refused unless FINAL with intact binding) and `apex-one release verify` |
+| First production runbook | DONE | FIRST_PRODUCTION_RUNBOOK.md, with recovery steps |
+| `apex-one local serve` | FIXED | now refused unless PRODUCTION_MODE admits the model beside a renderer |
+
+Test status: `.venv/bin/python -m pytest` → 248 passed, 0 failed (code identical to the final commit of 2026-11-03).

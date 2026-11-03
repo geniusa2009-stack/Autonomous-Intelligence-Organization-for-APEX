@@ -702,29 +702,37 @@ def test_calibration_bar_is_four_of_five_even_if_a_stored_flag_says_reliable(tmp
 
 
 def _brand_pkg(d: Path, *, placeholder_logo: bool = False, missing_robot: bool = False) -> Path:
-    d.mkdir(parents=True, exist_ok=True)
+    """A complete brand package in the BRAND_PACKAGE_INTAKE.md layout (synthetic shapes, test palette)."""
+    import hashlib
+
+    for sub in ("logo", "mascot", "fonts/licences"):
+        (d / sub).mkdir(parents=True, exist_ok=True)
     svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40"><rect fill="#0A1A33" width="120" height="40"/></svg>'
-    (d / "logo.svg").write_text(svg)
-    (d / "logo-on-dark.svg").write_text(svg.replace("#0A1A33", "#FFFFFF"))
+    (d / "logo" / "logo.svg").write_text(svg)
+    (d / "logo" / "logo-on-dark.svg").write_text(svg.replace("#0A1A33", "#FFFFFF"))
     if not missing_robot:
-        (d / "robot.svg").write_text(svg.replace('viewBox="0 0 120 40"', 'viewBox="0 0 40 40"'))
+        (d / "mascot" / "robot.svg").write_text(svg.replace('viewBox="0 0 120 40"', 'viewBox="0 0 40 40"'))
     if placeholder_logo:
         from apex_one.settings import REPO_ROOT
 
-        (d / "logo.svg").write_bytes((REPO_ROOT / "apex_one/assets/brand/apex_wordmark_placeholder.svg").read_bytes())
-    (d / "fonts").mkdir(exist_ok=True)
-    (d / "fonts" / "readex.woff2").write_bytes(b"wOF2fake")
-    import hashlib
+        (d / "logo" / "logo.svg").write_bytes((REPO_ROOT / "apex_one/assets/brand/apex_wordmark_placeholder.svg")
+                                              .read_bytes())
+    (d / "fonts" / "readex.woff2").write_bytes(b"wOF2" + b"\0" * 64)
+    (d / "fonts" / "licences" / "OFL-ReadexPro.txt").write_text("SIL Open Font License, Version 1.1. " * 10)
+    (d / "usage_rules.md").write_text("Logo at least 96 px wide; clear space half the logo height; never recolour, "
+                                      "stretch or rotate; dark variant only on navy.")
 
     def sha(name):
         return hashlib.sha256((d / name).read_bytes()).hexdigest() if (d / name).exists() else "0" * 64
-    (d / "brand.yaml").write_text(
-        "approved_by: Director\napproved_at: '2026-10-12'\npalette: {navy_900: '#0A1A33', white: '#FFFFFF'}\n"
-        "fonts: {display: Readex Pro}\nfont_files: {Readex Pro: fonts/readex.woff2}\n"
-        "font_licences: {Readex Pro: OFL-1.1}\n"
+    (d / "manifest.yaml").write_text(
+        "schema_version: 1\napproved_by: Director\napproved_at: '2026-10-12'\n"
+        "palette: {navy_900: '#0A1A33', white: '#FFFFFF'}\nfonts: {display: Readex Pro}\n"
+        "font_files: {Readex Pro: fonts/readex.woff2}\n"
+        "font_licences: {Readex Pro: {licence: OFL-1.1, evidence: fonts/licences/OFL-ReadexPro.txt}}\n"
         "usage: {min_logo_width_px: 96, clear_space_ratio: 0.5, allowed_backgrounds: [white, navy_900]}\n"
-        f"checksums: {{logo: {sha('logo.svg')}, logo_on_dark: {sha('logo-on-dark.svg')}, robot: {sha('robot.svg')}, "
-        f"'font:Readex Pro': {sha('fonts/readex.woff2')}}}\n")
+        f"checksums: {{logo: {sha('logo/logo.svg')}, logo_on_dark: {sha('logo/logo-on-dark.svg')}, "
+        f"robot: {sha('mascot/robot.svg')}, 'font:Readex Pro': {sha('fonts/readex.woff2')}, "
+        f"'licence:Readex Pro': {sha('fonts/licences/OFL-ReadexPro.txt')}, usage_rules: {sha('usage_rules.md')}}}\n")
     return d
 
 
@@ -1113,11 +1121,11 @@ def test_brand_validate_reports_valid_incomplete_invalid(tmp_path, monkeypatch):
     A._CACHE.clear()
     assert A.brand_status()["status"] == "INCOMPLETE"                    # nothing installed yet
     pkg = _brand_pkg(tmp_path / "p")
-    (pkg / "brand.yaml").write_text((pkg / "brand.yaml").read_text().replace("usage:", "usage_x:"))
+    (pkg / "manifest.yaml").write_text((pkg / "manifest.yaml").read_text().replace("usage:", "usage_x:"))
     bad = A.import_brand(pkg)                                            # usage constraints are mandatory
     assert not bad["installed"] and any("usage" in p for p in bad["problems"])
     pkg = _brand_pkg(tmp_path / "q")
-    (pkg / "robot.svg").write_text((pkg / "robot.svg").read_text() + " ")   # corrupted after checksums were taken
+    (pkg / "mascot" / "robot.svg").write_text((pkg / "mascot" / "robot.svg").read_text() + " ")  # corrupted in transit
     assert any("checksum mismatch for robot" in p for p in A.import_brand(pkg)["problems"])
     assert A.import_brand(_brand_pkg(tmp_path / "r"))["installed"]
     A._CACHE.clear()

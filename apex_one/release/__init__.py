@@ -20,6 +20,10 @@ def _is_evaluation(c: dict) -> bool:
     """A call counts as evaluation only if it was BOTH routed with purpose=evaluation and is an evaluation task."""
     return c.get("purpose", "production") == "evaluation" and str(c.get("task", "")).startswith(EVALUATION_TASKS)
 
+# approval contract: identity (token), job id, timestamp, final.pdf/final.html sha256, decision, comment, ledger entry;
+# approval refused for bytes not reviewed; FINAL refused if the artifact changed after approval
+APPROVAL_CONTRACT_VERSION = 2
+
 REQUIRED_ARTIFACTS = ["final.html", "final.pdf", "sources.json", "evidence.json", "claims.json", "contradictions.json",
                       "document_ast.json", "design_decisions.json", "model_routing.json", "quality_report.json",
                       "license_report.json", "contact_sheet.png", "job.json", "execution_plan.json",
@@ -116,3 +120,29 @@ def approval_binding_problems(job_dir: Path) -> list[str]:
     if not led or led.get("hash") != rec.get("ledger_hash") or led.get("job_id") != rec.get("job_id"):
         probs.append("approval record does not match its ledger entry")
     return probs
+
+
+def export_final(job_dir: Path, out: Path) -> dict:
+    """Export a FINAL release: refused unless the job is FINAL and its approval binding is intact. Writes the zip and
+    `<zip>.sha256`, and returns the hashes a recipient can verify."""
+    import hashlib
+
+    job = json.loads((job_dir / "job.json").read_text(encoding="utf-8"))
+    if job.get("status") != "FINAL":
+        raise RuntimeError(f"job is {job.get('status')}, not FINAL: only an approved release can be exported as FINAL")
+    probs = approval_binding_problems(job_dir)
+    if probs:
+        raise RuntimeError("approval binding broken: " + "; ".join(probs))
+    export_bundle(job_dir, out)
+    zip_sha = hashlib.sha256(out.read_bytes()).hexdigest()
+    rec = json.loads((job_dir / "human_approval.json").read_text(encoding="utf-8"))
+    side = out.with_suffix(out.suffix + ".sha256")          # `sha256sum -c` format, run inside the export folder
+    side.write_text(f"{zip_sha}  {out.name}\n", encoding="utf-8")
+    note = out.with_suffix(out.suffix + ".approval.json")
+    note.write_text(json.dumps({k: rec.get(k) for k in ("job_id", "approver", "approver_id", "at", "decision",
+                                                        "final_pdf_sha256", "final_html_sha256", "ledger_seq",
+                                                        "ledger_hash")} | {"zip_sha256": zip_sha}, indent=2),
+                    encoding="utf-8")
+    return {"zip": str(out), "zip_sha256": zip_sha, "final_pdf_sha256": rec["final_pdf_sha256"],
+            "approved_by": rec["approver"], "ledger_seq": rec["ledger_seq"], "checksum_file": str(side),
+            "approval_note": str(note)}

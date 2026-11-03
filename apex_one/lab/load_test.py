@@ -47,6 +47,7 @@ from apex_one.compute.local.resources import (
     swap_used_gb,
 )
 
+LOAD_TEST_VERSION = 1     # job shape + the ten scenarios + their PASS checks (module docstring)
 RENDER_NEED_GB = 2 * CHROMIUM_MEASURED_PEAK_GB     # same reserve as the PLAYWRIGHT_RENDER profile
 REQUEST_NEED_GB = 0.05                              # request buffers; the KV cache is allocated at load
 PAGE = """<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>

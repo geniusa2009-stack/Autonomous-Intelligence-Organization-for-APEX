@@ -1,29 +1,28 @@
 # APEX ONE ULTRA — Quality Report (shortest path to a production candidate)
 
-_Updated 2026-11-02. Every number comes from an artifact produced in this container (`docs/evidence/`). The
+_Updated 2026-11-03. Every number comes from an artifact produced in this container (`docs/evidence/`). The
 authoritative blocker list is PRODUCTION_BLOCKERS.md (live probes). Human-only work is in HUMAN_ACTIONS_REQUIRED.md.
 Regenerate with `apex-one reports`._
 
-## Maturity (independent dimensions; PRODUCTION_READY is computed from the mandatory ones)
+## Maturity (independent dimensions; the acceptance rule is `config/production_acceptance.yaml`)
 
-| dimension | status | mandatory | why |
+| dimension | status | required for production | why |
 |---|---|---|---|
-| ARCHITECTURE_COMPLETE | **YES** | yes | Every stage exists, is wired and tested. |
-| OFFLINE_PIPELINE_VALIDATED | **YES** | yes | Golden ULTRA: comprehension 98.9, rhythm 94.0, Arabic typography 100; a hard regression test guards it. |
-| LOCAL_MODEL_ROUTING_VALIDATED | **YES** | yes | 9 production model routes, all decided on identical measurements with verified licences. Three routes are EVALUATION_ONLY; production runs the native engine there. |
-| DESIGN_MODEL_VALIDATION | **PARTIAL** | no | GDB 6/39 tasks offline (n=2). Native wins or ties every page type. |
-| VISION_GATE | **PARTIAL** | no | No robust judge. Qwen3-VL 8B is an advisory 640 px finalist judge only. Absolute visual quality is NOT_MEASURED. |
-| REMOTE_FREE_COMPUTE_VALIDATED | **NO** | no | Remote free tiers are egress-denied; Gemini has no key. |
-| REAL_OPPORTUNITY_VALIDATED | **NO** | yes | No real job has reached RELEASE_CANDIDATE. The offline evidence-pack path is ready and tested. |
-| PRODUCTION_LOAD_VALIDATED | **YES** | yes | 10/10 load scenarios PASS in PRODUCTION_MODE with the real production model and real Chromium. |
-| BRAND_ASSETS_VALIDATED | **NO** | yes | `apex-one brand validate` → INCOMPLETE (no official package installed). |
-| HUMAN_APPROVAL_VALIDATED | **NO** | yes | Authentication and artifact binding are complete and tested. No approver exists yet. |
-| PRODUCTION_READY | **NO** | — | Unmet mandatory dimensions: REAL_OPPORTUNITY_VALIDATED, BRAND_ASSETS_VALIDATED, HUMAN_APPROVAL_VALIDATED. All three need a person. |
+| BRAND_ASSETS_VALIDATED | **NO** | yes | `apex-one brand validate` → INCOMPLETE (no official package yet; intake spec BRAND_PACKAGE_INTAKE.md) |
+| AUTHORIZED_APPROVER_CONFIGURED | **NO** | yes | authentication and artifact binding are complete and tested; no approver exists yet (APPROVER_SETUP.md) |
+| REAL_OPPORTUNITY_VALIDATED | **NO** | yes | no real job has reached RELEASE_CANDIDATE; the offline evidence-pack path is ready (REAL_OPPORTUNITY_PILOT.md) |
+| PRODUCTION_LOAD_VALIDATED | **YES** | yes | 10/10 load scenarios PASS in PRODUCTION_MODE with the real production model and real Chromium |
+| OFFLINE_PIPELINE_VALIDATED | **YES** | yes | golden ULTRA: comprehension 98.9, rhythm 94.0, Arabic typography 100; hard regression test |
+| LOCAL_MODEL_ROUTING_VALIDATED | **YES** | yes | 9 production model routes on identical measurements with verified licences; 3 EVALUATION_ONLY routes run native in production |
+| ARCHITECTURE_COMPLETE | **YES** | no | every stage exists, is wired and tested |
+| DESIGN_MODEL_VALIDATION | **PARTIAL** | no | GDB 6/39 tasks offline (n=2); native wins or ties every page type |
+| VISION_GATE | **PARTIAL** | no | no robust judge; Qwen3-VL 8B is a canonical-640 advisory finalist judge only; absolute visual quality NOT_MEASURED |
+| REMOTE_FREE_COMPUTE_VALIDATED | **NO** | no | remote free tiers egress-denied; Gemini keyless |
+| PRODUCTION_READY | **NO** | — | `apex-one release check` → BLOCKED on BRAND_ASSETS_VALIDATED, AUTHORIZED_APPROVER_CONFIGURED, REAL_OPPORTUNITY_VALIDATED — all three need a person |
 
-Why VISION_GATE, DESIGN_MODEL_VALIDATION and REMOTE_FREE_COMPUTE_VALIDATED are not mandatory:
-- **Vision gate:** no release decision depends on a model judge. The release candidate states that visual quality is NOT_MEASURED, and the human approver reviews the PDF.
-- **Design models:** native design is primary everywhere.
-- **Remote compute:** the $0 local route serves every production model task.
+The not-required dimensions are EXPERIMENTAL / OPTIONAL IMPROVEMENT: no release decision depends on them
+(PRODUCTION_ACCEPTANCE.md). The validated system is frozen as `APEX_ONE_OFFLINE_VALIDATED_BASELINE`
+(`docs/evidence/APEX_ONE_OFFLINE_VALIDATED_BASELINE.json`).
 
 ## Memory safety
 

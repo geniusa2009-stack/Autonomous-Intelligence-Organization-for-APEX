@@ -89,8 +89,10 @@ def _git(*args: str) -> subprocess.CompletedProcess:
 
 
 def test_generated_reports_come_from_one_commit_with_the_current_code():
-    commits = {m for _, _, line in _lines(r"^_Generated .* at commit `")
-               for m in re.findall(r"at commit `([0-9a-f]{7,40})`", line)}
+    stamps = list(_lines(r"^_Generated "))
+    unstamped = [f for f, _, line in stamps if not re.search(r"at commit `[0-9a-f]{7,40}`", line)]
+    assert not unstamped, f"generated reports without a commit stamp: {unstamped}"
+    commits = {m for _, _, line in stamps for m in re.findall(r"at commit `([0-9a-f]{7,40})`", line)}
     assert len(commits) == 1, f"reports generated at different commits: {commits}"
     c = commits.pop()
     assert _json("production_routing_policy.json")["frozen_at_commit"] == c

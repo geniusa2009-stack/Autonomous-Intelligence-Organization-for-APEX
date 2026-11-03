@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2      # brand-contract version (BRAND_PACKAGE_INTAKE.md)
 asset_dir: assets/apex
 placeholders:
   - apex_one/assets/brand/apex_wordmark_placeholder.svg
@@ -12,7 +12,8 @@ required:
   #   0 < clear_space_ratio <= 1, allowed_backgrounds: non-empty list}, checksums {role: sha256} for logo,
   #   logo_on_dark, robot (+ watermark if shipped) and font:<family> for each font file
   brand_manifest: {file: brand.yaml, kind: manifest,
-                   required_keys: [approved_by, approved_at, palette, fonts, font_licences, usage, checksums]}
+                   required_keys: [approved_by, approved_at, palette, fonts, font_files, font_licences, usage,
+                                   checksums]}
 optional:
   watermark: {file: watermark.svg, kind: svg}
 usage_constraints:      # what the release compiler may do with the assets

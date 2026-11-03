@@ -1,6 +1,6 @@
 {
   "branch": "claude/charming-archimedes-2guzc9",
-  "updated": "2026-11-02",
+  "updated": "2026-11-03",
   "maturity": {
     "ARCHITECTURE_COMPLETE": "YES",
     "OFFLINE_PIPELINE_VALIDATED": "YES",
@@ -15,7 +15,7 @@
     "PRODUCTION_READY": "NO"
   },
   "test_command": ".venv/bin/python -m pytest",
-  "last_test_result": "230 passed, 0 failed (full suite at the final commit of 2026-11-02)",
+  "last_test_result": "248 passed, 0 failed (full suite at the final commit of 2026-11-03)",
   "golden_ultra": {
     "targets": {
       "reader_comprehension": 98.889,
@@ -61,7 +61,7 @@
     "LARGE-MODELS-RESOURCE-BLOCKED (LOW, OPEN)"
   ],
   "queue": "scripts/validation_queue.py: ALL DONE (Q8_K_XL and gpt-oss RESOURCE_BLOCKED, terminal unless APEX_RETRY_BLOCKED=1)",
-  "resume_hint": "apex-one reports; read PRODUCTION_BLOCKERS.md, HUMAN_ACTIONS_REQUIRED.md, NEXT_ACTIONS.md",
+  "resume_hint": "apex-one release check; then FIRST_PRODUCTION_RUNBOOK.md",
   "maturity_mandatory": [
     "ARCHITECTURE_COMPLETE",
     "OFFLINE_PIPELINE_VALIDATED",
@@ -82,9 +82,29 @@
     "policy": "docs/evidence/production_routing_policy.json"
   },
   "commands_ready": {
-    "gemini": "apex-one vision validate-gemini",
+    "release_check": "apex-one release check",
+    "brand_checksums": "apex-one brand checksums <folder>",
+    "brand_import": "apex-one brand import <folder> [--dry-run]",
     "brand": "apex-one brand validate",
+    "approver": "apex-one auth add-approver \"<name>\"",
+    "audit": "apex-one auth history [--job <id>]",
     "evidence": "apex-one evidence init|check|run <pack>",
-    "approve": "APEX_APPROVER_TOKEN=<token> apex-one approve <job> --artifact-sha256 <sha>"
-  }
+    "approve": "APEX_APPROVER_TOKEN=<token> apex-one approve <job> --artifact-sha256 <sha>",
+    "export": "apex-one release export <job>",
+    "verify": "apex-one release verify <job>",
+    "gemini (experimental)": "apex-one vision validate-gemini"
+  },
+  "mode": "PRODUCTION_CLOSURE",
+  "baseline": {
+    "id": "APEX_ONE_OFFLINE_VALIDATED_BASELINE",
+    "file": "docs/evidence/APEX_ONE_OFFLINE_VALIDATED_BASELINE.json",
+    "check": "apex-one release baseline"
+  },
+  "operator_docs": [
+    "FIRST_PRODUCTION_RUNBOOK.md",
+    "BRAND_PACKAGE_INTAKE.md",
+    "APPROVER_SETUP.md",
+    "REAL_OPPORTUNITY_PILOT.md",
+    "PRODUCTION_ACCEPTANCE.md"
+  ]
 }

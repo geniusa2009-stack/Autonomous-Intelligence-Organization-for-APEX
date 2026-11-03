@@ -1,26 +1,29 @@
 # Next actions (ordered)
 
-Everything Claude can still do on its own. Human-only work is in **HUMAN_ACTIONS_REQUIRED.md**. The authoritative
-blocker list, with live status, is **PRODUCTION_BLOCKERS.md** (source: `config/production_blockers.yaml`).
+**Production closure mode.** No new model hunts, benchmarks or features. Human-only work is in
+**HUMAN_ACTIONS_REQUIRED.md**. The authoritative blocker list is **PRODUCTION_BLOCKERS.md**, and the acceptance
+rule is **PRODUCTION_ACCEPTANCE.md**. Run `apex-one release check` at any time.
 
-## The moment a human action lands (no code changes needed)
+## The moment a required human input lands (no code changes needed)
 
-| when this appears | Claude runs | result |
+| when this appears | run | result |
 |---|---|---|
-| `GEMINI_API_KEY` + `apex-one providers attest gemini` | `apex-one vision validate-gemini` (re-run to resume; ~200 requests/day on the free tier) | Gemini verdict (ROBUSTLY_CALIBRATED / CANONICAL_640_ONLY / UNQUALIFIED), pinned to the exact model version; reports regenerated |
-| an evidence pack for one real opportunity | `apex-one evidence check <pack>` then `apex-one evidence run <pack>` | Fact Lock, deadline / eligibility / funding validation, guide, QA, release candidate (or the exact missing source) |
-| the APEX brand folder | `apex-one brand import <folder> --dry-run`, then `apex-one brand import <folder>` and `apex-one brand validate` | BRAND_ASSETS_VALIDATED |
-| an approver exists | `apex-one auth verify-ledger`; on approval, FINAL re-checks that the approved artifact hash still matches | HUMAN_APPROVAL_VALIDATED |
-| licence decisions recorded | `apex-one reports` | EVALUATION_ONLY routes become deployable (or stay native) |
-| `huggingface.co` allowed | the queue's GDB steps at n ≥ 20 | DESIGN_MODEL_VALIDATION evidence |
+| the brand folder (BRAND_PACKAGE_INTAKE.md) | `apex-one brand checksums <folder>` → `apex-one brand import <folder> --dry-run` → `apex-one brand import <folder>` → `apex-one brand validate` | BRAND_ASSETS_VALIDATED |
+| an approver (APPROVER_SETUP.md) | `apex-one auth add-approver "<name>"` → `apex-one auth verify-ledger` | AUTHORIZED_APPROVER_CONFIGURED |
+| official evidence for one opportunity (REAL_OPPORTUNITY_PILOT.md) | `apex-one evidence check <pack>` → `apex-one evidence run <pack> --quality ultra` → approve → `apex-one release export` → `apex-one release verify` | REAL_OPPORTUNITY_VALIDATED; first FINAL |
 
-## Autonomous work still open
+The full sequence is FIRST_PRODUCTION_RUNBOOK.md.
 
-1. **Model-page stability.** Two more samples per model-written page type. Measure run-to-run stability. Promote
-   only a loss-free, stable lead over native. Native stays primary until then.
-2. **Load test with longer duration.** The current harness runs about 50 jobs. A soak run (hundreds of jobs,
-   several hours) would expose fragmentation and page-cache churn. Command:
-   `python -m apex_one.lab.load_test --only concurrent_safe` in a loop under the queue lock.
-3. **Hardware-bound candidates.** On a machine with ≥ 24 GB RAM, Qwen3-VL 8B Q8_K_XL and gpt-oss 20B would be
-   admitted. Run `APEX_RETRY_BLOCKED=1 scripts/snapshot_run.sh <commit> scripts/validation_queue.py --max-steps 3`.
-   The pre-acquisition admission still decides.
+## EXPERIMENTAL / OPTIONAL IMPROVEMENT (not needed for production; not scheduled)
+
+These need no work until someone chooses them:
+- Gemini judge (`apex-one vision validate-gemini` once a key exists);
+- GraphicDesignBench at full size (needs huggingface.co);
+- Qwen3-VL 8B Q8_K_XL and larger models (need ≥ 24 GB RAM);
+- remote providers;
+- licence decisions for evaluation-only models;
+- model-page stability sampling;
+- a long load soak.
+
+Any routing change after these needs new evidence on the identical contract, a verified licence, passing tests,
+`apex-one reports` and a reasoned baseline update (PRODUCTION_ACCEPTANCE.md).

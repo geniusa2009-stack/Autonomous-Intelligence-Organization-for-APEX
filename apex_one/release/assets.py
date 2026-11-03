@@ -66,9 +66,7 @@ def validate_assets(palette: list[str] | None = None) -> dict[str, Any]:
             m = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
             probs = [f"brand.yaml missing key {k}" for k in spec.get("required_keys", []) if k not in m]
             if not probs:
-                files = {role: adir / contract["required"][role]["file"] for role in SVG_ROLES}
-                files |= {f"font:{fam}": adir / "fonts" / Path(f).name for fam, f in (m.get("font_files") or {}).items()}
-                probs = manifest_problems(m, files)
+                probs = manifest_problems(m, installed_paths(m, adir))
         report["assets"][name] = {"status": "VALID" if not probs else
                                   ("PLACEHOLDER" if any("PLACEHOLDER" in x for x in probs) else "INVALID"),
                                   "problems": probs, "sha256": _sha(p)}
@@ -132,7 +130,15 @@ def embedded_asset_failures(html_text: str, report: dict[str, Any]) -> list[str]
 
 SVG_ROLES = ("logo", "logo_on_dark", "robot")
 FONT_EXT = (".woff2", ".woff", ".ttf", ".otf")
+FONT_MAGIC = (b"wOF2", b"wOFF", b"\x00\x01\x00\x00", b"true", b"OTTO")
 HEXCOL = re.compile(r"^#[0-9A-Fa-f]{6}$")
+NOT_A_LICENCE = {"", "unknown", "none", "n/a", "tbd", "?", "proprietary"}
+MANIFEST_NAMES = ("manifest.yaml", "brand.yaml")      # intake name first; brand.yaml = installed / legacy name
+# where each role lives in an intake package (BRAND_PACKAGE_INTAKE.md) — flat legacy names are still accepted
+PACKAGE_DEFAULTS = {"logo": ("logo/logo.svg", "logo.svg"), "logo_on_dark": ("logo/logo-on-dark.svg", "logo-on-dark.svg"),
+                    "robot": ("mascot/robot.svg", "robot.svg"), "watermark": ("logo/watermark.svg", "watermark.svg")}
+INSTALLED = {"logo": "logo.svg", "logo_on_dark": "logo-on-dark.svg", "robot": "robot.svg", "watermark": "watermark.svg"}
+MIN_USAGE_RULES_CHARS, MIN_LICENCE_EVIDENCE_BYTES = 80, 200
 
 
 def _svg_dims(path: Path) -> tuple[float, float] | None:
@@ -144,39 +150,98 @@ def _svg_dims(path: Path) -> tuple[float, float] | None:
     return (parts[2], parts[3]) if len(parts) == 4 else None
 
 
+def _licence(entry: Any) -> tuple[str, str | None]:
+    """font_licences value: {licence: <SPDX or 'commercial'>, evidence: <path to the licence text / receipt>}."""
+    if isinstance(entry, dict):
+        return str(entry.get("licence") or "").strip(), entry.get("evidence")
+    return str(entry or "").strip(), None
+
+
+def package_paths(manifest: dict[str, Any], src: Path) -> dict[str, Path]:
+    """role -> file inside an intake package (manifest `files` wins, then the intake layout, then flat names)."""
+    files = manifest.get("files") or {}
+    out = {}
+    for role, cands in PACKAGE_DEFAULTS.items():
+        rel = files.get(role) or next((c for c in cands if (src / c).exists()), None)
+        if rel or role != "watermark":
+            out[role] = src / (rel or cands[0])
+    for fam, f in (manifest.get("font_files") or {}).items():
+        out[f"font:{fam}"] = src / f
+    for fam, entry in (manifest.get("font_licences") or {}).items():
+        ev = _licence(entry)[1]
+        if ev:
+            out[f"licence:{fam}"] = src / ev
+    out["usage_rules"] = src / "usage_rules.md"
+    return out
+
+
+def installed_paths(manifest: dict[str, Any], adir: Path) -> dict[str, Path]:
+    """role -> file in assets/apex after import (same roles as package_paths)."""
+    out = {role: adir / name for role, name in INSTALLED.items() if role != "watermark"}
+    if (adir / INSTALLED["watermark"]).exists():
+        out["watermark"] = adir / INSTALLED["watermark"]
+    for fam, f in (manifest.get("font_files") or {}).items():
+        out[f"font:{fam}"] = adir / "fonts" / Path(f).name
+    for fam, entry in (manifest.get("font_licences") or {}).items():
+        ev = _licence(entry)[1]
+        if ev:
+            out[f"licence:{fam}"] = adir / "fonts" / "licences" / Path(ev).name
+    out["usage_rules"] = adir / "usage_rules.md"
+    return out
+
+
 def manifest_problems(manifest: dict[str, Any], files: dict[str, Path]) -> list[str]:
-    """Font licences, usage constraints and checksums of brand.yaml (config/asset_contract.yaml)."""
+    """Fonts (files + licence + licence evidence), usage constraints, usage rules and checksums of the manifest."""
     probs = []
     fams = set((manifest.get("fonts") or {}).values())
+    font_files = manifest.get("font_files") or {}
     lic = manifest.get("font_licences") or {}
-    probs += [f"brand.yaml font_licences: no licence for font {f!r}" for f in sorted(fams) if not lic.get(f)]
+    for fam in sorted(fams):
+        name, evidence = _licence(lic.get(fam))
+        if name.lower() in NOT_A_LICENCE:
+            probs.append(f"font {fam!r}: unlicensed — font_licences needs a real licence (e.g. OFL-1.1)")
+        ev = files.get(f"licence:{fam}")
+        if not evidence or ev is None or not ev.is_file() or ev.stat().st_size < MIN_LICENCE_EVIDENCE_BYTES:
+            probs.append(f"font {fam!r}: licence evidence missing (the licence text or purchase receipt file, "
+                         f">= {MIN_LICENCE_EVIDENCE_BYTES} bytes)")
+        if fam not in font_files:
+            probs.append(f"font {fam!r}: no font file declared in font_files")
+    for fam in font_files:
+        fp = files.get(f"font:{fam}")
+        if fp is None or not fp.is_file():
+            probs.append(f"font {fam!r}: file missing")
+        elif fp.suffix.lower() not in FONT_EXT or not fp.read_bytes()[:4].startswith(FONT_MAGIC):
+            probs.append(f"font {fam!r}: {fp.name} is corrupted or not a font ({'/'.join(FONT_EXT)})")
     u = manifest.get("usage") or {}
     try:
         if not float(u.get("min_logo_width_px", 0)) > 0:
-            probs.append("brand.yaml usage.min_logo_width_px must be > 0")
+            probs.append("usage.min_logo_width_px must be > 0")
         if not 0 < float(u.get("clear_space_ratio", 0)) <= 1:
-            probs.append("brand.yaml usage.clear_space_ratio must be in (0, 1]")
+            probs.append("usage.clear_space_ratio must be in (0, 1]")
     except (TypeError, ValueError):
-        probs.append("brand.yaml usage values must be numbers")
+        probs.append("usage values must be numbers")
     if not u.get("allowed_backgrounds"):
-        probs.append("brand.yaml usage.allowed_backgrounds must list at least one background")
+        probs.append("usage.allowed_backgrounds must list at least one background")
+    ur = files.get("usage_rules")
+    if ur is None or not ur.is_file() or len(ur.read_text(encoding="utf-8", errors="replace").strip()) < MIN_USAGE_RULES_CHARS:
+        probs.append(f"usage_rules.md missing or shorter than {MIN_USAGE_RULES_CHARS} characters")
     sums = manifest.get("checksums") or {}
     for role, path in files.items():
         if not path.exists():
             continue
         want = sums.get(role)
         if not want:
-            probs.append(f"brand.yaml checksums: no sha256 for {role}")
-        elif want.lower() != _sha(path):
+            probs.append(f"checksums: no sha256 for {role}")
+        elif str(want).lower() != _sha(path):
             probs.append(f"checksum mismatch for {role} ({path.name}): file changed or corrupted")
     return probs
 
 
 def brand_status(report: dict[str, Any] | None = None) -> dict[str, Any]:
     """VALID (production-ready) / INCOMPLETE (nothing wrong, something missing) / INVALID (something present is
-    wrong: placeholder, bad SVG, off-palette, bad manifest, checksum or fingerprint mismatch)."""
+    wrong: placeholder, bad SVG, off-palette, bad manifest, unlicensed font, checksum or fingerprint mismatch)."""
     rep = report if report is not None else validate_assets()
-    reasons = [f"{n}: {r['status']} — {'; '.join(r['problems'])[:160]}" for n, r in rep["assets"].items()
+    reasons = [f"{n}: {r['status']} — {'; '.join(r['problems'])[:240]}" for n, r in rep["assets"].items()
                if r["status"] != "VALID"] + list(rep.get("fingerprint_problems") or [])
     states = {r["status"] for r in rep["assets"].values()}
     if states & {"INVALID", "PLACEHOLDER"} or rep.get("fingerprint_problems"):
@@ -190,46 +255,64 @@ def brand_status(report: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def fingerprint(adir: Path) -> dict[str, Any]:
     """Brand fingerprint = hashes of every installed asset + the approved palette and fonts."""
-    files = {p.name: _sha(p) for p in sorted(adir.rglob("*")) if p.is_file()
+    files = {str(p.relative_to(adir)): _sha(p) for p in sorted(adir.rglob("*")) if p.is_file()
              and p.name not in ("brand_fingerprint.json", "IMPORT_RECORD.json", "README.md")}
     manifest = yaml.safe_load((adir / "brand.yaml").read_text(encoding="utf-8")) if (adir / "brand.yaml").exists() else {}
     core = {"files": files, "palette": manifest.get("palette"), "fonts": manifest.get("fonts")}
     return {**core, "fingerprint": hashlib.sha256(json.dumps(core, sort_keys=True).encode()).hexdigest()}
 
 
-def import_brand(src: Path, dry_run: bool = False) -> dict[str, Any]:
-    """Validate an APEX brand package and install it into assets/apex/ only if EVERY check passes.
+def _safe(src: Path, path: Path) -> str | None:
+    """A package file must be a regular file inside the package — no symlink, no path escaping the folder."""
+    try:
+        rel = path.resolve().relative_to(src.resolve())
+    except ValueError:
+        return f"{path} points outside the package"
+    if any((src / Path(*rel.parts[:i + 1])).is_symlink() for i in range(len(rel.parts))) or path.is_symlink():
+        return f"{rel} is a symbolic link (not accepted)"
+    return None
 
-    Package layout (folder): brand.yaml (approved_by, approved_at, palette {name: #RRGGBB}, fonts {role: family},
-    optional font_files {family: file}, optional files {logo, logo_on_dark, robot, watermark: filename}) plus the
-    files it names (defaults: logo.svg, logo-on-dark.svg, robot.svg, watermark.svg). Checks: file types, SVG validity
-    and viewBox dimensions (aspect sanity), no raster/script, colours within the package palette, not a known
-    placeholder, palette hex format, font files present with a font extension, required variants present."""
+
+def import_brand(src: Path, dry_run: bool = False) -> dict[str, Any]:
+    """Validate an APEX brand package (BRAND_PACKAGE_INTAKE.md) and install it into assets/apex/ only if EVERY check
+    passes. Rejects: missing required files, corrupted files (SVG that does not parse, fonts with no font header,
+    checksum mismatch), placeholders, raster/script in SVG, off-palette colours, unlicensed fonts or missing licence
+    evidence, files the manifest does not list, symlinks and paths outside the package. Installation is staged:
+    copied, re-hashed, then swapped in; a failure leaves the previous assets untouched."""
+    import shutil
+
     s = get_settings()
     contract = yaml.safe_load((s.config_dir / "asset_contract.yaml").read_text(encoding="utf-8"))
     adir = s.home / contract["asset_dir"]
     problems: list[str] = []
     report: dict[str, Any] = {"source": str(src), "checks": {}, "installed": False}
-    man_path = src / "brand.yaml"
-    if not man_path.exists():
-        return {**report, "problems": ["brand.yaml missing from the package"]}
-    manifest = yaml.safe_load(man_path.read_text(encoding="utf-8")) or {}
+    man_path = next((src / n for n in MANIFEST_NAMES if (src / n).is_file()), None)
+    if man_path is None:
+        return {**report, "problems": ["manifest missing: put manifest.yaml at the top of the package"]}
+    try:
+        manifest = yaml.safe_load(man_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as e:
+        return {**report, "problems": [f"manifest is not valid YAML: {e}"]}
     for k in contract["required"]["brand_manifest"]["required_keys"]:
         if not manifest.get(k):
-            problems.append(f"brand.yaml: missing {k}")
+            problems.append(f"manifest: missing {k}")
     palette = manifest.get("palette") or {}
     bad_hex = [f"{k}={v}" for k, v in palette.items() if not HEXCOL.match(str(v))]
     if bad_hex:
         problems.append(f"palette values must be #RRGGBB: {bad_hex}")
-    names = {"logo": "logo.svg", "logo_on_dark": "logo-on-dark.svg", "robot": "robot.svg", "watermark": "watermark.svg",
-             **(manifest.get("files") or {})}
-    ph = {_sha(s.home / p) for p in contract["placeholders"] if (s.home / p).exists()}
+    paths = package_paths(manifest, src)
+    for role, p in list(paths.items()):
+        why = _safe(src, p) if p.exists() or p.is_symlink() else None
+        if why:                       # never read through an unsafe path: report it and drop it from every check
+            problems.append(f"{role}: {why}")
+            paths[role] = src / f".rejected-{role}"
+    ph = {_sha(s.home / q) for q in contract["placeholders"] if (s.home / q).exists()}
     pal_values = [str(v) for v in palette.values() if HEXCOL.match(str(v))]
     for role in (*SVG_ROLES, "watermark"):
-        p = src / names[role]
-        if not p.exists():
+        p = paths.get(role)
+        if p is None or not p.exists():
             if role != "watermark":
-                problems.append(f"{role}: {names[role]} missing (required variant)")
+                problems.append(f"{role}: {p.relative_to(src) if p else role} missing (required)")
             continue
         if p.suffix.lower() != ".svg":
             problems.append(f"{role}: must be .svg (vector), got {p.suffix}")
@@ -238,23 +321,22 @@ def import_brand(src: Path, dry_run: bool = False) -> dict[str, Any]:
         dims = None
         try:
             dims = _svg_dims(p)
-        except etree.XMLSyntaxError:
+        except (etree.XMLSyntaxError, ValueError):
             pass
         if dims and (dims[0] <= 0 or dims[1] <= 0 or max(dims) / min(dims) > 12):
             probs.append(f"implausible viewBox dimensions {dims}")
-        report["checks"][role] = {"file": p.name, "sha256": _sha(p), "viewBox": dims, "problems": probs}
+        report["checks"][role] = {"file": str(p.relative_to(src)), "sha256": _sha(p), "viewBox": dims,
+                                  "problems": probs}
         problems += [f"{role}: {x}" for x in probs]
-    fonts = manifest.get("fonts") or {}
-    font_files = manifest.get("font_files") or {}
-    for fam, fname in font_files.items():
-        fp = src / fname
-        if not fp.exists() or fp.suffix.lower() not in FONT_EXT:
-            problems.append(f"font {fam}: file {fname} missing or not a font ({FONT_EXT})")
-    report["fonts"] = {"roles": fonts, "files": font_files}
-    pkg_files = {role: src / names[role] for role in (*SVG_ROLES, "watermark") if (src / names[role]).exists()}
-    pkg_files |= {f"font:{fam}": src / f for fam, f in font_files.items()}
-    problems += manifest_problems(manifest, pkg_files)
+    problems += manifest_problems(manifest, paths)
+    listed = {p.resolve() for p in paths.values()} | {man_path.resolve()}
+    unlisted = sorted(str(p.relative_to(src)) for p in src.rglob("*")
+                      if p.is_file() and not any(part.startswith(".") for part in p.relative_to(src).parts)
+                      and p.resolve() not in listed and p.name.lower() not in ("readme.md", "readme.txt"))
+    problems += [f"unlisted file {u}: every file must be named in the manifest (or removed)" for u in unlisted]
     genome = yaml.safe_load((s.config_dir / "apex_brand.yaml").read_text(encoding="utf-8"))["invariants"]
+    fonts = manifest.get("fonts") or {}
+    report["fonts"] = {"roles": fonts, "files": manifest.get("font_files") or {}}
     report["palette_vs_genome"] = {"only_in_package": sorted(set(map(str.upper, pal_values)) -
                                                              {v.upper() for v in genome["palette"].values()}),
                                    "fonts_differ": {k: v for k, v in fonts.items()
@@ -262,23 +344,40 @@ def import_brand(src: Path, dry_run: bool = False) -> dict[str, Any]:
     report["problems"] = problems
     if problems or dry_run:
         return report
-    adir.mkdir(parents=True, exist_ok=True)
-    import shutil
+    stage = adir.parent / f".{adir.name}.staging"
+    shutil.rmtree(stage, ignore_errors=True)
+    stage.mkdir(parents=True)
+    try:
+        if (adir / "README.md").exists():
+            shutil.copy2(adir / "README.md", stage / "README.md")
+        dest = installed_paths(manifest, stage)
+        if "watermark" in paths and paths["watermark"].exists():
+            dest["watermark"] = stage / INSTALLED["watermark"]
+        for role, sp in paths.items():
+            if sp.exists():
+                dest[role].parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(sp, dest[role])
+        shutil.copy2(man_path, stage / "brand.yaml")
+        copied = manifest_problems(manifest, installed_paths(manifest, stage))     # re-hash after the copy
+        if copied:
+            raise RuntimeError(f"copy verification failed: {copied}")
+        fp = fingerprint(stage)
+        (stage / "brand_fingerprint.json").write_text(json.dumps(fp, indent=2), encoding="utf-8")
+        from datetime import UTC, datetime
 
-    dest_names = {"logo": "logo.svg", "logo_on_dark": "logo-on-dark.svg", "robot": "robot.svg", "watermark": "watermark.svg"}
-    for role, chk in report["checks"].items():
-        shutil.copy2(src / chk["file"], adir / dest_names[role])
-    for fname in font_files.values():
-        (adir / "fonts").mkdir(exist_ok=True)
-        shutil.copy2(src / fname, adir / "fonts" / Path(fname).name)
-    shutil.copy2(man_path, adir / "brand.yaml")
-    fp = fingerprint(adir)
-    (adir / "brand_fingerprint.json").write_text(json.dumps(fp, indent=2), encoding="utf-8")
-    from datetime import UTC, datetime
-
-    (adir / "IMPORT_RECORD.json").write_text(json.dumps({**report, "installed": True,
-                                                         "at": datetime.now(UTC).isoformat(),
-                                                         "fingerprint": fp["fingerprint"]}, indent=2), encoding="utf-8")
+        (stage / "IMPORT_RECORD.json").write_text(json.dumps({**report, "installed": True,
+                                                              "at": datetime.now(UTC).isoformat(),
+                                                              "fingerprint": fp["fingerprint"]}, indent=2),
+                                                  encoding="utf-8")
+        old = adir.parent / f".{adir.name}.previous"
+        shutil.rmtree(old, ignore_errors=True)
+        if adir.exists():
+            adir.rename(old)
+        stage.rename(adir)
+        shutil.rmtree(old, ignore_errors=True)
+    except Exception as e:  # noqa: BLE001 — a failed install never leaves half a brand behind
+        shutil.rmtree(stage, ignore_errors=True)
+        return {**report, "problems": [f"install failed, previous assets kept: {e}"]}
     _CACHE.clear()
     return {**report, "installed": True, "fingerprint": fp["fingerprint"]}
 
@@ -291,3 +390,14 @@ def fingerprint_problems(adir: Path) -> list[str]:
     if json.loads(rec.read_text())["fingerprint"] != fingerprint(adir)["fingerprint"]:
         return ["installed assets differ from the imported brand fingerprint (re-run `apex-one brand import`)"]
     return []
+
+
+def checksums_block(src: Path) -> str:
+    """The `checksums:` block for a package's manifest, computed from the files the manifest names (paste it in)."""
+    man_path = next((src / n for n in MANIFEST_NAMES if (src / n).is_file()), None)
+    manifest = yaml.safe_load(man_path.read_text(encoding="utf-8")) or {} if man_path else {}
+    lines = ["checksums:"]
+    for role, p in package_paths(manifest, src).items():
+        if p.is_file() and not _safe(src, p):
+            lines.append(f"  {role!r}: {_sha(p)}" if ":" in role else f"  {role}: {_sha(p)}")
+    return "\n".join(lines) + "\n"
