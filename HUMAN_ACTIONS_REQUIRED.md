@@ -1,20 +1,12 @@
 # Human actions required
 
-_Generated 2026-11-02 13:18 UTC by `apex-one reports` at commit `daab43f` from measured artifacts._
+_Generated 2026-11-03 17:15 UTC by `apex-one reports` at commit `17c6ca3` from measured artifacts._
 
 Only what a person must do. Everything Claude can still do autonomously is in NEXT_ACTIONS.md. Generated from `config/production_blockers.yaml`; an action disappears when its probe sees it done.
 
-## A. Create a Gemini free-tier API key  (`GEMINI-KEY-MISSING`, MEDIUM)
+# Required for production (in this order)
 
-**WHY** — No local model is a robust visual judge (Qwen3-VL 8B is canonical-640-only; larger local judges do not fit 16 GB). Gemini is the only reachable free route left to test. It may still fail calibration.
-
-**WHAT EXACTLY IS NEEDED** — (1) A free-tier key from Google AI Studio in a project with NO billing account, stored as the environment secret GEMINI_API_KEY (environment settings → secrets). (2) Your attestation that it is free-tier with billing disabled — the $0 firewall refuses every remote route without one: apex-one providers attest gemini --by "<your name>" --note "AI Studio key, no billing".
-
-**COMMAND AVAILABLE AFTERWARD** — `apex-one vision validate-gemini  (exit 0 = completed with a verdict, 2 = still blocked, 3 = infrastructure error; re-run resumes)`
-
-_Done when:_ GEMINI_API_KEY present, a free_tier_no_billing attestation recorded, AND `apex-one vision validate-gemini` passes its live test (the calibration outcome itself may be UNQUALIFIED — that still unblocks)
-
-## B. Supply the official APEX brand package  (`BRAND-ASSETS-MISSING`, CRITICAL)
+## A. Supply the official APEX brand package  (`BRAND-ASSETS-MISSING`, CRITICAL)
 
 **WHY** — Real guides cannot become release candidates with placeholder branding (Brand Production Gate FAIL), and placeholders are never embedded in FINAL artifacts.
 
@@ -24,7 +16,7 @@ _Done when:_ GEMINI_API_KEY present, a free_tier_no_billing attestation recorded
 
 _Done when:_ `apex-one brand validate` prints VALID (every required asset present, vector, on-palette, not a placeholder, checksums match, fingerprint recorded)
 
-## C. Create (or name) the authorised release approver  (`APPROVER-MISSING`, CRITICAL)
+## B. Create (or name) the authorised release approver  (`APPROVER-MISSING`, CRITICAL)
 
 **WHY** — Approval identity comes only from an authenticated token; a typed name is never accepted. Without an approver no guide can reach FINAL.
 
@@ -34,7 +26,7 @@ _Done when:_ `apex-one brand validate` prints VALID (every required asset presen
 
 _Done when:_ `apex-one auth list` shows at least one active release_approver AND `apex-one auth verify-ledger` reports the ledger intact
 
-## D. Provide authoritative opportunity evidence  (`REAL-OPPORTUNITY-UNVALIDATED`, CRITICAL)
+## C. Provide authoritative opportunity evidence  (`REAL-OPPORTUNITY-UNVALIDATED`, CRITICAL)
 
 **WHY** — The guide's critical facts (deadline, eligibility, funding) must come from official sources; this container cannot reach them.
 
@@ -44,7 +36,9 @@ _Done when:_ `apex-one auth list` shows at least one active release_approver AND
 
 _Done when:_ a non-synthetic job built from an evidence pack (`apex-one evidence run <pack>`) reaches RELEASE_CANDIDATE with every critical fact locked from ≥ 2 sources or human-confirmed
 
-## E. Decide the pending model licences  (`LICENCE-VERIFICATION-PENDING`, MEDIUM)
+# EXPERIMENTAL / OPTIONAL IMPROVEMENT (not needed for production)
+
+## D. Decide the pending model licences  (`LICENCE-VERIFICATION-PENDING`, MEDIUM)
 
 **WHY** — Gemma 3 4B is the only local model that clears the Egyptian-Arabic guide floor, and it cannot be deployed while its licence is unverified. The others only add fallbacks.
 
@@ -53,6 +47,16 @@ _Done when:_ a non-synthetic job built from an evidence pack (`apex-one evidence
 **COMMAND AVAILABLE AFTERWARD** — `apex-one license verify <licence-id> --license "<licence name>" --state PRODUCTION_ALLOWED --source <URL of the licence text you read> --by "<name>"  (or --state BLOCKED)`
 
 _Done when:_ each pending licence (lic-gemma, lic-gemma3-12b, lic-nvidia-nemotron-nano, lic-gpt-oss) recorded by a named human with `apex-one license verify` as PRODUCTION_ALLOWED or BLOCKED (BLOCKED also resolves the blocker: the decision is what is missing)
+
+## E. Create a Gemini free-tier API key  (`GEMINI-KEY-MISSING`, MEDIUM)
+
+**WHY** — No local model is a robust visual judge (Qwen3-VL 8B is canonical-640-only; larger local judges do not fit 16 GB). Gemini is the only reachable free route left to test. It may still fail calibration.
+
+**WHAT EXACTLY IS NEEDED** — (1) A free-tier key from Google AI Studio in a project with NO billing account, stored as the environment secret GEMINI_API_KEY (environment settings → secrets). (2) Your attestation that it is free-tier with billing disabled — the $0 firewall refuses every remote route without one: apex-one providers attest gemini --by "<your name>" --note "AI Studio key, no billing".
+
+**COMMAND AVAILABLE AFTERWARD** — `apex-one vision validate-gemini  (exit 0 = completed with a verdict, 2 = still blocked, 3 = infrastructure error; re-run resumes)`
+
+_Done when:_ GEMINI_API_KEY present, a free_tier_no_billing attestation recorded, AND `apex-one vision validate-gemini` passes its live test (the calibration outcome itself may be UNQUALIFIED — that still unblocks)
 
 ## F. Allow the free-provider hosts (optional)  (`REMOTE-PROVIDERS-EGRESS-DENIED`, MEDIUM)
 

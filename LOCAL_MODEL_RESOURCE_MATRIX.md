@@ -1,6 +1,6 @@
 # Local model resource matrix
 
-_Generated 2026-11-02 13:17 UTC by `apex-one reports` at commit `daab43f` from measured artifacts._
+_Generated 2026-11-03 17:14 UTC by `apex-one reports` at commit `17c6ca3` from measured artifacts._
 
 Machine: 16.9 GB RAM (10^9 bytes), no swap, 4 CPU threads, no GPU; memory available with no model loaded: **16.3 GB**. On this machine compute scheduling is part of correctness: every stage is admitted BEFORE it starts (`apex_one/compute/local/resources.py`) with ADMIT / DEFER / RESOURCE_BLOCKED and an explicit reason; a clean RESOURCE_BLOCKED is a successful scheduler decision.
 

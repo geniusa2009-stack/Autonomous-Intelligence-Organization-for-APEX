@@ -1,24 +1,58 @@
 {
   "maturity": {
-    "ARCHITECTURE_COMPLETE": {
+    "BRAND_ASSETS_VALIDATED": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "no FINAL artifact may carry placeholder branding",
+      "evidence": "apex-one brand validate → INCOMPLETE: logo: MISSING — logo.svg not found; logo_on_dark: MISSING — logo-on-dark.svg not found; robot: MISSING — robot.svg not found",
+      "open_blockers": [
+        "BRAND-ASSETS-MISSING"
+      ]
+    },
+    "AUTHORIZED_APPROVER_CONFIGURED": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "a release needs a token-authenticated approver whose decision is bound to the artifact hash",
+      "evidence": "0 active approver(s); ledger intact",
+      "open_blockers": [
+        "APPROVER-MISSING"
+      ]
+    },
+    "REAL_OPPORTUNITY_VALIDATED": {
+      "status": "NO",
+      "mandatory": true,
+      "why_mandatory_or_not": "one real guide must reach RELEASE_CANDIDATE from authoritative evidence",
+      "evidence": "no non-synthetic job has reached RELEASE_CANDIDATE",
+      "open_blockers": [
+        "REAL-OPPORTUNITY-UNVALIDATED"
+      ]
+    },
+    "PRODUCTION_LOAD_VALIDATED": {
       "status": "YES",
       "mandatory": true,
-      "why_mandatory_or_not": "every stage exists, is wired and tested",
-      "evidence": "state machine, $0 compute, research, editorial, design, QA, release, learning",
+      "why_mandatory_or_not": "PRODUCTION_MODE must throttle, never OOM, under concurrent load",
+      "evidence": "load test PASS (model qwen3-vl-4b-q4kxl, real model: True)",
       "open_blockers": []
     },
     "OFFLINE_PIPELINE_VALIDATED": {
       "status": "YES",
       "mandatory": true,
-      "why_mandatory_or_not": "golden ULTRA reaches the human gate with all quality targets PASS",
+      "why_mandatory_or_not": "golden ULTRA reaches the human gate with every quality target PASS",
       "evidence": "golden ULTRA: comprehension 98.9, rhythm 94.0, Arabic typography 100; tests/test_pipeline.py::test_golden_ultra_quality_never_regresses",
       "open_blockers": []
     },
     "LOCAL_MODEL_ROUTING_VALIDATED": {
       "status": "YES",
       "mandatory": true,
-      "why_mandatory_or_not": "every model route is decided on identical measurements, licence-gated",
+      "why_mandatory_or_not": "every deployed model route rests on identical measurements and a verified licence",
       "evidence": "9 production model routes, all on identical measurements with verified licences; EVALUATION_ONLY (native in production): ['editorial.write.egyptian_guide', 'editorial.write', 'editorial.critique']",
+      "open_blockers": []
+    },
+    "ARCHITECTURE_COMPLETE": {
+      "status": "YES",
+      "mandatory": false,
+      "why_mandatory_or_not": "structural; already YES and covered by the test suite",
+      "evidence": "state machine, $0 compute, research, editorial, design, QA, release, learning",
       "open_blockers": []
     },
     "DESIGN_MODEL_VALIDATION": {
@@ -50,49 +84,15 @@
         "REMOTE-PROVIDERS-EGRESS-DENIED"
       ]
     },
-    "REAL_OPPORTUNITY_VALIDATED": {
-      "status": "NO",
-      "mandatory": true,
-      "why_mandatory_or_not": "a real guide must reach RELEASE_CANDIDATE from authoritative evidence",
-      "evidence": "no non-synthetic job has reached RELEASE_CANDIDATE",
-      "open_blockers": [
-        "REAL-OPPORTUNITY-UNVALIDATED"
-      ]
-    },
-    "PRODUCTION_LOAD_VALIDATED": {
-      "status": "YES",
-      "mandatory": true,
-      "why_mandatory_or_not": "PRODUCTION_MODE must throttle, not OOM, under real concurrent load",
-      "evidence": "load test PASS (model qwen3-vl-4b-q4kxl, real model: True)",
-      "open_blockers": []
-    },
-    "BRAND_ASSETS_VALIDATED": {
-      "status": "NO",
-      "mandatory": true,
-      "why_mandatory_or_not": "no FINAL artifact may carry placeholder branding",
-      "evidence": "apex-one brand validate → INCOMPLETE: logo: MISSING — logo.svg not found; logo_on_dark: MISSING — logo-on-dark.svg not found; robot: MISSING — robot.svg not found",
-      "open_blockers": [
-        "BRAND-ASSETS-MISSING"
-      ]
-    },
-    "HUMAN_APPROVAL_VALIDATED": {
-      "status": "NO",
-      "mandatory": true,
-      "why_mandatory_or_not": "a release needs an authenticated approver bound to the artifact hash",
-      "evidence": "0 active approver(s); ledger intact",
-      "open_blockers": [
-        "APPROVER-MISSING"
-      ]
-    },
     "PRODUCTION_READY": {
       "status": "NO",
       "mandatory": true,
-      "why_mandatory_or_not": "YES only when every mandatory dimension is YES",
-      "evidence": "unmet mandatory dimensions: ['REAL_OPPORTUNITY_VALIDATED', 'BRAND_ASSETS_VALIDATED', 'HUMAN_APPROVAL_VALIDATED']",
+      "why_mandatory_or_not": "PRODUCTION_READY = YES iff every required dimension = YES (config/production_acceptance.yaml)",
+      "evidence": "unmet mandatory dimensions: ['BRAND_ASSETS_VALIDATED', 'AUTHORIZED_APPROVER_CONFIGURED', 'REAL_OPPORTUNITY_VALIDATED']",
       "open_blockers": [
-        "REAL_OPPORTUNITY_VALIDATED",
         "BRAND_ASSETS_VALIDATED",
-        "HUMAN_APPROVAL_VALIDATED"
+        "AUTHORIZED_APPROVER_CONFIGURED",
+        "REAL_OPPORTUNITY_VALIDATED"
       ]
     }
   },

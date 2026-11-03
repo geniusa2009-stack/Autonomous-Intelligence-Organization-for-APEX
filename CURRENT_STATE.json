@@ -2,16 +2,16 @@
   "branch": "claude/charming-archimedes-2guzc9",
   "updated": "2026-11-03",
   "maturity": {
-    "ARCHITECTURE_COMPLETE": "YES",
+    "BRAND_ASSETS_VALIDATED": "NO",
+    "AUTHORIZED_APPROVER_CONFIGURED": "NO",
+    "REAL_OPPORTUNITY_VALIDATED": "NO",
+    "PRODUCTION_LOAD_VALIDATED": "YES",
     "OFFLINE_PIPELINE_VALIDATED": "YES",
     "LOCAL_MODEL_ROUTING_VALIDATED": "YES",
+    "ARCHITECTURE_COMPLETE": "YES",
     "DESIGN_MODEL_VALIDATION": "PARTIAL",
     "VISION_GATE": "PARTIAL",
     "REMOTE_FREE_COMPUTE_VALIDATED": "NO",
-    "REAL_OPPORTUNITY_VALIDATED": "NO",
-    "PRODUCTION_LOAD_VALIDATED": "YES",
-    "BRAND_ASSETS_VALIDATED": "NO",
-    "HUMAN_APPROVAL_VALIDATED": "NO",
     "PRODUCTION_READY": "NO"
   },
   "test_command": ".venv/bin/python -m pytest",
@@ -63,13 +63,12 @@
   "queue": "scripts/validation_queue.py: ALL DONE (Q8_K_XL and gpt-oss RESOURCE_BLOCKED, terminal unless APEX_RETRY_BLOCKED=1)",
   "resume_hint": "apex-one release check; then FIRST_PRODUCTION_RUNBOOK.md",
   "maturity_mandatory": [
-    "ARCHITECTURE_COMPLETE",
-    "OFFLINE_PIPELINE_VALIDATED",
-    "LOCAL_MODEL_ROUTING_VALIDATED",
+    "BRAND_ASSETS_VALIDATED",
+    "AUTHORIZED_APPROVER_CONFIGURED",
     "REAL_OPPORTUNITY_VALIDATED",
     "PRODUCTION_LOAD_VALIDATED",
-    "BRAND_ASSETS_VALIDATED",
-    "HUMAN_APPROVAL_VALIDATED"
+    "OFFLINE_PIPELINE_VALIDATED",
+    "LOCAL_MODEL_ROUTING_VALIDATED"
   ],
   "blockers_source": "config/production_blockers.yaml → PRODUCTION_BLOCKERS.md (probe-evaluated)",
   "load_test": {
@@ -106,5 +105,14 @@
     "APPROVER_SETUP.md",
     "REAL_OPPORTUNITY_PILOT.md",
     "PRODUCTION_ACCEPTANCE.md"
-  ]
+  ],
+  "acceptance_rule": "config/production_acceptance.yaml",
+  "release_check": {
+    "verdict": "BLOCKED",
+    "blockers": [
+      "BRAND_ASSETS_VALIDATED: NO — next: apex-one brand import <folder>   (spec: BRAND_PACKAGE_INTAKE.md)",
+      "AUTHORIZED_APPROVER_CONFIGURED: NO — next: apex-one auth add-approver \"<full name>\"   (spec: APPROVER_SETUP.md)",
+      "REAL_OPPORTUNITY_VALIDATED: NO — next: apex-one evidence init <pack>   (spec: REAL_OPPORTUNITY_PILOT.md)"
+    ]
+  }
 }

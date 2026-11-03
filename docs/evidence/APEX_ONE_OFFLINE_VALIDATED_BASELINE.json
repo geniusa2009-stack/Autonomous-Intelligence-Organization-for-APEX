@@ -1,0 +1,17 @@
+{
+  "id": "APEX_ONE_OFFLINE_VALIDATED_BASELINE",
+  "baseline_commit": "17c6ca3",
+  "test_count": 248,
+  "recorded_at": "2026-11-03T17:15:28.275552+00:00",
+  "reason": "Production closure: offline-validated system (routing frozen, acceptance rule, release contracts)",
+  "values": {
+    "routing_policy_sha256": "dff9e0844d8fdba0c10b25c08375f1db04044e598570e88622ea0f5dbad29d49",
+    "memory_policy_sha256": "0bc57eba6271194aeb851d41211ae33b45d33526a04dfe659161ef28875bf570",
+    "acceptance_rule_sha256": "90615d9451e42eec43822f8df17e1df61aa9ce1cf0d72832752836a60b4aa9f8",
+    "brand_contract_version": 2,
+    "approval_contract_version": 2,
+    "evidence_pack_version": 1,
+    "load_test_version": 1
+  },
+  "history": []
+}
